@@ -22,6 +22,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::get('/admin/dashboard', 'AdminController@dashboard');
     Route::get('/admin/routes','Admin\RouteController@index');
+    Route::post('/admin/routes','Admin\RouteController@insert');
+    Route::get('/admin/routes/{id}','Admin\RouteController@findRouteById');
+    Route::delete('/admin/routes/{id}','Admin\RouteController@delete');
 });
