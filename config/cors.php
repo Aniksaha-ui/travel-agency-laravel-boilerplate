@@ -14,21 +14,21 @@ return [
     | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
     |
     */
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],  // Ensure that your API paths are correctly mentioned.
 
-    'paths' => ['api/*'],
+    'allowed_methods' => ['*'], // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
 
-    'allowed_methods' => ['*'],
-
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['*'], // Allow requests from all origins (change to specific origins if needed)
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['*'], // Allow all headers (adjust as per requirement)
 
     'exposed_headers' => [],
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => false, // Set this to true if you're using cookies or authentication
+
 
 ];
