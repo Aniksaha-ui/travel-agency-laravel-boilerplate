@@ -4,7 +4,7 @@ namespace App\Repository\Interfaces;
 
 use Illuminate\Http\Request;
 
-interface RouteInterface{
+interface CommonInterface{
     public function index($page,$search);
     public function store($request);
     public function findById($id);
