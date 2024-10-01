@@ -38,9 +38,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /*************************************vehicles api **************************************/
 
     Route::get('/admin/vehicles','Admin\Vehicles\VehiclesController@index');
-    Route::post('/admin/users','Admin\Users\UserController@insert');
-    Route::get('/admin/users/{id}','Admin\Users\UserController@findUserById');
-    Route::delete('/admin/users/{id}','Admin\Users\UserController@delete');
+    Route::post('/admin/vehicles','Admin\Vehicles\VehiclesController@insert');
+    Route::get('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@findVehicleById');
+    Route::delete('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@delete');
     
     /*************************************users api ***************************************/
 

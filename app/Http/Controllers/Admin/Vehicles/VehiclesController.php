@@ -48,7 +48,7 @@ class VehiclesController extends Controller
         }
        }
    
-       public function findRouteById($id){
+       public function findVehicleById($id){
            try{
                $response = $this->vehicleService->findById($id);
                if($response){
