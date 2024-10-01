@@ -35,9 +35,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /*************************************routes api **************************************/
 
 
+    
+
+
     /*************************************users api **************************************/
 
     Route::get('/admin/users','Admin\Users\UserController@index');
+    Route::post('/admin/users','Admin\Users\UserController@insert');
+    Route::get('/admin/users/{id}','Admin\Users\UserController@findUserById');
+    Route::delete('/admin/users/{id}','Admin\Users\UserController@delete');
     
     /*************************************users api ***************************************/
 

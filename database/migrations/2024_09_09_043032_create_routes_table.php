@@ -14,10 +14,10 @@ class CreateRoutesTable extends Migration
     public function up()
     {
         Schema::create('routes', function (Blueprint $table) {
-            $table->id();
-            $table->string('origin');
-            $table->string('destination');
-            $table->string('route_name');
+            $table->id(); // Primary key named 'id'
+            $table->string('origin', 100);
+            $table->string('destination', 100);
+            $table->string('route_name', 100);
             $table->timestamps();
         });
     }
