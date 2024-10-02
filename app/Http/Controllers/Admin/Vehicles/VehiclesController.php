@@ -90,4 +90,12 @@ class VehiclesController extends Controller
            }
        }
 
+       public function dropdown(){
+            $response = $this->vehicleService->dropdown();
+            return response()->json([
+                "data"=> $response,
+                "message"=> "success"
+            ],200);
+       }
+
 }

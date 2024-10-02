@@ -52,6 +52,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /*************************************vehicles api start**************************************/
 
     Route::get('/admin/vehicles','Admin\Vehicles\VehiclesController@index');
+    Route::get('/admin/vehicles/dropdown','Admin\Vehicles\VehiclesController@dropdown');
     Route::post('/admin/vehicles','Admin\Vehicles\VehiclesController@insert');
     Route::get('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@findVehicleById');
     Route::delete('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@delete');

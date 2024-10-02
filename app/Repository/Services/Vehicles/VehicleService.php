@@ -64,6 +64,15 @@ class VehicleService implements CommonInterface{
         }
     }
 
+    public function dropdown(){
+        try{
+           $vehicles = DB::table('vehicles')->select('id','vehicle_name')->get();
+           return $vehicles;
+        }catch(Exception $ex){
+            Log::alert($ex->getMessage());
+        }
+    }
+
 
 }
 
