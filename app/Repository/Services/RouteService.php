@@ -64,6 +64,16 @@ class RouteService implements CommonInterface{
         }
     }
 
+    public function dropdownList(){
+        try{
+            $perPage = 10;
+           $routes = DB::table('routes')->select('id','route_name')->get();
+           return $routes;
+        }catch(Exception $ex){
+            Log::alert($ex->getMessage());
+        }
+    }
+
 
 }
 

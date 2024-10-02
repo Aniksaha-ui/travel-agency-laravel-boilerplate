@@ -28,11 +28,25 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /*************************************routes api start**************************************/
     
     Route::get('/admin/routes','Admin\RouteController@index');
+    Route::get('/admin/routes/dropdown','Admin\RouteController@dropdown');
     Route::post('/admin/routes','Admin\RouteController@insert');
     Route::get('/admin/routes/{id}','Admin\RouteController@findRouteById');
     Route::delete('/admin/routes/{id}','Admin\RouteController@delete');
 
     /*************************************routes api end**************************************/
+
+
+
+    /*************************************users api start**************************************/
+
+    Route::get('/admin/users','Admin\Users\UserController@index');
+    Route::post('/admin/users','Admin\Users\UserController@insert');
+    Route::get('/admin/users/{id}','Admin\Users\UserController@findUserById');
+    Route::delete('/admin/users/{id}','Admin\Users\UserController@delete');
+    
+    /*************************************users api end**************************************/
+
+
 
 
     /*************************************vehicles api start**************************************/
@@ -46,25 +60,23 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
 
-    /*************************************vehicles api start**************************************/
+    /*************************************seats api start**************************************/
 
     Route::get('/admin/seat','Admin\Seat\SeatController@index');
     Route::post('/admin/seat','Admin\Seat\SeatController@insert');
     Route::get('/admin/seat/{id}','Admin\Seat\SeatController@findVehicleById');
     Route::delete('/admin/seat/{id}','Admin\Seat\SeatController@delete');
     
-    /*************************************vehicles api end**************************************/
+    /*************************************seats api end**************************************/
 
 
-    /*************************************users api start**************************************/
 
-    Route::get('/admin/users','Admin\Users\UserController@index');
-    Route::post('/admin/users','Admin\Users\UserController@insert');
-    Route::get('/admin/users/{id}','Admin\Users\UserController@findUserById');
-    Route::delete('/admin/users/{id}','Admin\Users\UserController@delete');
+
+    /*************************************Report api start **********************************/
+    Route::get('/admin/vehiclewisetotalseat','Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
+    Route::get('/admin/vehiclewiseseat/{id}','Admin\Reports\ReportController@vehicleWiseAllSeatReport');
+    /*************************************Report api start **********************************/
     
-    /*************************************users api end**************************************/
-
 
     
 

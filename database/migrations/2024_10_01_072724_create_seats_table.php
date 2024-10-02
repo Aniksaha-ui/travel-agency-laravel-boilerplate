@@ -18,7 +18,7 @@ class CreateSeatsTable extends Migration
             $table->string('seat_number', 10);
             $table->enum('seat_class', ['economy', 'business', 'first_class']);
             $table->enum('seat_type', ['window', 'aisle', 'middle']);
-
+            $table->integer('is_available')->default(0);
             $table->timestamps();
 
             // Add foreign key constraint on 'vehicle_id' to reference 'id' in 'vehicles' table

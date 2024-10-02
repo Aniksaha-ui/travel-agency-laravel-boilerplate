@@ -26,7 +26,7 @@ class VehicleService implements CommonInterface{
                     ->where('vehicle_type', 'like', '%' . $search . '%')
                     ->orWhere('vehicle_name', 'like', '%' . $search . '%')
                     ->orWhere('total_seats', 'like', '%' . $search . '%')
-                    ->paginate($perPage, ['vehicle_type','vehicle_name','total_seats','routes.route_name'], 'page', $page);
+                    ->paginate($perPage, ['vehicles.id','vehicle_type','vehicle_name','total_seats','routes.route_name'], 'page', $page);
            return $vehicles;
         }catch(Exception $ex){
             Log::alert($ex->getMessage());

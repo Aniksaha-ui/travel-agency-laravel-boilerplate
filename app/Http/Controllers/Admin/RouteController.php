@@ -90,4 +90,13 @@ class RouteController extends Controller
         }
     }
 
+
+    public function dropdown(){
+        $response = $this->routeService->dropdownList();
+        return response()->json([
+            "data"=> $response,
+            "message"=> "success"
+        ],200);
+    }
+
 }
