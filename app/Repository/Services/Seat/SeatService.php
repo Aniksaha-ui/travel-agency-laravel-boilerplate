@@ -28,7 +28,7 @@ class SeatService implements CommonInterface{
                     ->orWhere('seat_class', 'like', '%' . $search . '%')
                     ->orWhere('seat_type', 'like', '%' . $search . '%')
                     ->orWhere('vehicle_name', 'like', '%' . $search . '%')
-                    ->paginate($perPage, ['vehicle_name','seat_number','seat_class','seat_type'], 'page', $page);
+                    ->paginate($perPage, ['seats.id','vehicle_name','seat_number','seat_class','seat_type'], 'page', $page);
            return $routes;
         }catch(Exception $ex){
             Log::alert($ex->getMessage());
