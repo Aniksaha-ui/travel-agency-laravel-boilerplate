@@ -16,9 +16,6 @@ class CheckAdmin
      */
     public function handle($request, Closure $next)
     {
-        Log::info("--------------------------------------------------");
-        Log::info($request->user());
-        Log::info("--------------------------------------------------");
          if (!$request->user() || !$this->isAdmin($request->user())) {
             return response()->json(['message' => 'Authentication failed'], 403);
         }
