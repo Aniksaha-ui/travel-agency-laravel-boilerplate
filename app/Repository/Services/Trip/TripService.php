@@ -22,12 +22,11 @@ class TripService implements CommonInterface{
 
         try{
             $perPage = 10;
-            $availableSeats = DB::table('seat_availability')
-            ->select('trip_id', 'vehicle_id', DB::raw('COUNT(seat_id) AS available_seats'))
-            ->join('seats', 'seat_availability.seat_id', '=', 'seats.id')
-            ->where('is_available', 1) // Assuming 1 means available
-            ->groupBy('trip_id', 'vehicle_id')
-            ->get();
+            $availableSeats = DB::table('trips')
+            ->where('is_active',1)
+            ->orWhere('trip_name', 'like', '%' . $search . '%')
+            ->orWhere('price', 'like', '%' . $search . '%')
+            ->paginate($perPage, ['trip_name','departure_time','arrival_time','price'], 'page', $page);
         
            return $availableSeats;
         }catch(Exception $ex){
@@ -37,7 +36,7 @@ class TripService implements CommonInterface{
 
     public function store($request){
         try{
-            $routeInsert = DB::table('seats')->insert($request);
+            $routeInsert = DB::table('trips')->insert($request);
             if($routeInsert){
                 return true;
             }
@@ -50,7 +49,7 @@ class TripService implements CommonInterface{
 
     public function findById($id){
         try{
-            $route = DB::table('seats')->where('id',$id)->first();
+            $route = DB::table('trips')->where('id',$id)->first();
             return $route;
         }catch(Exception $ex){
             Log::alert("Find By Id Error".$ex->getMessage());
