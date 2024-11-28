@@ -23,10 +23,12 @@ class TripService implements CommonInterface{
         try{
             $perPage = 10;
             $availableSeats = DB::table('trips')
+            ->join('vehicles','trips.vehicle_id','=','vehicles.id')
+            ->join('routes','trips.route_id','=','routes.id')
             ->where('is_active',1)
             ->orWhere('trip_name', 'like', '%' . $search . '%')
             ->orWhere('price', 'like', '%' . $search . '%')
-            ->paginate($perPage, ['trip_name','departure_time','arrival_time','price'], 'page', $page);
+            ->paginate($perPage, ['trips.id','trip_name','departure_time','arrival_time','price','vehicle_name','route_name'], 'page', $page);
         
            return $availableSeats;
         }catch(Exception $ex){

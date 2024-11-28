@@ -29,18 +29,19 @@ class TripController extends Controller
 
     public function insert(Request $request){
         try{
+            Log::info($request->all());
            $response = $this->tripService->store($request->all());
            if($response==true){
             return response()->json([
                 'isExecute' => true,
                 'data' => $response,
-                'message' => 'New Vehicle Created',
+                'message' => 'New Trip Created',
             ],200);
            }
    
            return response()->json([
                'isExecute' => true,
-               'message' => 'New Vehicle Cannot be Created'
+               'message' => 'New Trip Cannot be Created'
            ],200);
            
         }catch(Exception $ex){
@@ -48,14 +49,14 @@ class TripController extends Controller
         }
        }
    
-       public function findVehicleById($id){
+       public function findTripById($id){
            try{
                $response = $this->tripService->findById($id);
                if($response){
                    return response()->json([
                        "isExecute"=> true,
                        "data"=> $response,
-                       "message"=> "Find Single Vehicle"
+                       "message"=> "Find Single Trip"
                    ],200);
                }else{
                    return response()->json([
@@ -77,7 +78,7 @@ class TripController extends Controller
                    return response()->json([
                        "isExecute"=> true,
                        "data"=> $response,
-                       "message"=> "Vehicle Deleted"
+                       "message"=> "Trip Deleted"
                    ],200);
                }else{
                    return response()->json([

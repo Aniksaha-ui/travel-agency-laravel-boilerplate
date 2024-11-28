@@ -72,6 +72,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /*************************************Trips api end**************************************/
     Route::get('/admin/trip','Admin\Trip\TripController@index');
+    Route::post('/admin/trip','Admin\Trip\TripController@insert');
 
 
     /*************************************seats api end**************************************/
