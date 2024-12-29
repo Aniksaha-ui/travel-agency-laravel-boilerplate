@@ -7,6 +7,7 @@ use App\Repository\Services\Vehicles\VehicleService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class VehiclesController extends Controller
 {
@@ -37,12 +38,6 @@ class VehiclesController extends Controller
                 'message' => 'New Vehicle Created',
             ],200);
            }
-   
-           return response()->json([
-               'isExecute' => true,
-               'message' => 'New Vehicle Cannot be Created'
-           ],200);
-           
         }catch(Exception $ex){
            Log::error($ex->getMessage());
         }
@@ -97,5 +92,19 @@ class VehiclesController extends Controller
                 "message"=> "success"
             ],200);
        }
+
+       public function vehicleBooking(Request $request){
+       
+        $response = $this->vehicleService->vehicleBooking($request->all());
+        if($response==true){
+            return response()->json([
+                'isExecute' => true,
+                'data' => $response,
+                'message' => 'New Vehicle Created',
+            ],200);
+           }
+       }
+
+
 
 }

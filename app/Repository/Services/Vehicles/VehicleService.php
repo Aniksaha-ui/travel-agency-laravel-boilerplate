@@ -74,5 +74,28 @@ class VehicleService implements CommonInterface{
     }
 
 
+    public function vehicleBooking($data){
+        try{
+            $tripId = $data['trip_id'];
+            $vehicleId = $data['vehicle_id'];
+            $seats = DB::table('seats')->where('vehicle_id',$vehicleId)->get();
+            $insertedData = [];
+            foreach ($seats as $seat) {
+                $insertedData[] = [
+                    'trip_id' => $tripId,
+                    'seat_id' => $seat->id 
+                ];
+            }
+            $vehicleInsert = DB::table('seat_availablities')->insert($insertedData);
+            if($vehicleInsert){
+                return true;
+            }
+            return false;
+        }catch(Exception $ex){
+            Log::alert($ex->getMessage());
+        }
+    }
+
+
 }
 

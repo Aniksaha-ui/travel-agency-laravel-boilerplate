@@ -56,7 +56,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('/admin/vehicles','Admin\Vehicles\VehiclesController@insert');
     Route::get('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@findVehicleById');
     Route::delete('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@delete');
-    
+    Route::post('/admin/trip/vehicle/booking','Admin\Vehicles\VehiclesController@vehicleBooking');
     /*************************************vehicles api end**************************************/
 
 
@@ -76,6 +76,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
     /*************************************seats api end**************************************/
+
+    /*************************************Trip for Vehicle Booking**************************************/
+    /*************************************Trip for Vehicle Booking**************************************/
 
 
 
