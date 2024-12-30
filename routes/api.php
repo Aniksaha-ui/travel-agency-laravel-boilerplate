@@ -77,8 +77,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /*************************************seats api end**************************************/
 
-    /*************************************Trip for Vehicle Booking**************************************/
-    /*************************************Trip for Vehicle Booking**************************************/
+    /*************************************Booking**************************************/
+    Route::get('/admin/booking','Admin\booking\bookingController@index');
+    Route::post('/admin/tripsummery','Admin\booking\bookingController@tripwiseBooking');
+    Route::post('/admin/dailybookingReport','Admin\booking\bookingController@dailybookingReport');
+    /*************************************Booking**************************************/
 
 
 

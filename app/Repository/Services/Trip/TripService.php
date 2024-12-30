@@ -39,6 +39,7 @@ class TripService implements CommonInterface{
     public function store($request){
         try{
             $routeInsert = DB::table('trips')->insert($request);
+            Log::info("Trip inserted: ".$routeInsert);
             if($routeInsert){
                 return true;
             }
