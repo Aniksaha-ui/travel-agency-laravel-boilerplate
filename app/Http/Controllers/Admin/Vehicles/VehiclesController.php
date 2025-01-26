@@ -96,7 +96,9 @@ class VehiclesController extends Controller
        public function vehicleBooking(Request $request){
        
         $response = $this->vehicleService->vehicleBooking($request->all());
-        if($response==true){
+        $trackingResponse  = $this->vehicleService->vehicleTripTrackings($request->all());
+
+        if($response==true && $trackingResponse==true){
             return response()->json([
                 'isExecute' => true,
                 'data' => $response,

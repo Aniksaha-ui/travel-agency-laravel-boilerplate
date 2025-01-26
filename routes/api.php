@@ -57,6 +57,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@findVehicleById');
     Route::delete('/admin/vehicles/{id}','Admin\Vehicles\VehiclesController@delete');
     Route::post('/admin/trip/vehicle/booking','Admin\Vehicles\VehiclesController@vehicleBooking');
+    
+
     /*************************************vehicles api end**************************************/
 
 
@@ -89,8 +91,17 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/vehiclewisetotalseat','Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
     Route::get('/admin/vehiclewiseseat/{id}','Admin\Reports\ReportController@vehicleWiseAllSeatReport');
     /*************************************Report api start **********************************/
+
     
+
+  
 
     
 
 });
+
+   /************************************* User api start *******************************/
+   
+   Route::post('/trips','User\trip\TripController@index');
+
+   /************************************* User api start *******************************/ 

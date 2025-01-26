@@ -97,5 +97,30 @@ class VehicleService implements CommonInterface{
     }
 
 
-}
+    public function vehicleTripTrackings($data){
+        try{
+            $tripId = $data['trip_id'];
+            $vehicleId = $data['vehicle_id'];
+            $tripInformation  = DB::table('trips')->where('id',$tripId)->first();
+            $trackingInformationToInsert = [
+                'trip_id' => $tripId,
+                'vehicle_id' => $vehicleId,
+                'travel_start_date' => $tripInformation->departure_time,
+                'travel_end_date' => $tripInformation->arrival_time
+            ];
 
+            Log::info($trackingInformationToInsert);
+            $trackingInformationStore = DB::table('vehicle_trip_trackings')->insert($trackingInformationToInsert);
+            Log::info($trackingInformationToInsert);
+
+            if($trackingInformationStore){
+                return true;
+            }
+            return false;
+        }catch(Exception $ex){
+            Log::alert($ex->getMessage());
+        }
+    }
+
+
+}

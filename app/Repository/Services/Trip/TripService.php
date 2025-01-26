@@ -68,5 +68,35 @@ class TripService implements CommonInterface{
         }
     }
 
+    public function findAllActiveTrips($data){
+        try{
+            $query = DB::table('trips')
+                    ->join('seat_availablities', 'trips.id', '=', 'seat_availablities.trip_id')
+                    ->join('vehicles', 'trips.vehicle_id', '=', 'vehicles.id')
+                    ->join('routes', 'trips.route_id', '=', 'routes.id')
+                    ->select('trips.trip_name','trips.departure_time','trips.arrival_time','trips.price','vehicles.vehicle_name','vehicles.vehicle_type','routes.route_name', DB::raw('COUNT(seat_availablities.id) as available_seats'))
+                    ->groupBy('trips.id'); 
+            
+            if (isset($data['trip_name']) && $data['trip_name']) {
+                $query->where('trip_name', 'like', '%' . $data['trip_name'] . '%');
+            }
+            if (isset($data['start_date']) && $data['start_date']) {
+                $query->where('departure_time', '<=', $data['start_date']);
+            }
+            if (isset($data['end_date']) && $data['end_date']) {
+                $query->where('arrival_time', '>=', $data['end_date']);
+            }
+
+            $trips = $query->get();
+
+            
+
+            return $trips;
+        }catch(Exception $ex){
+            Log::alert($ex->getMessage());
+        }
+    }
+
+
 
 }
