@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Repository\Services\Trip\TripService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -32,5 +33,9 @@ class tripController extends Controller
         } catch(Exception $ex){
             Log::alert($ex->getMessage());
         }
+    }
+
+    public function booking(Request $request){
+       
     }
 }
