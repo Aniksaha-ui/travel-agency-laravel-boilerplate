@@ -76,7 +76,7 @@ class TripService implements CommonInterface
     {
         try {
             $query = DB::table('trips')
-                ->select('trips.trip_name', 'trips.departure_time', 'trips.arrival_time', 'trips.price')
+                ->select('trips.trip_name', 'trips.departure_time', 'trips.arrival_time', 'trips.price', 'trips.description', 'trips.image', 'trips.status')
                 ->groupBy('trips.id');
 
             if (isset($data['trip_name']) && $data['trip_name']) {
@@ -90,8 +90,6 @@ class TripService implements CommonInterface
             }
 
             $trips = $query->get();
-
-
 
             return $trips;
         } catch (Exception $ex) {
