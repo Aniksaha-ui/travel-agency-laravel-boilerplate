@@ -103,5 +103,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
    /************************************* User api start *******************************/
    
    Route::post('/trips','User\trip\TripController@index');
+Route::middleware(['auth:sanctum', 'users'])->group(function () {
+    Route::post('/booking','User\trip\TripController@booking');
+});
+
 
    /************************************* User api start *******************************/ 

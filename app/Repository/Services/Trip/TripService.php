@@ -97,6 +97,4 @@ class TripService implements CommonInterface{
         }
     }
 
-
-
 }
