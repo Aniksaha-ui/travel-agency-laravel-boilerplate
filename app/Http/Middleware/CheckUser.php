@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\Log;
 
 class CheckUser
 {
@@ -15,13 +16,14 @@ class CheckUser
      */
     public function handle($request, Closure $next)
     {
-         if (!$request->user() || !$this->isAdmin($request->user())) {
+        if (!$request->user() || !$this->isAdmin($request->user())) {
             return response()->json(['message' => 'Authentication failed'], 403);
         }
         return $next($request);
     }
 
-    public function isAdmin($user){
-        return $user->role =='users' ? true : false;
+    public function isAdmin($user)
+    {
+        return $user->role == 'users' ? true : false;
     }
 }

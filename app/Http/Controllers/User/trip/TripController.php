@@ -19,23 +19,18 @@ class tripController extends Controller
     {
         $this->tripService = $tripService;
     }
-    public function index(Request $request){
-        Log::info("request : " .json_encode($request->all()));
-        try{
+    public function index(Request $request)
+    {
+        Log::info("request : " . json_encode($request->all()));
+        try {
 
             $trips = $this->tripService->findAllActiveTrips($request->all());
             return response()->json([
-                "data"=> $trips,
-                "message"=> "success"
-            ],200);
-
-
-        } catch(Exception $ex){
+                "data" => $trips,
+                "message" => "success"
+            ], 200);
+        } catch (Exception $ex) {
             Log::alert($ex->getMessage());
         }
-    }
-
-    public function booking(Request $request){
-       
     }
 }
