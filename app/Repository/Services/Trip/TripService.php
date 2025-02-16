@@ -76,8 +76,7 @@ class TripService implements CommonInterface
     {
         try {
             $query = DB::table('trips')
-                ->select('trips.trip_name', 'trips.departure_time', 'trips.arrival_time', 'trips.price', 'trips.description', 'trips.image', 'trips.status')
-                ->groupBy('trips.id');
+                ->select('trips.trip_name', 'trips.departure_time', 'trips.arrival_time', 'trips.price', 'trips.description', 'trips.image', 'trips.status');
 
             if (isset($data['trip_name']) && $data['trip_name']) {
                 $query->where('trip_name', 'like', '%' . $data['trip_name'] . '%');
