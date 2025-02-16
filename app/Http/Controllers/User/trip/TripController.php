@@ -33,4 +33,18 @@ class tripController extends Controller
             Log::alert($ex->getMessage());
         }
     }
+
+    public function singleTrip($id)
+    {
+
+        try {
+            $trip = $this->tripService->findTripById($id);
+            return response()->json([
+                "data" => $trip,
+                "message" => "success"
+            ], 200);
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+        }
+    }
 }

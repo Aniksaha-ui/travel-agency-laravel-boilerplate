@@ -95,4 +95,14 @@ class TripService implements CommonInterface
             Log::alert($ex->getMessage());
         }
     }
+
+    public function findTripById($id)
+    {
+        try {
+            $tripInformation = DB::table('trips')->where('id', $id)->first();
+            return $tripInformation;
+        } catch (Exception $ex) {
+            Log::alert("Find By Id Error" . $ex->getMessage());
+        }
+    }
 }
