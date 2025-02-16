@@ -96,9 +96,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 /************************************* User api start *******************************/
 
 Route::post('/trips', 'User\trip\TripController@index');
+Route::post('/trip/:id', 'User\trip\TripController@singleTrip');
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/admin/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/booking', 'User\booking\bookingController@tripBooking');
+    Route::post('/mybookings', 'User\booking\bookingController@mybookings');
 });
 
 

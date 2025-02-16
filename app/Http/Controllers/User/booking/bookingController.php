@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User\booking;
 
 use App\Http\Controllers\Controller;
+use App\Repository\Services\Users\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -12,6 +13,12 @@ use Illuminate\Support\Str;
 
 class bookingController extends Controller
 {
+    private $bookingService;
+
+    public function __construct(BookingService $bookingService)
+    {
+        $this->bookingService = $bookingService;
+    }
 
     public function tripBooking(Request $request)
     {
@@ -132,6 +139,20 @@ class bookingController extends Controller
                 'message' => 'Something went wrong!',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function mybookings(Request $request)
+    {
+        try {
+            $userId = $request->user()->id;
+            $bookings = $this->bookingService->mybookings($userId);
+            return response()->json([
+                "data" => $bookings,
+                "message" => "success"
+            ], 200);
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
         }
     }
 }
