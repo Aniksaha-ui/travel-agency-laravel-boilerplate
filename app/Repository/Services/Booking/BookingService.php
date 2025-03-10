@@ -57,7 +57,7 @@ class BookingService
                                 )
                                 ->where('t.id', $tripId)
                                 ->groupBy('t.id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name')
-    ->get();
+                                 ->get();
 
 
                 $seats = DB::table('trips as t')

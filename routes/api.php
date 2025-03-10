@@ -100,7 +100,6 @@ Route::get('/trip/{id}', 'User\trip\TripController@singleTrip');
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/booking', 'User\booking\bookingController@tripBooking');
-    Route::post('/bookingview/{tourId}', 'User\booking\bookingController@tripBookingView');
     Route::post('/mybookings', 'User\booking\bookingController@mybookings');
 });
 
