@@ -28,8 +28,6 @@ class bookingController extends Controller
             'seatinfo.*.trip_id' => 'required|integer|exists:trips,id',
             'seatinfo.*.seat_id' => 'required|integer|exists:seats,id',
             'seatinfo.*.seat_number' => 'required|string|max:10',
-            'seatinfo.*.vehicle_name' => 'required|string|max:255',
-            'seatinfo.*.is_available' => 'required|boolean|in:1',
             'paymentinfo' => 'required|array',
             'paymentinfo.amount' => 'required|numeric|min:1',
             'paymentinfo.payment_method' => 'required|string|in:card,bkash,nagad,internet_banking',
