@@ -33,7 +33,8 @@ class BookingService implements CommonInterface
         try {
             $bookingInformation = DB::table("bookings")
                 ->join('trips', 'bookings.trip_id', "=", "trips.id")
-                ->select("bookings.*", "trips.trip_name")
+                ->join('users', 'bookings.user_id', "=", "users.id")
+                ->select("bookings.*", "trips.trip_name", "users.name", "users.email")
                 ->where("user_id", $userId)
                 ->get();
             return $bookingInformation;
