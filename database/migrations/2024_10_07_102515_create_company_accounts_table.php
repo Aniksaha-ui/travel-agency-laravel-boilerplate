@@ -17,8 +17,8 @@ class CreateCompanyAccountsTable extends Migration
             $table->id();
             $table->string('account_name');
             $table->string('account_number');
+            $table->string('type');
             $table->timestamps();
-
         });
     }
 
