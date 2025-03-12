@@ -46,6 +46,7 @@ class BookingService
                     ->select(
                         't.id as trip_id',
                         't.trip_name as trip_name',
+                        't.price as price',
                         't.image as image',
                         't.description as description',
                         't.status as status',
