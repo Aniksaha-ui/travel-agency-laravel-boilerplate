@@ -46,6 +46,7 @@ class BookingService
                     ->select(
                         't.id as trip_id',
                         't.trip_name as trip_name',
+                        't.price as price',
                         't.image as image',
                         't.description as description',
                         't.status as status',
@@ -56,7 +57,7 @@ class BookingService
                         DB::raw('SUM(CASE WHEN sa.is_available = 0 THEN t.price ELSE 0 END) as revenue')
                     )
                     ->where('t.id', $tripId)
-                    ->groupBy('t.id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name')
+                    ->groupBy('t.id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name', 't.price')
                     ->get();
 
 
