@@ -153,4 +153,21 @@ class bookingController extends Controller
             Log::alert($ex->getMessage());
         }
     }
+
+    public function invoice(Request $request)
+    {
+        try {
+            $tripId = $request->input('booking_id');
+            $userId = $request->user()->id;
+            Log::info('Trip Id comes from front' . $tripId);
+
+            $invoiceInfo = $this->bookingService->invoiceInfo($tripId, $userId);
+            return response()->json([
+                "data" => $invoiceInfo,
+                "message" => "success"
+            ], 200);
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+        }
+    }
 }
