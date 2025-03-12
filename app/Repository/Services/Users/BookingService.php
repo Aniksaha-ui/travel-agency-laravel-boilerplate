@@ -59,6 +59,7 @@ class BookingService implements CommonInterface
                     'users.email as user_email',
                     'trips.id as trip_id',
                     'trips.trip_name',
+                    'trips.price',
                     'bookings.status as payment_status',
                     'booking_seats.id as seat_id',
                     'payments.payment_method',
@@ -105,6 +106,7 @@ class BookingService implements CommonInterface
                 $organizedData[$bookingId]['seats'][] = [
                     'seat_id' => $row->seat_id,
                     'seat_number' => $row->seat_number,
+                    'price' => $row->price,
                 ];
             }
 
