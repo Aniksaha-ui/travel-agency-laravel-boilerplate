@@ -35,29 +35,29 @@ class BookingService
             $tripId = $data['trip_id'] ?? null;
 
             if ($tripId != null) {
-              $tripSummaries = DB::table('trips as t')
-                                ->join('vehicles as v', 't.vehicle_id', '=', 'v.id')
-                                ->join('seats as s', 'v.id', '=', 's.vehicle_id')
-                                ->join('routes as r', 't.route_id', '=', 'r.id')
-                                ->leftJoin('seat_availablities as sa', function ($join) {
-                                    $join->on('sa.trip_id', '=', 't.id')
-                                        ->on('sa.seat_id', '=', 's.id');
-                                })
-                                ->select(
-                                    't.id as trip_id',
-                                    't.trip_name as trip_name',
-                                    't.image as image',
-                                    't.description as description',
-                                    't.status as status',
-                                    'r.route_name',
-                                    DB::raw('COUNT(s.id) as total_seats'),
-                                    DB::raw('COUNT(CASE WHEN sa.is_available = 0 THEN 1 END) as booked_seats'),
-                                    DB::raw('COUNT(CASE WHEN sa.is_available = 1 THEN 1 END) as available_seats'),
-                                    DB::raw('SUM(CASE WHEN sa.is_available = 0 THEN t.price ELSE 0 END) as revenue')
-                                )
-                                ->where('t.id', $tripId)
-                                ->groupBy('t.id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name')
-                                 ->get();
+                $tripSummaries = DB::table('trips as t')
+                    ->join('vehicles as v', 't.vehicle_id', '=', 'v.id')
+                    ->join('seats as s', 'v.id', '=', 's.vehicle_id')
+                    ->join('routes as r', 't.route_id', '=', 'r.id')
+                    ->leftJoin('seat_availablities as sa', function ($join) {
+                        $join->on('sa.trip_id', '=', 't.id')
+                            ->on('sa.seat_id', '=', 's.id');
+                    })
+                    ->select(
+                        't.id as trip_id',
+                        't.trip_name as trip_name',
+                        't.image as image',
+                        't.description as description',
+                        't.status as status',
+                        'r.route_name',
+                        DB::raw('COUNT(s.id) as total_seats'),
+                        DB::raw('COUNT(CASE WHEN sa.is_available = 0 THEN 1 END) as booked_seats'),
+                        DB::raw('COUNT(CASE WHEN sa.is_available = 1 THEN 1 END) as available_seats'),
+                        DB::raw('SUM(CASE WHEN sa.is_available = 0 THEN t.price ELSE 0 END) as revenue')
+                    )
+                    ->where('t.id', $tripId)
+                    ->groupBy('t.id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name')
+                    ->get();
 
 
                 $seats = DB::table('trips as t')
@@ -75,7 +75,10 @@ class BookingService
                         'sa.is_available'
                     )
                     ->where('t.id', $tripId)
-                    ->get();
+                    ->get()
+                    ->unique('seat_id')
+                    ->values();
+
 
                 return ["tripSummaries" => $tripSummaries, "seat_layout" => $seats ?? []];
             }
