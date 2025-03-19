@@ -113,7 +113,7 @@ class BookingService
     public function dailybookingReport($date)
     {
         try {
-            Log::info("hitted");
+
             $dailyReport = DB::table('bookings')
                 ->join('trips', 'bookings.trip_id', '=', 'trips.id')
                 ->select(
