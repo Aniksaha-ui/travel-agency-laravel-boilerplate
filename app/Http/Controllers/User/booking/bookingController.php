@@ -117,7 +117,22 @@ class bookingController extends Controller
                 ->whereIn('seat_id', $seatIds)
                 ->update(['is_available' => 0]);
 
-            DB::commit(); // Commit transaction
+
+            Log::info($paymentInfo['payment_method']);
+            Log::info($paymentInfo['amount']);
+            DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->increment('amount', $paymentInfo['amount']);
+            DB::table('account_history')->insert([
+                'user_id' => $request->user()->id,
+                'user_account_type' => $paymentInfo['payment_method'],
+                'user_account_no' => $paymentInfo['payment_method'] == 'card' ? $paymentInfo['card'] : $paymentInfo['payment_method'] == 'nagad' ? $paymentInfo['nagad'] : $paymentInfo['bkash'],
+                'getaway' => $paymentInfo['payment_method'],
+                'amount' => $paymentInfo['amount'],
+                'com_account_no' => DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->value('account_number'),
+                'transaction_reference' => $transactionRef,
+                'purpose' => 'booking',
+                'tran_date' => now(),
+            ]);
+            DB::commit();
 
             return response()->json([
                 'status' => 'success',
