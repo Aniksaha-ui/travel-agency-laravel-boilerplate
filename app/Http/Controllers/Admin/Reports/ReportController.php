@@ -14,25 +14,36 @@ class ReportController extends Controller
     {
         $this->reportService = $reportService;
     }
-    public function vehicleWiseSeatTotalReport(Request $request){
+    public function vehicleWiseSeatTotalReport(Request $request)
+    {
         $page = $request->query('page');
         $search = $request->query('search');
-      
-        $response = $this->reportService->vehicleWiseSeatTotalReport($page,$search);
+
+        $response = $this->reportService->vehicleWiseSeatTotalReport($page, $search);
         return response()->json([
-            "data"=> $response,
-            "message"=> "success"
-        ],200);
+            "data" => $response,
+            "message" => "success"
+        ], 200);
     }
 
-    public function vehicleWiseAllSeatReport($id,Request $request){
+    public function vehicleWiseAllSeatReport($id, Request $request)
+    {
         $vehicleId = $id;
         $page = $request->query('page');
         $search = $request->query('search');
-        $response = $this->reportService->vehicleWiseAllSeatReport($vehicleId,$page,$search);
+        $response = $this->reportService->vehicleWiseAllSeatReport($vehicleId, $page, $search);
         return response()->json([
-            "data"=> $response,
-            "message"=> "success"
-        ],200);
+            "data" => $response,
+            "message" => "success"
+        ], 200);
+    }
+
+    public function accountBalance()
+    {
+        $response = $this->reportService->accountBalance();
+        return response()->json([
+            "data" => $response,
+            "message" => "success"
+        ], 200);
     }
 }

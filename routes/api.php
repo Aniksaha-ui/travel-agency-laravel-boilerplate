@@ -91,6 +91,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/vehiclewisetotalseat', 'Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
     Route::get('/admin/vehiclewiseseat/{id}', 'Admin\Reports\ReportController@vehicleWiseAllSeatReport');
     /*************************************Report api start **********************************/
+
+
+    /***************************************Report api end ***********************************/
+    Route::get('/admin/accountBalance', 'Admin\Reports\ReportController@accountBalance');
+
+
+
+    /***************************************Report api end ***********************************/
 });
 
 /************************************* User api start *******************************/
