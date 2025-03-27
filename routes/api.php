@@ -95,6 +95,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /***************************************Report api end ***********************************/
     Route::get('/admin/accountBalance', 'Admin\Reports\ReportController@accountBalance');
+    Route::get('/admin/accountHistory/{accountId}', 'Admin\Reports\ReportController@accountHistory');
 
 
 

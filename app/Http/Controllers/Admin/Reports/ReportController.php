@@ -46,4 +46,14 @@ class ReportController extends Controller
             "message" => "success"
         ], 200);
     }
+
+
+    public function accountHistory($type)
+    {
+        $response = $this->reportService->accountHistory($type);
+        return response()->json([
+            "data" => $response,
+            "message" => "success"
+        ], 200);
+    }
 }

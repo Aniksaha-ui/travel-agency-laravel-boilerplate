@@ -54,10 +54,21 @@ class ReportService
     public function accountBalance()
     {
         try {
-            $accountInformation = DB::query('company_accounts')->get();
+            $accountInformation = DB::table('company_accounts')->get();
+            Log::info(json_encode($accountInformation));
             return $accountInformation;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
         }
     }
+
+    public function accountHistory($userAccountType){
+        try{
+            $accountHistory = DB::table('account_history')->where('user_account_type',$userAccountType)->get();
+            return $accountHistory;
+        }catch(Exception $ex){
+            Log::alert($ex->getMessage());
+        }
+    }
+
 }
