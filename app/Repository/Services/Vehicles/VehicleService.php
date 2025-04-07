@@ -35,7 +35,21 @@ class VehicleService implements CommonInterface{
 
     public function store($request){
         try{
-            $vehicleInsert = DB::table('vehicles')->insert($request);
+            $vehicleInsert = DB::table('vehicles')->insertGetId($request);
+            $seatLayout = $this->generateSeats($request['total_seats']);
+            Log::info($seatLayout);
+            foreach($seatLayout as $seat){
+                $seatData = [
+                    'vehicle_id' => $vehicleInsert,
+                    'seat_number' => $seat,
+                    'seat_class' => 'economy',
+                    'seat_type' => 'window',
+                    'is_available' => 1
+                ];
+                DB::table('seats')->insert($seatData);
+            }
+
+
             if($vehicleInsert){
                 return true;
             }
@@ -121,6 +135,22 @@ class VehicleService implements CommonInterface{
             Log::alert($ex->getMessage());
         }
     }
+
+
+    function generateSeats($number_of_seats) {
+        $rows = ['A', 'B','C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ'];
+        $seatsPerRow = 4;
+        $seats = [];
+    
+        for ($i = 0; $i < $number_of_seats; $i++) {
+            $row = $rows[intdiv($i, $seatsPerRow)]; 
+            $seat = ($i % $seatsPerRow) + 1;
+            $seats[] = $row . $seat;
+        }
+     
+        return $seats;
+    }
+    
 
 
 }

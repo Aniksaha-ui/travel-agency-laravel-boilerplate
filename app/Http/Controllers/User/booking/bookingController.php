@@ -54,7 +54,9 @@ class bookingController extends Controller
 
             // Check if any of the requested seats are already booked
             $existingSeats = DB::table('booking_seats')
+                ->join('bookings', 'booking_seats.booking_id', '=', 'bookings.id')
                 ->whereIn('seat_id', $seatIds)
+                ->where('trip_id', $tripId)
                 ->exists();
 
             if ($existingSeats) {
