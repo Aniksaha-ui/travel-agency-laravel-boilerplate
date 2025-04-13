@@ -111,6 +111,7 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/booking', 'User\booking\bookingController@tripBooking');
     Route::post('/mybookings', 'User\booking\bookingController@mybookings');
     Route::post('/invoice', 'User\booking\bookingController@invoice');
+    Route::post('/booking/cancle', 'User\booking\bookingController@cancleBooking');
 });
 
 

@@ -187,4 +187,34 @@ class bookingController extends Controller
             Log::alert($ex->getMessage());
         }
     }
+
+
+    public function cancleBooking()
+    {
+        try {
+            $bookingId = request()->input('id');
+
+            $bookingInformation = DB::table('bookings')->where('id', $bookingId)->first();
+            $seatIds = explode(',', $bookingInformation->seat_ids);
+
+            DB::beginTransaction();
+            try {
+                DB::table('booking_seats')
+                    ->whereIn('seat_id', $seatIds)
+                    ->where('booking_id', $bookingId)
+                    ->delete();
+
+                DB::table('seat_availablities')
+                    ->whereIn('seat_id', $seatIds)
+                    ->update(['is_available' => 1]);
+
+                DB::commit();
+            } catch (Exception $ex) {
+                DB::rollBack();
+                Log::alert($ex->getMessage());
+            }
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+        }
+    }
 }
