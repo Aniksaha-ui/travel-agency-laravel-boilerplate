@@ -15,8 +15,10 @@ class CreateGuidesTable extends Migration
     {
         Schema::create('guides', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('contact_info');
+            $table->unsignedBigInteger('user_id')->constrained()->onDelete('cascade');
+            $table->string('bio')->nullable();
+            $table->string('phone')->nullable();
+            $table->float('rating')->default(0);
             $table->timestamps();
         });
     }

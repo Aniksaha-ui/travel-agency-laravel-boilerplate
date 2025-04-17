@@ -193,28 +193,61 @@ class bookingController extends Controller
     {
         try {
             $bookingId = request()->input('id');
-
-            $bookingInformation = DB::table('bookings')->where('id', $bookingId)->first();
+    
+            // Fetch booking and seat info in one query
+            $bookingInformation = DB::table('bookings')
+                ->where('id', $bookingId)
+                ->select('seat_ids', 'status')
+                ->first();
+    
+            if (!$bookingInformation) {
+                return response()->json(['message' => 'Booking not found.'], 404);
+            }
+    
             $seatIds = explode(',', $bookingInformation->seat_ids);
-
+    
             DB::beginTransaction();
+    
             try {
+                // Update booking status to 'cancle booking'
+                DB::table('bookings')
+                    ->where('id', $bookingId)
+                    ->update(['status' => 'cancelled']); // Fix the typo ('cancle' -> 'cancelled')
+    
+                // Delete booking seats
                 DB::table('booking_seats')
                     ->whereIn('seat_id', $seatIds)
                     ->where('booking_id', $bookingId)
                     ->delete();
-
+    
+                // Update seat availability
                 DB::table('seat_availablities')
                     ->whereIn('seat_id', $seatIds)
                     ->update(['is_available' => 1]);
-
+    
+                // Refund the payment
+                $paymentAmount = DB::table('payments')->where('booking_id', $bookingId)->value('amount');
+                DB::table('refunds')->insert([
+                    'booking_id' => $bookingId,
+                    'amount' => $paymentAmount,
+                    'reason' => 'Booking cancelled',
+                    'status' => 'pending'
+                ]);
+    
                 DB::commit();
+    
+                return response()->json(['message' => 'Booking cancelled successfully.'], 200);
+    
             } catch (Exception $ex) {
                 DB::rollBack();
-                Log::alert($ex->getMessage());
+                Log::error('Error during cancellation: ' . $ex->getMessage());
+                return response()->json(['message' => 'Failed to cancel booking.'], 500);
             }
+    
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::error('Error fetching booking details: ' . $ex->getMessage());
+            return response()->json(['message' => 'Error processing cancellation request.'], 500);
         }
     }
+    
 }

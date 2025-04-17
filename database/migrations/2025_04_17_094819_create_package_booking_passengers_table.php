@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePackageExclusionsTable extends Migration
+class CreatePackageBookingPassengersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,11 @@ class CreatePackageExclusionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('package_exclusions', function (Blueprint $table) {
+        Schema::create('package_booking_passengers', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('package_id');
-            $table->string('item_name');
+            $table->foreignId('package_booking_id')->constrained('package_bookings')->onDelete('cascade');
+            $table->enum('type', ['adult', 'child']);
             $table->timestamps();
-            $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
         });
     }
 
@@ -29,6 +28,6 @@ class CreatePackageExclusionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('package_exclusions');
+        Schema::dropIfExists('package_booking_passengers');
     }
 }

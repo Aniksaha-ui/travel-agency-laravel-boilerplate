@@ -15,9 +15,14 @@ class CreatePackagesTable extends Migration
     {
         Schema::create('packages', function (Blueprint $table) {
             $table->id();
-            $table->string('package_name');
+            $table->string('name');
             $table->text('description')->nullable();
+            $table->integer('includes_meal')->default(0);
+            $table->integer('includes_hotel')->default(0);
+            $table->integer('includes_bus')->default(0);
+            $table->unsignedBigInteger('trip_id')->nullable();
             $table->timestamps();
+            $table->foreign('trip_id')->references('id')->on('trips')->onDelete('set null');
         });
     }
 

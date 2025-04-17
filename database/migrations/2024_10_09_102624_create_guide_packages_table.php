@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePackageExclusionsTable extends Migration
+class CreateGuidePackagesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,12 @@ class CreatePackageExclusionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('package_exclusions', function (Blueprint $table) {
+        Schema::create('guide_packages', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('guide_id');
             $table->unsignedBigInteger('package_id');
-            $table->string('item_name');
             $table->timestamps();
+            $table->foreign('guide_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
         });
     }
@@ -29,6 +30,6 @@ class CreatePackageExclusionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('package_exclusions');
+        Schema::dropIfExists('guide_packages');
     }
 }
