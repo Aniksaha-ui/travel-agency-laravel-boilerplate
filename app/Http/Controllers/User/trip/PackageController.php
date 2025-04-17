@@ -7,7 +7,7 @@ use App\Repository\Services\Packages\PackageService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
+use DB;
 class PackageController extends Controller
 {
     private $packageService;
@@ -60,7 +60,7 @@ class PackageController extends Controller
         DB::beginTransaction();
         try {
             $package = DB::table('packages')->where('id', $request->package_id)->first();
-            $pricing = DB::table('package_pricing')->where('package_id', $package->id)->first();
+            $pricing = DB::table('price_packages')->where('package_id', $package->id)->first();
             $trip = DB::table('trips')->where('id', $package->trip_id)->first();
     
             $totalCost = ($pricing->adult_price * $request->adults) + ($pricing->child_price * $request->children);
@@ -101,9 +101,9 @@ class PackageController extends Controller
             if ($package->includes_bus == 1) {
                 $totalSeatsNeeded = $request->adults + $request->children;
     
-                $availableSeats = DB::table('seat_availability')
+                $availableSeats = DB::table('seat_availablities')
                     ->where('trip_id', $trip->id)
-                    ->where('is_booked', 0)
+                    ->where('is_available', 1)
                     ->limit($totalSeatsNeeded)
                     ->pluck('id');
     
@@ -128,7 +128,7 @@ class PackageController extends Controller
                         'updated_at' => now()
                     ]);
     
-                    DB::table('seat_availability')->where('id', $seatId)->update(['is_booked' => 1]);
+                    DB::table('seat_availability')->where('id', $seatId)->update(['is_available' => 0]);
                 }
             }
     
