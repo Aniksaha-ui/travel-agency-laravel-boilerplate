@@ -51,7 +51,6 @@ class PackageController extends Controller
     public function packageBooking(Request $request){
 
         $request->validate([
-            'user_id' => 'required|exists:users,id',
             'package_id' => 'required|exists:packages,id',
             'adults' => 'required|integer|min:1',
             'children' => 'required|integer|min:0'
@@ -67,7 +66,7 @@ class PackageController extends Controller
     
             // 1. Insert into package_bookings
             $bookingId = DB::table('package_bookings')->insertGetId([
-                'user_id' => $request->user_id,
+                'user_id' => $request->user()->id,
                 'package_id' => $package->id,
                 'trip_id' => $trip->id,
                 'total_adult' => $request->adults,
@@ -105,31 +104,41 @@ class PackageController extends Controller
                     ->where('trip_id', $trip->id)
                     ->where('is_available', 1)
                     ->limit($totalSeatsNeeded)
-                    ->pluck('id');
+                    ->pluck('seat_id');
     
                 if ($availableSeats->count() < $totalSeatsNeeded) {
                     DB::rollBack();
                     return response()->json(['message' => 'Not enough seats available'], 400);
                 }
-    
+                $seatInformation = [];
                 foreach ($availableSeats as $seatId) {
-                    $bookingSeatId = DB::table('bookings')->insertGetId([
-                        'user_id' => $request->user_id,
-                        'trip_id' => $trip->id,
-                        'status' => 'confirmed',
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-    
-                    DB::table('booking_seats')->insert([
-                        'booking_id' => $bookingSeatId,
-                        'seat_id' => $seatId,
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-    
-                    DB::table('seat_availability')->where('id', $seatId)->update(['is_available' => 0]);
+                    $seatInformation[] = $seatId;
                 }
+              
+
+                    $bookingSeatId = DB::table('bookings')->insertGetId([
+                        'user_id' => $request->user()->id,
+                        'trip_id' => $trip->id,
+                        'seat_ids' => implode(',', $seatInformation),
+                        'status' => 'payment init',
+                        'booking_type' => 'package',
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    foreach($seatInformation as $seatId){
+                        DB::table('booking_seats')->insert([
+                            'booking_id' => $bookingSeatId,
+                            'seat_id' => $seatId,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
+                
+                    Log::info("trip_id" .$trip->id ." seat_id ". implode(',', $seatInformation) );
+                  
+                    DB::table('seat_availablities')->whereIn('seat_id', $seatInformation)->where('trip_id',$trip->id)->update(['is_available' => 0]);
+                
             }
     
             DB::commit();
