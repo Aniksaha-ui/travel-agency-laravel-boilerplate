@@ -80,6 +80,26 @@ class BookingService
                     ->get()
                     ->unique('seat_id')
                     ->values();
+                    
+                    
+                Log::info(DB::table('trips as t')
+                    ->join('vehicles as v', 't.vehicle_id', '=', 'v.id')
+                    ->join('seats as s', 'v.id', '=', 's.vehicle_id')
+                    ->leftJoin('seat_availablities as sa', function ($join) {
+                        $join->on('sa.trip_id', '=', 't.id')
+                            ->on('sa.seat_id', '=', 's.id');
+                    })
+                    ->select(
+                        't.id as trip_id',
+                        's.id as seat_id',
+                        's.seat_number',
+                        'v.vehicle_name',
+                        'sa.is_available'
+                    )
+                    ->where('sa.trip_id', $tripId)
+                    ->get()
+                    ->unique('seat_id')
+                    ->values());
 
 
                 return ["tripSummaries" => $tripSummaries, "seat_layout" => $seats ?? []];
