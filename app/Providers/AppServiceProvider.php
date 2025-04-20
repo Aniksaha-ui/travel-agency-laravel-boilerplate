@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Repository\Interfaces\RouteInterface;
 use App\Repository\Services\RouteService;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Schema::defaultStringLength(191);
     }
 }
