@@ -16,10 +16,9 @@ class CreatePackageInclusionsTable extends Migration
         Schema::create('package_inclusions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('package_id');
-            $table->string('inclusion');
+            $table->string('item_name');
             $table->timestamps();
             $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
-
         });
     }
 

@@ -88,6 +88,9 @@ class TripService implements CommonInterface
                 $query->where('arrival_time', '>=', $data['end_date']);
             }
 
+            $query->where('is_active', 1);
+            $query->orderBy('id', 'desc');
+
             $trips = $query->get();
 
             return $trips;

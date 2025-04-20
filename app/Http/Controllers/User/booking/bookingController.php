@@ -72,6 +72,7 @@ class bookingController extends Controller
                 "trip_id" => $tripId,
                 "seat_ids" => implode(",", $seatIds),
                 "status" => "payment init",
+                'booking_type' => 'trip',
                 "created_at" => now(),
                 "updated_at" => now()
             ]);
@@ -187,4 +188,67 @@ class bookingController extends Controller
             Log::alert($ex->getMessage());
         }
     }
+
+
+    public function cancleBooking()
+    {
+        try {
+            $bookingId = request()->input('id');
+    
+            // Fetch booking and seat info in one query
+            $bookingInformation = DB::table('bookings')
+                ->where('id', $bookingId)
+                ->select('seat_ids', 'status')
+                ->first();
+    
+            if (!$bookingInformation) {
+                return response()->json(['message' => 'Booking not found.'], 404);
+            }
+    
+            $seatIds = explode(',', $bookingInformation->seat_ids);
+    
+            DB::beginTransaction();
+    
+            try {
+                // Update booking status to 'cancle booking'
+                DB::table('bookings')
+                    ->where('id', $bookingId)
+                    ->update(['status' => 'cancelled']); // Fix the typo ('cancle' -> 'cancelled')
+    
+                // Delete booking seats
+                DB::table('booking_seats')
+                    ->whereIn('seat_id', $seatIds)
+                    ->where('booking_id', $bookingId)
+                    ->delete();
+    
+                // Update seat availability
+                DB::table('seat_availablities')
+                    ->whereIn('seat_id', $seatIds)
+                    ->update(['is_available' => 1]);
+    
+                // Refund the payment
+                $paymentAmount = DB::table('payments')->where('booking_id', $bookingId)->value('amount');
+                DB::table('refunds')->insert([
+                    'booking_id' => $bookingId,
+                    'amount' => $paymentAmount,
+                    'reason' => 'Booking cancelled',
+                    'status' => 'pending'
+                ]);
+    
+                DB::commit();
+    
+                return response()->json(['message' => 'Booking cancelled successfully.'], 200);
+    
+            } catch (Exception $ex) {
+                DB::rollBack();
+                Log::error('Error during cancellation: ' . $ex->getMessage());
+                return response()->json(['message' => 'Failed to cancel booking.'], 500);
+            }
+    
+        } catch (Exception $ex) {
+            Log::error('Error fetching booking details: ' . $ex->getMessage());
+            return response()->json(['message' => 'Error processing cancellation request.'], 500);
+        }
+    }
+    
 }

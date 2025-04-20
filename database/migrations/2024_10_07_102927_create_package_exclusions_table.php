@@ -16,7 +16,7 @@ class CreatePackageExclusionsTable extends Migration
         Schema::create('package_exclusions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('package_id');
-            $table->string('exclusion');
+            $table->string('item_name');
             $table->timestamps();
             $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
         });

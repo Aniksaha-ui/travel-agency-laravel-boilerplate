@@ -17,6 +17,8 @@ class CreateRefundsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('booking_id');
             $table->decimal('amount', 10, 2);
+            $table->string('reason')->nullable();
+            $table->string('status')->default('pending');
             $table->timestamps();
             $table->foreign('booking_id')->references('id')->on('bookings')->onDelete('cascade');
 
