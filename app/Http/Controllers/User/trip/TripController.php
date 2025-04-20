@@ -23,7 +23,7 @@ class tripController extends Controller
     {
         Log::info("request : " . json_encode($request->all()));
         try {
-
+            
             $trips = $this->tripService->findAllActiveTrips($request->all());
             return response()->json([
                 "data" => $trips,
