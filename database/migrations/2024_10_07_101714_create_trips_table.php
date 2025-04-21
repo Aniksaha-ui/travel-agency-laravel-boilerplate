@@ -18,20 +18,16 @@ class CreateTripsTable extends Migration
             $table->unsignedBigInteger('vehicle_id');
             $table->unsignedBigInteger('route_id');
             $table->string('trip_name');
-            $table->longText('description')->charset('utf8mb4')->collation('utf8mb4_general_ci');
             $table->dateTime('departure_time');
-            $table->string('image')->charset('utf8mb4')->collation('utf8mb4_general_ci');
             $table->dateTime('arrival_time');
             $table->decimal('price', 8, 2);
-            $table->boolean('is_active')->default(1);
-            $table->timestamps();
-            $table->string('status')->charset('utf8mb4')->collation('utf8mb4_general_ci');
-
-            $table->foreign('vehicle_id')->references('id')->on('vehicles')->onDelete('cascade');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps(); // Includes created_at and updated_at
+            $table->string('status', 50)->nullable();
+            $table->text('description')->nullable();
+            $table->string('image', 255)->nullable();
             $table->foreign('route_id')->references('id')->on('routes')->onDelete('cascade');
-
-            $table->index('vehicle_id');
-            $table->index('route_id');
+            $table->foreign('vehicle_id')->references('id')->on('vehicles')->onDelete('cascade');
         });
     }
 

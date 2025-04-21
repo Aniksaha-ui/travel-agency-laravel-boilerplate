@@ -15,11 +15,20 @@ class CreateBookingSeatsTable extends Migration
     {
         Schema::create('booking_seats', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('booking_id');
-            $table->unsignedBigInteger('seat_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('trip_id');
+            $table->text('seat_ids')->nullable(); // comma-separated seat ids
+            $table->string('booking_type')->default('trips');
+            $table->string('status');
             $table->timestamps();
-            $table->foreign('booking_id')->references('id')->on('bookings')->onDelete('cascade');
-            $table->foreign('seat_id')->references('id')->on('seats')->onDelete('cascade');
+            $table->index('user_id');
+            $table->index('trip_id');
+            $table->foreign('user_id')
+                ->references('id')->on('users')
+                ->onDelete('cascade');
+            $table->foreign('trip_id')
+                ->references('id')->on('trips')
+                ->onDelete('cascade');
         });
     }
 

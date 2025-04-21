@@ -15,13 +15,11 @@ class CreateRefundsTable extends Migration
     {
         Schema::create('refunds', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('booking_id');
+            $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->string('reason')->nullable();
             $table->string('status')->default('pending');
-            $table->timestamps();
-            $table->foreign('booking_id')->references('id')->on('bookings')->onDelete('cascade');
-
+            $table->timestamps(); // created_at and updated_at
         });
     }
 

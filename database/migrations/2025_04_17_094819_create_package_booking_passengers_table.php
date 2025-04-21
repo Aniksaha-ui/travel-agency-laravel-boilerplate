@@ -15,7 +15,7 @@ class CreatePackageBookingPassengersTable extends Migration
     {
         Schema::create('package_booking_passengers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('package_booking_id')->constrained('package_bookings')->onDelete('cascade');
+            $table->foreignId('package_booking_id')->constrained()->onDelete('cascade');
             $table->enum('type', ['adult', 'child']);
             $table->timestamps();
         });

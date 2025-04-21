@@ -15,10 +15,10 @@ class CreateGuidesTable extends Migration
     {
         Schema::create('guides', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->constrained()->onDelete('cascade');
-            $table->string('bio')->nullable();
-            $table->string('phone')->nullable();
-            $table->float('rating')->default(0);
+            $table->unsignedBigInteger('user_id');
+            $table->string('bio');
+            $table->timestamp('phone')->nullable(); // Storing phone as timestamp (usually for date or datetime purposes)
+            $table->timestamp('rating')->nullable(); // Storing rating as timestamp (consider changing datatype if needed)
             $table->timestamps();
         });
     }

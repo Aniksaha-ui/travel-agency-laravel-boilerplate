@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class guide_performance extends Model
+class account_history extends Model
 {
     //
 }
