@@ -17,7 +17,7 @@ class CreateCompanyAccountsTable extends Migration
             $table->id();
             $table->string('account_name');
             $table->string('account_number');
-            $table->integer('amount');
+            $table->decimal('amount', 10, 2);
             $table->string('type');
             $table->timestamps(); // includes created_at and updated_at
         });
