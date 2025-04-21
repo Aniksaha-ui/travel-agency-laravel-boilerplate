@@ -13,7 +13,7 @@ class CreateAccountHistoriesTable extends Migration
      */
     public function up()
     {
-        Schema::create('account_histories', function (Blueprint $table) {
+        Schema::create('account_history', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('user_id');
             $table->string('user_account_type', 20)->nullable();
