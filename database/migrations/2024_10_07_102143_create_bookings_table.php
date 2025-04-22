@@ -20,6 +20,7 @@ class CreateBookingsTable extends Migration
             $table->text('seat_ids'); // JSON array of seat IDs
             $table->string('status'); // Booking status
             $table->string('booking_type'); // trip/packages
+            $table->string('package_id')->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
             $table->timestamps();

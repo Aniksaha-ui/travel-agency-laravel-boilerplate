@@ -126,6 +126,7 @@ class PackageController extends Controller
                 $lastBookingId = DB::table('bookings')->insertGetId([
                     'user_id' => $request->user()->id,
                     'trip_id' => $trip->id,
+                    'package_id' => $package->id,
                     'seat_ids' => implode(',', $seatInformation),
                     'status' => 'payment init',
                     'booking_type' => 'package',
