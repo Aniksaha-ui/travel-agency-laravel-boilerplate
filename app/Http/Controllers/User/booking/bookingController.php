@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User\booking;
 
 use App\Http\Controllers\Controller;
+use App\Repository\Services\SMS\SMSService;
 use App\Repository\Services\Users\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -127,7 +128,11 @@ class bookingController extends Controller
             DB::table('account_history')->insert([
                 'user_id' => $request->user()->id,
                 'user_account_type' => $paymentInfo['payment_method'],
-                'user_account_no' => $paymentInfo['payment_method'] == 'card' ? $paymentInfo['card'] : $paymentInfo['payment_method'] == 'nagad' ? $paymentInfo['nagad'] : $paymentInfo['bkash'],
+                'user_account_no' => $paymentInfo['payment_method'] == 'card'
+                    ? $paymentInfo['card']
+                    : ($paymentInfo['payment_method'] == 'nagad'
+                        ? $paymentInfo['nagad']
+                        : $paymentInfo['bkash']),
                 'getaway' => $paymentInfo['payment_method'],
                 'amount' => $paymentInfo['amount'],
                 'com_account_no' => DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->value('account_number'),
@@ -135,6 +140,10 @@ class bookingController extends Controller
                 'purpose' => 'booking',
                 'tran_date' => now(),
             ]);
+
+            $sms = new SMSService();
+            $smsResponse = $sms->sendSMS('+8801628781323', 'Your booking has been successfully created.');
+            dd($smsResponse);
             DB::commit();
 
             return response()->json([
@@ -194,38 +203,38 @@ class bookingController extends Controller
     {
         try {
             $bookingId = request()->input('id');
-    
+
             // Fetch booking and seat info in one query
             $bookingInformation = DB::table('bookings')
                 ->where('id', $bookingId)
                 ->select('seat_ids', 'status')
                 ->first();
-    
+
             if (!$bookingInformation) {
                 return response()->json(['message' => 'Booking not found.'], 404);
             }
-    
+
             $seatIds = explode(',', $bookingInformation->seat_ids);
-    
+
             DB::beginTransaction();
-    
+
             try {
                 // Update booking status to 'cancle booking'
                 DB::table('bookings')
                     ->where('id', $bookingId)
                     ->update(['status' => 'cancelled']); // Fix the typo ('cancle' -> 'cancelled')
-    
+
                 // Delete booking seats
                 DB::table('booking_seats')
                     ->whereIn('seat_id', $seatIds)
                     ->where('booking_id', $bookingId)
                     ->delete();
-    
+
                 // Update seat availability
                 DB::table('seat_availablities')
                     ->whereIn('seat_id', $seatIds)
                     ->update(['is_available' => 1]);
-    
+
                 // Refund the payment
                 $paymentAmount = DB::table('payments')->where('booking_id', $bookingId)->value('amount');
                 DB::table('refunds')->insert([
@@ -234,21 +243,18 @@ class bookingController extends Controller
                     'reason' => 'Booking cancelled',
                     'status' => 'pending'
                 ]);
-    
+
                 DB::commit();
-    
+
                 return response()->json(['message' => 'Booking cancelled successfully.'], 200);
-    
             } catch (Exception $ex) {
                 DB::rollBack();
                 Log::error('Error during cancellation: ' . $ex->getMessage());
                 return response()->json(['message' => 'Failed to cancel booking.'], 500);
             }
-    
         } catch (Exception $ex) {
             Log::error('Error fetching booking details: ' . $ex->getMessage());
             return response()->json(['message' => 'Error processing cancellation request.'], 500);
         }
     }
-    
 }

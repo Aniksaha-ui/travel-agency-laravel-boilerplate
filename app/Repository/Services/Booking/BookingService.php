@@ -57,7 +57,7 @@ class BookingService
                         DB::raw('SUM(CASE WHEN sa.is_available = 0 THEN t.price ELSE 0 END) as revenue')
                     )
                     ->where('sa.trip_id', $tripId)
-                    ->groupBy('trip_id','sa.trip_id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name', 't.price')
+                    ->groupBy('trip_id', 'sa.trip_id', 't.trip_name', 't.image', 't.description', 't.status', 'r.route_name', 't.price')
                     ->get();
 
                 Log::info($tripSummaries);
@@ -80,8 +80,8 @@ class BookingService
                     ->get()
                     ->unique('seat_id')
                     ->values();
-                    
-                    
+
+
                 Log::info(DB::table('trips as t')
                     ->join('vehicles as v', 't.vehicle_id', '=', 'v.id')
                     ->join('seats as s', 'v.id', '=', 's.vehicle_id')
@@ -136,12 +136,13 @@ class BookingService
 
             $dailyReport = DB::table('bookings')
                 ->join('trips', 'bookings.trip_id', '=', 'trips.id')
+                ->join('payments', 'bookings.id', '=', 'payments.booking_id')
                 ->select(
                     'trips.trip_name as trip_name',
                     'trips.route_id as trip_route',
                     DB::raw('DATE(bookings.created_at) as booking_date'),
                     DB::raw('COUNT(bookings.id) as total_bookings'),
-                    DB::raw('SUM(bookings.total_amount) as total_revenue')
+                    DB::raw('SUM(payments.amount) as total_revenue')
                 )
                 ->whereDate('bookings.created_at', '=', $date)
                 ->groupBy('trip_name', 'booking_date', 'trip_route')
