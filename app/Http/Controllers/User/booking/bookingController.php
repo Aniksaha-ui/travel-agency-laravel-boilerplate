@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\User\booking;
 
 use App\Http\Controllers\Controller;
-use App\Repository\Services\SMS\SMSService;
 use App\Repository\Services\Users\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -141,9 +140,7 @@ class bookingController extends Controller
                 'tran_date' => now(),
             ]);
 
-            $sms = new SMSService();
-            $smsResponse = $sms->sendSMS('+8801628781323', 'Your booking has been successfully created.');
-            dd($smsResponse);
+            
             DB::commit();
 
             return response()->json([

@@ -37,6 +37,8 @@ class BookingService implements CommonInterface
                 ->select("bookings.*", "trips.trip_name", "users.name", "users.email")
                 ->where("user_id", $userId)
                 ->get();
+                
+            Log::info("booking information" . json_encode($bookingInformation));
             return $bookingInformation;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
@@ -47,12 +49,12 @@ class BookingService implements CommonInterface
     {
         try {
             $invoiceInfo = DB::table('bookings')
-                ->join('booking_seats', 'booking_seats.booking_id', '=', 'bookings.id')
+                ->leftJoin('booking_seats', 'booking_seats.booking_id', '=', 'bookings.id')
                 ->join('payments', 'payments.booking_id', '=', 'bookings.id')
                 ->join('transactions', 'transactions.payment_id', '=', 'payments.id')
                 ->join('trips', 'trips.id', '=', 'bookings.trip_id')
                 ->join('users', 'users.id', '=', 'bookings.user_id')
-                ->join('seats', 'seats.id', '=', 'booking_seats.seat_id')
+                ->leftJoin('seats', 'seats.id', '=', 'booking_seats.seat_id')
                 ->select(
                     'bookings.id as booking_id',
                     'users.name as user_name',
@@ -72,7 +74,7 @@ class BookingService implements CommonInterface
                 ->where('bookings.id', $bookingId)
                 ->where('bookings.user_id', $userId)
                 ->get();
-
+            Log::info("invoice info" . json_encode($invoiceInfo));
             // Organize into a parent-child structure
             $organizedData = [];
 
