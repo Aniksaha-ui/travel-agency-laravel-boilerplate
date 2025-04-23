@@ -209,4 +209,21 @@ class PackageController extends Controller
             return response()->json(['message' => 'Booking failed', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function tripwisePackages($tripId)
+    {
+        Log::info("Trip" . $tripId);
+        try {
+            $packages = $this->packageService->tripwisePackages($tripId);
+            return response()->json([
+                'data' => $packages,
+                'message' => 'success'
+            ], 200);
+        } catch (Exception $exception) {
+            Log::error('Error fetching packages: ' . $exception->getMessage());
+            return response()->json([
+                'message' => 'Failed to retrieve packages'
+            ], 500);
+        }
+    }
 }

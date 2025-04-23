@@ -108,6 +108,7 @@ Route::post('/trips', 'User\trip\TripController@index');
 Route::get('/trip/{id}', 'User\trip\TripController@singleTrip');
 Route::get('/packages', 'User\trip\PackageController@getPackages');
 Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformation');
+Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePackages');
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
@@ -116,8 +117,6 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/invoice', 'User\booking\bookingController@invoice');
     Route::post('/booking/cancle', 'User\booking\bookingController@cancleBooking');
     Route::post('/packages/booking', 'User\trip\PackageController@packageBooking');
-
-
 });
 
 
