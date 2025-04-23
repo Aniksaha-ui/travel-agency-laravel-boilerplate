@@ -19,10 +19,11 @@ class BookingService
             $bookings = DB::table('bookings')
                 ->join('users', 'bookings.user_id', '=', 'users.id')
                 ->join('trips', 'bookings.trip_id', '=', 'trips.id')
+                ->leftJoin('packages', 'bookings.package_id', '=', 'packages.id')
                 ->where('bookings.seat_ids', 'like', '%' . $search . '%')
                 ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
                 ->orWhere('trips.price', 'like', '%' . $search . '%')
-                ->paginate($perPage, ['bookings.id', 'bookings.seat_ids', 'trips.trip_name', 'trips.price', 'users.name'], 'page', $page);
+                ->paginate($perPage, ['bookings.id', 'bookings.seat_ids', 'trips.trip_name', 'trips.price', 'users.name', 'packages.name'], 'page', $page);
             return $bookings;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
