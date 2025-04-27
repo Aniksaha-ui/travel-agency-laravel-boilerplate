@@ -87,6 +87,7 @@ class PackageService
     {
         try {
             $packages = DB::table('packages')
+                ->join('trips', 'packages.trip_id', '=', 'trips.id')
                 ->where('trip_id', $tripId)
                 ->get();
             return $packages;
