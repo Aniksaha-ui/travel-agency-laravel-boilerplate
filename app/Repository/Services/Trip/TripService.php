@@ -108,4 +108,23 @@ class TripService implements CommonInterface
             Log::alert("Find By Id Error" . $ex->getMessage());
         }
     }
+
+    public function update($tripId){
+        try{
+            $trip = DB::table('trips')->where('id', $tripId)->first();
+            if (!$trip) {
+                return ["status" => false, "message" => "Trip not found"];
+            }
+            $inactiveTrip = DB::table('trips')->where('id', $tripId)->update(['is_active' => 0]);
+            if($inactiveTrip){
+                return ["status" =>true,"message" => "Trip Inactive successfully"];
+            }else{
+                return ["status" =>false, "message" => "Trip Inactive failed"];
+            }
+        } catch(Exception $ex){
+            Log::alert("Update error: ".$ex->getMessage());
+        }
+
+    }
+
 }

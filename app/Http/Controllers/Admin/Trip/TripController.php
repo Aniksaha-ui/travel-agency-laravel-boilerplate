@@ -90,4 +90,27 @@ class TripController extends Controller
                Log::error($ex->getMessage());
            }
        }
+
+
+       public function update($tripId){
+        try{
+
+            Log::info($tripId);
+            $response = $this->tripService->update($tripId);
+            if($response){
+                return response()->json([
+                    "isExecute"=> true,
+                    "data"=> $response,
+                    "message"=> "Trip Updated"
+                ],200);
+            }else{
+                return response()->json([
+                    "isExecute"=> true,
+                    "message"=> "Data Can not be Updated"
+                ],200);
+            }
+        }catch(Exception $ex){
+            Log::error($ex->getMessage());
+        }
+       }
 }
