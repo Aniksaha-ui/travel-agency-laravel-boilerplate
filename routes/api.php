@@ -104,16 +104,12 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
     /****************************************packages api start ********************************** */
-    
+
+    Route::post('/admin/packages', 'Admin\Package\PackageController@index');
 
 
 
     /****************************************packages api start ********************************** */
-
-
-
-
-
 });
 
 /************************************* User api start *******************************/

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use DB;
 use GuzzleHttp\Psr7\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB as FacadesDB;
 
 class PackageService
 {
@@ -91,6 +92,21 @@ class PackageService
                 ->where('trip_id', $tripId)
                 ->get();
             return $packages;
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+        }
+    }
+
+    public function getAllPackages($page, $search)
+    {
+        try {
+            $perPage = 10;
+            $routes = DB::table('packages')
+                ->join('trips', 'packages.trip_id', '=', 'trips.id')
+                ->where('trips.trip_name', 'like', '%' . $search . '%')
+                ->orWhere('packages.name', 'like', '%' . $search . '%')
+                ->paginate($perPage, ['packages.*', 'trips.trip_name'], 'page', $page);
+            return $routes;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
         }
