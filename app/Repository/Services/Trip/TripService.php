@@ -29,7 +29,7 @@ class TripService implements CommonInterface
                 ->where('is_active', 1)
                 ->orWhere('trip_name', 'like', '%' . $search . '%')
                 ->orWhere('price', 'like', '%' . $search . '%')
-                ->paginate($perPage, ['trips.id', 'trip_name', 'departure_time', 'arrival_time', 'price', 'vehicle_name', 'route_name'], 'page', $page);
+                ->paginate($perPage, ['trips.id', 'trip_name', 'departure_time', 'arrival_time', 'price', 'vehicle_name', 'route_name', 'is_active'], 'page', $page);
 
             return $availableSeats;
         } catch (Exception $ex) {
@@ -109,22 +109,21 @@ class TripService implements CommonInterface
         }
     }
 
-    public function update($tripId){
-        try{
+    public function update($tripId)
+    {
+        try {
             $trip = DB::table('trips')->where('id', $tripId)->first();
             if (!$trip) {
                 return ["status" => false, "message" => "Trip not found"];
             }
             $inactiveTrip = DB::table('trips')->where('id', $tripId)->update(['is_active' => 0]);
-            if($inactiveTrip){
-                return ["status" =>true,"message" => "Trip Inactive successfully"];
-            }else{
-                return ["status" =>false, "message" => "Trip Inactive failed"];
+            if ($inactiveTrip) {
+                return ["status" => true, "message" => "Trip Inactive successfully"];
+            } else {
+                return ["status" => false, "message" => "Trip Inactive failed"];
             }
-        } catch(Exception $ex){
-            Log::alert("Update error: ".$ex->getMessage());
+        } catch (Exception $ex) {
+            Log::alert("Update error: " . $ex->getMessage());
         }
-
     }
-
 }

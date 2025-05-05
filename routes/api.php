@@ -106,6 +106,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /****************************************packages api start ********************************** */
 
     Route::post('/admin/packages', 'Admin\Package\PackageController@index');
+    Route::post('/admin/packages/create', 'Admin\Package\PackageController@create');
 
 
 
@@ -117,7 +118,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 Route::post('/trips', 'User\trip\TripController@index');
 Route::get('/trip/{id}', 'User\trip\TripController@singleTrip');
 Route::get('/packages', 'User\trip\PackageController@getPackages');
-Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformation');
+Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformation');   //can be also used for admin
 Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePackages');
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
