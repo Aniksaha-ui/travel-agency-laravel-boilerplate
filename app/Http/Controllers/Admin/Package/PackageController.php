@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Package;
 
 use App\Http\Controllers\Controller;
 use App\Repository\Services\Packages\PackageService;
+use Exception;
 use Illuminate\Http\Request;
 
 class PackageController extends Controller
@@ -26,5 +27,26 @@ class PackageController extends Controller
             'message' => 'List of packages',
             'data' => $response ?? []
         ]);
+    }
+
+    public function create(Request $request)
+    {
+
+        try {
+
+            $response = $this->packageService->store($request->all());
+            if ($response == true) {
+                return response()->json([
+                    'isExecute' => true,
+                    'data' => $response,
+                    'message' => 'New Package Created',
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            return response()->json([
+                'isExecute' => false,
+                'message' => 'Package Cannot be Created'
+            ], 200);
+        }
     }
 }

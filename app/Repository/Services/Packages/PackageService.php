@@ -111,4 +111,55 @@ class PackageService
             Log::alert($ex->getMessage());
         }
     }
+
+    public function store($data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $packageId = DB::table('packages')->insertGetId([
+                "name" => $data['name'],
+                "trip_id" => $data['trip_id'],
+                "includes_meal" => $data['includes_meal'],
+                "includes_hotel" => $data['includes_hotel'],
+                "includes_bus" => $data['includes_bus'],
+                "description" => $data['description'],
+                "image" => $data['image'],
+                "created_at" => Carbon::now(),
+                "updated_at" => Carbon::now()
+            ]);
+            if ($data['inclusions']) {
+
+                foreach ($data['inclusions'] as $inclusion) {
+                    DB::table('package_inclusions')->insert([
+                        'package_id' => $packageId,
+                        'item_name' => $inclusion
+                    ]);
+                }
+            }
+            if ($data['exclusions']) {
+                foreach ($data['exclusions'] as $exclusion) {
+                    DB::table('package_exclusions')->insert([
+                        'package_id' => $packageId,
+                        'item_name' => $exclusion
+                    ]);
+                }
+            }
+            if ($data['pricing']) {
+                foreach ($data['pricing'] as $price) {
+                    DB::table('price_packages')->insert([
+                        'package_id' => $packageId,
+                        'adult_price' => $price['adult_price'],
+                        'child_price' => $price['child_price']
+                    ]);
+                }
+            }
+            DB::commit();
+            return true;
+        } catch (Exception $ex) {
+            DB::rollBack();
+            Log::alert($ex->getMessage());
+            throw $ex;
+        }
+    }
 }
