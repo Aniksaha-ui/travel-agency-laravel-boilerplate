@@ -50,7 +50,7 @@ class PackageService
     public function singlePackage($packageId)
     {
         try {
-            $package = DB::table('packages')->first();
+            $package = DB::table('packages')->where('id', $packageId)->first();
 
             if (!$package) {
                 return response()->json([
