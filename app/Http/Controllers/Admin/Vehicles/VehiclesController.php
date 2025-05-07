@@ -99,9 +99,11 @@ class VehiclesController extends Controller
 
     public function vehicleBooking(Request $request)
     {
-
+        $trackingResponse = false;
         $response = $this->vehicleService->vehicleBooking($request->all());
-        $trackingResponse  = $this->vehicleService->vehicleTripTrackings($request->all());
+        if ($response['status'] == true) {
+            $trackingResponse  = $this->vehicleService->vehicleTripTrackings($request->all());
+        }
 
         if ($response['status'] == true && $trackingResponse == true) {
             return response()->json([

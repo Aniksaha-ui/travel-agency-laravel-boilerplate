@@ -126,4 +126,21 @@ class TripService implements CommonInterface
             Log::alert("Update error: " . $ex->getMessage());
         }
     }
+
+    public function dropdown()
+    {
+        try {
+            $trips = DB::table('trips')
+                ->select('trips.id', 'trips.trip_name', 'trips.departure_time', 'trips.arrival_time', 'trips.price', 'trips.description', 'trips.image', 'trips.status')
+                ->whereNotIn('trips.id', function ($query) {
+                    $query->select('vehicle_trip_trackings.trip_id')->from('vehicle_trip_trackings');
+                })
+                ->get();
+
+
+            return $trips;
+        } catch (Exception $ex) {
+            Log::alert("Dropdown error: " . $ex->getMessage());
+        }
+    }
 }

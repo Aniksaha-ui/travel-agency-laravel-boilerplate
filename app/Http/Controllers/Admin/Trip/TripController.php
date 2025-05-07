@@ -16,101 +16,125 @@ class TripController extends Controller
         $this->tripService = $tripService;
     }
 
-    public function index(Request $request){
+    public function index(Request $request)
+    {
         $page = $request->query('page');
         $search = $request->query('search');
-      
-        $response = $this->tripService->index($page,$search);
+
+        $response = $this->tripService->index($page, $search);
         return response()->json([
-            "data"=> $response,
-            "message"=> "success"
-        ],200);
+            "data" => $response,
+            "message" => "success"
+        ], 200);
     }
 
-    public function insert(Request $request){
-        try{
+    public function insert(Request $request)
+    {
+        try {
             Log::info($request->all());
-           $response = $this->tripService->store($request->all());
-           if($response==true){
+            $response = $this->tripService->store($request->all());
+            if ($response == true) {
+                return response()->json([
+                    'isExecute' => true,
+                    'data' => $response,
+                    'message' => 'New Trip Created',
+                ], 200);
+            }
+
             return response()->json([
                 'isExecute' => true,
-                'data' => $response,
-                'message' => 'New Trip Created',
-            ],200);
-           }
-   
-           return response()->json([
-               'isExecute' => true,
-               'message' => 'New Trip Cannot be Created'
-           ],200);
-           
-        }catch(Exception $ex){
-           Log::error($ex->getMessage());
+                'message' => 'New Trip Cannot be Created'
+            ], 200);
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
         }
-       }
-   
-       public function findTripById($id){
-           try{
-               $response = $this->tripService->findById($id);
-               if($response){
-                   return response()->json([
-                       "isExecute"=> true,
-                       "data"=> $response,
-                       "message"=> "Find Single Trip"
-                   ],200);
-               }else{
-                   return response()->json([
-                       "isExecute"=> true,
-                       "message"=> "No Data Found"
-                   ],200);
-               }
-   
-           }catch(Exception $ex){
-               Log::error($ex->getMessage());
-           }
-       }
-   
-   
-       public function delete($id){
-           try{
-               $response = $this->tripService->delete($id);
-               if($response){
-                   return response()->json([
-                       "isExecute"=> true,
-                       "data"=> $response,
-                       "message"=> "Trip Deleted"
-                   ],200);
-               }else{
-                   return response()->json([
-                       "isExecute"=> true,
-                       "message"=> "Data Can not be deleted"
-                   ],200);
-               }
-           }catch(Exception $ex){
-               Log::error($ex->getMessage());
-           }
-       }
+    }
+
+    public function findTripById($id)
+    {
+        try {
+            $response = $this->tripService->findById($id);
+            if ($response) {
+                return response()->json([
+                    "isExecute" => true,
+                    "data" => $response,
+                    "message" => "Find Single Trip"
+                ], 200);
+            } else {
+                return response()->json([
+                    "isExecute" => true,
+                    "message" => "No Data Found"
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
+        }
+    }
 
 
-       public function update($tripId){
-        try{
+    public function delete($id)
+    {
+        try {
+            $response = $this->tripService->delete($id);
+            if ($response) {
+                return response()->json([
+                    "isExecute" => true,
+                    "data" => $response,
+                    "message" => "Trip Deleted"
+                ], 200);
+            } else {
+                return response()->json([
+                    "isExecute" => true,
+                    "message" => "Data Can not be deleted"
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
+        }
+    }
+
+
+    public function update($tripId)
+    {
+        try {
 
             Log::info($tripId);
             $response = $this->tripService->update($tripId);
-            if($response){
+            if ($response) {
                 return response()->json([
-                    "isExecute"=> true,
-                    "data"=> $response,
-                    "message"=> "Trip Updated"
-                ],200);
-            }else{
+                    "isExecute" => true,
+                    "data" => $response,
+                    "message" => "Trip Updated"
+                ], 200);
+            } else {
                 return response()->json([
-                    "isExecute"=> true,
-                    "message"=> "Data Can not be Updated"
-                ],200);
+                    "isExecute" => true,
+                    "message" => "Data Can not be Updated"
+                ], 200);
             }
-        }catch(Exception $ex){
+        } catch (Exception $ex) {
             Log::error($ex->getMessage());
         }
-       }
+    }
+
+    public function dropdown()
+    {
+        try {
+            $response = $this->tripService->dropdown();
+            if ($response) {
+                return response()->json([
+                    "isExecute" => true,
+                    "data" => $response,
+                    "message" => "Trip Dropdown"
+                ], 200);
+            } else {
+                return response()->json([
+                    "isExecute" => true,
+                    "message" => "No Data Found"
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
+        }
+    }
 }

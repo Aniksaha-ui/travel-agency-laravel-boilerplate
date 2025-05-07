@@ -140,11 +140,7 @@ class VehicleService implements CommonInterface
                 'travel_start_date' => $tripInformation->departure_time,
                 'travel_end_date' => $tripInformation->arrival_time
             ];
-
-            Log::info($trackingInformationToInsert);
             $trackingInformationStore = DB::table('vehicle_trip_trackings')->insert($trackingInformationToInsert);
-            Log::info($trackingInformationToInsert);
-
             if ($trackingInformationStore) {
                 return true;
             }
