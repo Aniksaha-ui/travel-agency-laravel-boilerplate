@@ -23,6 +23,7 @@ class RefundService
             Log::info("RefundService user id: " . $userId);
             $refunds = DB::table('refunds')
                 ->join('bookings', 'refunds.booking_id', '=', 'bookings.id')
+                ->join('trips', 'bookings.trip_id', '=', 'trips.id')
                 ->where('user_id', $userId)
                 ->get();
             return ["status" => true, "data" => $refunds];

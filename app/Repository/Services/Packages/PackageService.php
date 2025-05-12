@@ -90,6 +90,7 @@ class PackageService
             $packages = DB::table('packages')
                 ->join('trips', 'packages.trip_id', '=', 'trips.id')
                 ->where('trip_id', $tripId)
+                ->select('packages.*', 'trips.trip_name')
                 ->get();
             return $packages;
         } catch (Exception $ex) {
