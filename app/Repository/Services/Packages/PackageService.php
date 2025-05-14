@@ -42,7 +42,7 @@ class PackageService
 
             return $packagesInformation;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("Package Service - index function" . $ex->getMessage());
         }
     }
 
@@ -78,9 +78,11 @@ class PackageService
                 ->select('trips.id as trip_id', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'route_name')
                 ->first();
 
+            Log::info("Package Service - response singlePackage function" . json_encode($package));
+
             return $package;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("Package Service - singlePackage function" . $ex->getMessage());
         }
     }
 
@@ -92,9 +94,11 @@ class PackageService
                 ->where('trip_id', $tripId)
                 ->select('packages.*', 'trips.trip_name')
                 ->get();
+            Log::info("Package Service - response singlePackage function" . json_encode($packages));
+
             return $packages;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("packageService - tripwisePackages function" . $ex->getMessage());
         }
     }
 
@@ -107,9 +111,11 @@ class PackageService
                 ->where('trips.trip_name', 'like', '%' . $search . '%')
                 ->orWhere('packages.name', 'like', '%' . $search . '%')
                 ->paginate($perPage, ['packages.*', 'trips.trip_name'], 'page', $page);
+            Log::info("Package Service - response singlePackage function" . json_encode($packages));
+
             return $routes;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("packageService - getAllPackages function" . $ex->getMessage());
         }
     }
 
@@ -117,6 +123,7 @@ class PackageService
     {
         try {
             DB::beginTransaction();
+            Log::info("PackageService - requestdata" . json_encode($data));
 
             $packageId = DB::table('packages')->insertGetId([
                 "name" => $data['name'],
@@ -159,7 +166,7 @@ class PackageService
             return true;
         } catch (Exception $ex) {
             DB::rollBack();
-            Log::alert($ex->getMessage());
+            Log::alert("packageService - store function" . $ex->getMessage());
             throw $ex;
         }
     }

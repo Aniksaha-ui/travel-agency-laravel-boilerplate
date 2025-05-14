@@ -23,10 +23,10 @@ class BookingService
                 ->where('bookings.seat_ids', 'like', '%' . $search . '%')
                 ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
                 ->orWhere('trips.price', 'like', '%' . $search . '%')
-                ->paginate($perPage, ['bookings.id', 'bookings.user_id', 'bookings.seat_ids', 'bookings.booking_type', 'bookings.created_at', 'bookings.status', 'bookings.booking_type', 'trips.trip_name', 'trips.price', 'users.name as username', 'packages.name as package_name','users.name','users.email'], 'page', $page);
+                ->paginate($perPage, ['bookings.id', 'bookings.user_id', 'bookings.seat_ids', 'bookings.booking_type', 'bookings.created_at', 'bookings.status', 'bookings.booking_type', 'trips.trip_name', 'trips.price', 'users.name as username', 'packages.name as package_name', 'users.name', 'users.email'], 'page', $page);
             return $bookings;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("bookingService-index function" . $ex->getMessage());
         }
     }
 
@@ -127,7 +127,7 @@ class BookingService
 
             return $tripSummaries;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("BookingService - tripwiseBooking function" . $ex->getMessage());
         }
     }
 
@@ -150,11 +150,11 @@ class BookingService
                 ->orderBy('booking_date', 'desc')
                 ->get();
 
-            Log::info("daily report" . $dailyReport ?? []);
+            Log::info("BookingService - response daily report" . $dailyReport ?? []);
 
             return $dailyReport;
         } catch (Exception $ex) {
-            Log::alert($ex->getMessage());
+            Log::alert("BookingService - dailybookingReport function" . $ex->getMessage());
         }
     }
 }
