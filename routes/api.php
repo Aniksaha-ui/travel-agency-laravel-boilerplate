@@ -133,4 +133,11 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 });
 
 
+
+// guides api
+
+Route::get('admin/guide', 'Admin\guide\guideController@getGuides');
+Route::post('admin/guide', 'Admin\guide\guideController@store');
+
+
 /************************************* User api start *******************************/
