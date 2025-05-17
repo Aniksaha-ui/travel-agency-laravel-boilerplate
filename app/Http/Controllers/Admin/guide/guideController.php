@@ -50,4 +50,35 @@ class guideController extends Controller
             Log::error("guideController" . $ex->getMessage());
         }
     }
+
+    public function getGuideById($id)
+    {
+        try {
+            Log::info("guideController getGuideById" . $id);
+            $response = $this->guideService->findById($id);
+            return response()->json([
+                "data" => $response['data'],
+                "message" => $response['message'],
+                "status" => $response['status']
+            ]);
+        } catch (Exception $ex) {
+            Log::error("guideController getGuideById" . $ex->getMessage());
+        }
+    }
+
+    public function update(Request $request)
+    {
+        try {
+            Log::info("guideController update" . json_encode($request->all()));
+            $response = $this->guideService->update($request->all());
+            Log::info("guideController update response" . json_encode($response));
+            return response()->json([
+                "data" => $response['data'],
+                "message" => $response['message'],
+                "status" => $response['status']
+            ]);
+        } catch (Exception $ex) {
+            Log::error("guideController" . $ex->getMessage());
+        }
+    }
 }

@@ -79,8 +79,55 @@ class GuideService
     public function findById($id)
     {
         try {
+
+            Log::info("guideService findById" . $id);
+            $guide = DB::table('guides')
+                ->join('users', 'guides.user_id', '=', 'users.id')
+                ->where('guides.id', $id)
+                ->select('guides.*', 'users.name', 'users.email')
+                ->first();
+            if (!isset($guide)) {
+                return ["status" => false, "data" => [], "message" => "Guide not found"];
+            } else {
+                return ["status" => true, "data" => $guide, "message" => "Guide retrived successfully"];
+            }
         } catch (Exception $ex) {
-            Log::alert("Find By Id Error" . $ex->getMessage());
+            Log::alert("guideService findById" . $ex->getMessage());
+        }
+    }
+
+    public function update($data)
+    {
+        try {
+            DB::beginTransaction();
+            $userInformation = [
+                'name' => $data['name'],
+                'email' => $data['email']
+            ];
+
+            $userId = DB::table('users')->where('id', $data['user_id'])->update($userInformation);
+
+            if (!$userId) {
+                DB::rollBack();
+                return ["status" => false, "data" => [], "message" => "Guide not updated"];
+            }
+            $guideInformation = [
+                'bio' => $data['bio'],
+                'phone' => $data['phone']
+            ];
+            $guideInformation = DB::table('guides')->where('user_id', $data['user_id'])->update($guideInformation);
+            Log::info("guideService guideInformation" . json_encode($guideInformation));
+
+            if ($guideInformation) {
+                DB::commit();
+                return ["status" => true, "data" => [], "message" => "Guide updated successfully"];
+            } else {
+                DB::rollBack();
+                return ["status" => false, "data" => [], "message" => "Guide not updated"];
+            }
+        } catch (Exception $ex) {
+            DB::rollBack();
+            Log::alert("guideService update function error:" . $ex->getMessage());
         }
     }
 
