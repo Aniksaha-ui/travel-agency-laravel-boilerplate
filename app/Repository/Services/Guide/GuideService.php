@@ -160,9 +160,9 @@ class GuideService
             Log::info("guideService getGuidePerformance");
 
             $perPage = 10;
-            $guides = DB::table('guide_performances')
-                ->join('guides', 'guide_performances.guide_id', '=', 'guides.id')
+            $guides = DB::table('guides')
                 ->join('users', 'guides.user_id', '=', 'users.id')
+                ->join('guide_performances', 'guides.id', '=', 'guide_performances.guide_id')
                 ->where('name', 'like', '%' . $search . '%')
                 ->orWhere('email', 'like', '%' . $search . '%')
                 ->paginate($perPage, ['guide_performances.*', 'name', 'email'], 'page', $page);
