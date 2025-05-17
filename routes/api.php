@@ -140,6 +140,8 @@ Route::get('admin/guide', 'Admin\guide\guideController@getGuides');
 Route::post('admin/guide', 'Admin\guide\guideController@store');
 Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
 Route::post('admin/guide/update', 'Admin\guide\guideController@update');
+Route::get('admin/guide/performance', 'Admin\guide\guideController@getGuidePerformance');
+Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
 
 
 /************************************* User api start *******************************/

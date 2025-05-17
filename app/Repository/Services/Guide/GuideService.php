@@ -138,4 +138,42 @@ class GuideService
             Log::alert("Delete Error" . $ex->getMessage());
         }
     }
+
+    public function guidePerformance($data)
+    {
+        try {
+            $guidePerformance = DB::table('guide_performances')->insert($data);
+            if ($guidePerformance) {
+                return ["status" => true, "data" => [], "message" => "Guide performance created successfully"];
+            } else {
+                return ["status" => false, "data" => [], "message" => "Guide performance not created"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService guidePerformance" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+    public function getGuidePerformance($page, $search = null)
+    {
+        try {
+            Log::info("guideService getGuidePerformance");
+
+            $perPage = 10;
+            $guides = DB::table('guide_performances')
+                ->join('guides', 'guide_performances.guide_id', '=', 'guides.id')
+                ->join('users', 'guides.user_id', '=', 'users.id')
+                ->where('name', 'like', '%' . $search . '%')
+                ->orWhere('email', 'like', '%' . $search . '%')
+                ->paginate($perPage, ['guide_performances.*', 'name', 'email'], 'page', $page);
+            if ($guides->count() > 0) {
+                return ["status" => true, "data" => $guides, "message" => "Guides performance list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No guides found"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService getGuidePerformance" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
 }
