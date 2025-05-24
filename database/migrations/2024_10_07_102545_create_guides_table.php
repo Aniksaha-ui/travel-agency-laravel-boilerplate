@@ -17,8 +17,8 @@ class CreateGuidesTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('bio');
-            $table->timestamp('phone')->nullable(); // Storing phone as timestamp (usually for date or datetime purposes)
-            $table->timestamp('rating')->nullable(); // Storing rating as timestamp (consider changing datatype if needed)
+            $table->string('phone')->nullable(); // Storing phone as timestamp (usually for date or datetime purposes)
+            $table->string('rating')->nullable(); // Storing rating as timestamp (consider changing datatype if needed)
             $table->timestamps();
         });
     }

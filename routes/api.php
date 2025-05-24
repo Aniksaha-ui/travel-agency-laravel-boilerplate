@@ -109,9 +109,20 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /****************************************packages api start ********************************** */
 
-    /************************************* api start **********************************/
+    /*************************************Guide api start **********************************/
 
-    /************************************* api start ********************************** */
+    Route::get('admin/guide', 'Admin\guide\guideController@getGuides');
+    Route::post('admin/guide', 'Admin\guide\guideController@store');
+    Route::post('admin/guide/update', 'Admin\guide\guideController@update');
+    Route::get('guide/performance', 'Admin\guide\guideController@getGuidePerformance');
+
+    /*************************************Guide api start ********************************** */
+
+    Route::get('admin/refund', 'Admin\refund\refundController@getRefunds');
+    Route::post('admin/refund/disburse', 'Admin\refund\refundController@disburseRefund');
+
+
+
 });
 
 /************************************* User api start *******************************/
@@ -121,6 +132,9 @@ Route::get('/trip/{id}', 'User\trip\TripController@singleTrip');
 Route::get('/packages', 'User\trip\PackageController@getPackages');
 Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformation');   //can be also used for admin
 Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePackages');
+Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
+Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
+
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
@@ -133,15 +147,11 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 });
 
 
-
-// guides api
-
-Route::get('admin/guide', 'Admin\guide\guideController@getGuides');
-Route::post('admin/guide', 'Admin\guide\guideController@store');
-Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
-Route::post('admin/guide/update', 'Admin\guide\guideController@update');
-Route::get('guide/performance', 'Admin\guide\guideController@getGuidePerformance');
-Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
-
-
 /************************************* User api start *******************************/
+
+
+
+// costing of packages and others
+
+
+
