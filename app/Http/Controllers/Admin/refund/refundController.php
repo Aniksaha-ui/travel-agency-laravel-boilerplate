@@ -38,7 +38,8 @@ class refundController extends Controller
     public function disburseRefund(Request $request){
         Log::info("refundController disburseRefund" . json_encode($request->all()));
         try{
-            $response = $this->refundService->disburseRefund($request->all());     return response()->json([
+            $response = $this->refundService->disburseRefund($request->all());     
+            return response()->json([
                 "data" => $response['data'],
                 "message" => $response['message'],
                 "status" => $response['status']

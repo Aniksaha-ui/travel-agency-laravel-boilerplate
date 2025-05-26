@@ -106,14 +106,14 @@ class PackageService
     {
         try {
             $perPage = 10;
-            $routes = DB::table('packages')
+            $packages = DB::table('packages')
                 ->join('trips', 'packages.trip_id', '=', 'trips.id')
                 ->where('trips.trip_name', 'like', '%' . $search . '%')
                 ->orWhere('packages.name', 'like', '%' . $search . '%')
                 ->paginate($perPage, ['packages.*', 'trips.trip_name'], 'page', $page);
             Log::info("Package Service - response singlePackage function" . json_encode($packages));
 
-            return $routes;
+            return $packages;
         } catch (Exception $ex) {
             Log::alert("packageService - getAllPackages function" . $ex->getMessage());
         }

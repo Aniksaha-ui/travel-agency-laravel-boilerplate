@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/booking', 'Admin\booking\bookingController@index');
     Route::post('/admin/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/admin/dailybookingReport', 'Admin\booking\bookingController@dailybookingReport');
+  
     /*************************************Booking**************************************/
 
 
@@ -92,6 +93,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /*************************************Report api start **********************************/
     Route::get('/admin/vehiclewisetotalseat', 'Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
     Route::get('/admin/vehiclewiseseat/{id}', 'Admin\Reports\ReportController@vehicleWiseAllSeatReport');
+    Route::get('/admin/packageWiseBooking', 'Admin\Reports\ReportController@packageWiseBooking');
+    Route::post('/admin/useageOfVehicle', 'Admin\Reports\ReportController@useageOfVehicle');
+    Route::get('/admin/tripwiseBookingUsers/{id}', 'Admin\Reports\ReportController@tripwiseBookingUsers');
     /*************************************Report api start **********************************/
 
 
