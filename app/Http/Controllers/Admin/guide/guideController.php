@@ -133,4 +133,21 @@ class guideController extends Controller
             Log::error("guideController getGuidePerformance" . $ex->getMessage());
         }
     }
+
+
+    public function costingByPackage()
+    {
+        try {
+            $packageId = request()->input('package_id');
+            $response = $this->guideService->costingByPackage($packageId);
+            Log::info("guideController costingByPackage response" . json_encode($response));
+            return response()->json([
+                "data" => $response['data'],
+                "message" => $response['message'],
+                "status" => $response['status']
+            ]);
+        } catch (Exception $ex) {
+            Log::error("guideController costingByPackage" . $ex->getMessage());
+        }
+    }
 }

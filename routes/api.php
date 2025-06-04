@@ -85,7 +85,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/booking', 'Admin\booking\bookingController@index');
     Route::post('/admin/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/admin/dailybookingReport', 'Admin\booking\bookingController@dailybookingReport');
-  
+
     /*************************************Booking**************************************/
 
 
@@ -124,9 +124,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::get('admin/refund', 'Admin\refund\refundController@getRefunds');
     Route::post('admin/refund/disburse', 'Admin\refund\refundController@disburseRefund');
-
-
-
 });
 
 /************************************* User api start *******************************/
@@ -154,8 +151,7 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 /************************************* User api start *******************************/
 
 
+Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');  // costing of packages and others
+
 
 // costing of packages and others
-
-
-

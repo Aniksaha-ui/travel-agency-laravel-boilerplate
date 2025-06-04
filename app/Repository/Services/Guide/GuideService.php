@@ -176,4 +176,13 @@ class GuideService
             return ["status" => false, "data" => [], "message" => "Internal server error"];
         }
     }
+
+    public function costingByPackage($packageId)
+    {
+        try {
+        } catch (Exception $ex) {
+            Log::info("guideService costingByPackage" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
 }

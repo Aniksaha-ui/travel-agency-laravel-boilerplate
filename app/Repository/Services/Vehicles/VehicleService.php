@@ -107,7 +107,7 @@ class VehicleService implements CommonInterface
                 })->first();
 
             if ($alreadyBooked) {
-                return ['status' => true, 'message' => 'This Vehicle Is Already Booked For Given Trip Dates'];
+                return ['status' => false, 'message' => 'This Vehicle Is Already Booked For Given Trip Dates. Please change the trip date'];
             }
             $seats = DB::table('seats')->where('vehicle_id', $vehicleId)->get();
             $insertedData = [];
