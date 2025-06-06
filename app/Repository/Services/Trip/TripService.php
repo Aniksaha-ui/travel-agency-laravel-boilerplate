@@ -2,6 +2,7 @@
 
 namespace App\Repository\Services\Trip;
 
+use App\Helpers\admin\FileManageHelper;
 use App\Repository\Interfaces\CommonInterface;
 use App\route;
 use Exception;
@@ -16,7 +17,7 @@ class TripService implements CommonInterface
     /**
      * Get all contacts.
      *
-     * @return bool
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function index($page, $search)
     {
@@ -40,7 +41,25 @@ class TripService implements CommonInterface
     public function store($request)
     {
         try {
-            $routeInsert = DB::table('trips')->insert($request);
+
+            if (request()->hasFile('image')) {
+                $documentLink = FileManageHelper::uploadFile('travel', $request['image']);
+            } else {
+                $request['image'] = 'images/trips/default.png';
+            }
+            $insertedData = [
+                'trip_name' => $request['trip_name'],
+                'departure_time' => $request['departure_time'],
+                'arrival_time' => $request['arrival_time'],
+                'price' => $request['price'],
+                'description' => $request['description'] ?? '',
+                'image' => $documentLink ?? $request['image'],
+                'status' => 1,
+                'vehicle_id' => $request['vehicle_id'],
+                'route_id' => $request['route_id'],
+                'is_active' => 1,
+            ];
+            $routeInsert = DB::table('trips')->insert($insertedData);
             Log::info("Trip inserted: " . $routeInsert);
             if ($routeInsert) {
                 return true;
@@ -48,6 +67,40 @@ class TripService implements CommonInterface
             return false;
         } catch (Exception $ex) {
             Log::alert("Insert error: " . $ex->getMessage());
+        }
+    }
+
+
+
+    public function update($request, $id)
+    {
+        try {
+
+            if (request()->hasFile('image')) {
+                $documentLink = FileManageHelper::uploadFile('travel', $request['image']);
+            } else {
+                $request['image'] = DB::table('trips')->where('id', $id)->value('image');
+            }
+            $updatedData = [
+                'trip_name' => $request['trip_name'],
+                'departure_time' => $request['departure_time'],
+                'arrival_time' => $request['arrival_time'],
+                'price' => $request['price'],
+                'description' => $request['description'] ?? '',
+                'image' => $documentLink ?? $request['image'],
+                'status' => 1,
+                'vehicle_id' => $request['vehicle_id'],
+                'route_id' => $request['route_id'],
+                'is_active' => 1,
+            ];
+            $routeInsert = DB::table('trips')->where('id', $id)->update($updatedData);
+            Log::info("Trip updated: " . $routeInsert);
+            if ($routeInsert) {
+                return true;
+            }
+            return false;
+        } catch (Exception $ex) {
+            Log::alert("Update error: " . $ex->getMessage());
         }
     }
 
@@ -109,7 +162,7 @@ class TripService implements CommonInterface
         }
     }
 
-    public function update($tripId)
+    public function inactiveTripByTripId($tripId)
     {
         try {
             $trip = DB::table('trips')->where('id', $tripId)->first();

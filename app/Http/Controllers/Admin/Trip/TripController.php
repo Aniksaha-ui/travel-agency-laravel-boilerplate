@@ -50,6 +50,30 @@ class TripController extends Controller
         }
     }
 
+
+    public function update(Request $request, $id)
+    {
+        try {
+            Log::info($request->all());
+            $response = $this->tripService->update($request->all(), $id);
+            if ($response) {
+                return response()->json([
+                    "isExecute" => true,
+                    "data" => $response,
+                    "message" => "Trip Updated"
+                ], 200);
+            } else {
+                return response()->json([
+                    "isExecute" => true,
+                    "message" => "Data Can not be Updated"
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
+        }
+    }
+
+
     public function findTripById($id)
     {
         try {
@@ -94,12 +118,12 @@ class TripController extends Controller
     }
 
 
-    public function update($tripId)
+    public function inactiveTripByTripId($tripId)
     {
         try {
 
             Log::info($tripId);
-            $response = $this->tripService->update($tripId);
+            $response = $this->tripService->inactiveTripByTripId($tripId);
             if ($response) {
                 return response()->json([
                     "isExecute" => true,
