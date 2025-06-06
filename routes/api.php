@@ -77,6 +77,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/trip/dropdown', 'Admin\Trip\TripController@dropdown');
     Route::post('/admin/trip', 'Admin\Trip\TripController@insert');
     Route::get('/admin/trip/{tripId}', 'Admin\Trip\TripController@inactiveTripByTripId');
+    Route::get('/admin/single/trip/{id}', 'Admin\Trip\TripController@singleTrip');
     Route::post('/admin/trip/update/{id}', 'Admin\Trip\TripController@update');
 
 

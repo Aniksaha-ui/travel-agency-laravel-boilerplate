@@ -161,4 +161,26 @@ class TripController extends Controller
             Log::error($ex->getMessage());
         }
     }
+
+
+    public function singleTrip($id)
+    {
+        try {
+            $response = $this->tripService->singleTrip($id);
+            if ($response) {
+                return response()->json([
+                    "isExecute" => true,
+                    "data" => $response,
+                    "message" => "Single Trip"
+                ], 200);
+            } else {
+                return response()->json([
+                    "isExecute" => true,
+                    "message" => "No Data Found"
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
+        }
+    }
 }

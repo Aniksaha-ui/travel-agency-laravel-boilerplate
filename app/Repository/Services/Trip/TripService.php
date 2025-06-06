@@ -196,4 +196,21 @@ class TripService implements CommonInterface
             Log::alert("Dropdown error: " . $ex->getMessage());
         }
     }
+
+
+    public function singleTrip($id)
+    {
+        try {
+            $trip = DB::table('trips')
+                ->join('vehicles', 'trips.vehicle_id', '=', 'vehicles.id')
+                ->join('routes', 'trips.route_id', '=', 'routes.id')
+                ->select('trips.*', 'vehicles.id as vehicle_id',  'routes.id as route_id')
+                ->where('trips.id', $id)
+                ->first();
+
+            return $trip;
+        } catch (Exception $ex) {
+            Log::alert("Single Trip error: " . $ex->getMessage());
+        }
+    }
 }
