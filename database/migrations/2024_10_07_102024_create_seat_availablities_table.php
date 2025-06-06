@@ -18,7 +18,7 @@ class CreateSeatAvailablitiesTable extends Migration
             $table->unsignedBigInteger('seat_id');
             $table->unsignedBigInteger('trip_id');
             $table->boolean('is_available')->default(true);
-            $table->timestamps(); // Includes created_at and updated_at
+            $table->timestamps();
             $table->foreign('seat_id')->references('id')->on('seats')->onDelete('cascade');
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
         });

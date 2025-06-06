@@ -15,14 +15,17 @@ class CreatePackageBookingsTable extends Migration
     {
         Schema::create('package_bookings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('package_id')->constrained()->onDelete('cascade');
-            $table->foreignId('trip_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('package_id');
+            $table->unsignedBigInteger('trip_id');
             $table->integer('total_adult');
             $table->integer('total_child')->default(0);
             $table->decimal('total_cost', 10, 2);
             $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->default('pending');
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
+            $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
         });
     }
 

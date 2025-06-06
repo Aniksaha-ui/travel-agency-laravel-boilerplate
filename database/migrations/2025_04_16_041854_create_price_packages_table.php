@@ -15,10 +15,11 @@ class CreatePricePackagesTable extends Migration
     {
         Schema::create('price_packages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('package_id')->constrained('packages')->onDelete('cascade');
+            $table->unsignedBigInteger('package_id');
             $table->decimal('adult_price', 10, 2);
             $table->decimal('child_price', 10, 2);
-            $table->timestamps(); // created_at and updated_at
+            $table->timestamps();
+            $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
         });
     }
 
