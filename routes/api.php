@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /*************************************Booking**************************************/
     Route::get('/admin/booking', 'Admin\booking\bookingController@index');
+    Route::post('/admin/booking-invoice', 'Admin\booking\bookingController@invoice');
     Route::post('/admin/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/admin/dailybookingReport', 'Admin\booking\bookingController@dailybookingReport');
 
@@ -121,6 +122,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('admin/guide', 'Admin\guide\guideController@store');
     Route::post('admin/guide/update', 'Admin\guide\guideController@update');
     Route::get('guide/performance', 'Admin\guide\guideController@getGuidePerformance');
+    Route::get('admin/guide/dropdown', 'Admin\guide\guideController@getGuidesdropdown');
 
     /*************************************Guide api start ********************************** */
 
@@ -152,8 +154,8 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 
 /************************************* User api start *******************************/
 
-
-Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');  // costing of packages and others
+Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
+Route::get('admin/guidepackagesassign', 'Admin\guide\guideController@getGuidePackageAssign');
 
 
 // costing of packages and others

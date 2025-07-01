@@ -183,7 +183,6 @@ class bookingController extends Controller
         try {
             $tripId = $request->input('booking_id');
             $userId = $request->user()->id;
-            Log::info('Trip Id comes from front' . $tripId);
 
             $invoiceInfo = $this->bookingService->invoiceInfo($tripId, $userId);
             return response()->json([

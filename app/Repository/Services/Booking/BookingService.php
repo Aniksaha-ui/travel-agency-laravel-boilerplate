@@ -157,4 +157,72 @@ class BookingService
             Log::alert("BookingService - dailybookingReport function" . $ex->getMessage());
         }
     }
+    public function invoice($bookingId)
+    {
+        try {
+
+
+            $invoice = DB::table('bookings')
+                ->leftJoin('booking_seats', 'booking_seats.booking_id', '=', 'bookings.id')
+                ->join('payments', 'payments.booking_id', '=', 'bookings.id')
+                ->join('transactions', 'transactions.payment_id', '=', 'payments.id')
+                ->join('trips', 'trips.id', '=', 'bookings.trip_id')
+                ->join('users', 'users.id', '=', 'bookings.user_id')
+                ->leftJoin('seats', 'seats.id', '=', 'booking_seats.seat_id')
+                ->leftJoin('packages', 'packages.id', '=', 'bookings.package_id')
+                ->select(
+                    'bookings.id as booking_id',
+                    'bookings.status as booking_status',
+                    'users.name as user_name',
+                    'users.email as user_email',
+                    'trips.id as trip_id',
+                    'trips.trip_name',
+                    'trips.price',
+                    'trips.departure_time',
+                    'trips.arrival_time',
+                    'bookings.status as payment_status',
+                    'bookings.booking_type',
+                    DB::raw('GROUP_CONCAT(seats.seat_number) as seat_numbers'),
+                    'bookings.seat_ids as booked_seats',
+                    'payments.payment_method',
+                    'payments.nagad',
+                    'payments.bkash',
+                    'payments.card',
+                    'transactions.transaction_reference',
+                    'packages.name as package_name',
+                    'payments.amount as total_payment_amount'
+                )
+                ->where('bookings.id', $bookingId)
+                ->groupBy(
+                    'bookings.id',
+                    'booking_status',
+                    'users.name',
+                    'users.email',
+                    'trips.id',
+                    'trips.trip_name',
+                    'trips.price',
+                    'bookings.status',
+                    'bookings.booking_type',
+                    'payments.payment_method',
+                    'payments.nagad',
+                    'payments.bkash',
+                    'payments.card',
+                    'transactions.transaction_reference',
+                    'packages.name',
+                    'trips.departure_time',
+                    'trips.arrival_time',
+                )
+                ->get();
+
+
+            if ($invoice->count() > 0) {
+                return ["status" => true, "data" => $invoice, "message" => "Invoice retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
+        } catch (Exception $ex) {
+            Log::alert("BookingService - dailybookingReport function" . $ex->getMessage());
+            return ["status" => false, "message" => "Internal Server Error."];
+        }
+    }
 }

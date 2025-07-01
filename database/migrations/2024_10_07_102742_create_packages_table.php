@@ -21,6 +21,7 @@ class CreatePackagesTable extends Migration
             $table->integer('includes_meal')->default(0);
             $table->integer('includes_hotel')->default(0);
             $table->integer('includes_bus')->default(0);
+            $table->string('image')->nullable();
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
             $table->timestamps();
         });

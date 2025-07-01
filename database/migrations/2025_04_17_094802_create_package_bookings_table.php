@@ -21,11 +21,13 @@ class CreatePackageBookingsTable extends Migration
             $table->integer('total_adult');
             $table->integer('total_child')->default(0);
             $table->decimal('total_cost', 10, 2);
+            $table->unsignedBigInteger('booking_id');
             $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->default('pending');
-            $table->timestamps();
+            $table->foreign('booking_id')->references('id')->on('bookings')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
+            $table->timestamps();
         });
     }
 

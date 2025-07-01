@@ -37,7 +37,7 @@ class BookingService implements CommonInterface
                 ->select("bookings.*", "trips.trip_name", "users.name", "users.email")
                 ->where("user_id", $userId)
                 ->get();
-                
+
             Log::info("booking information" . json_encode($bookingInformation));
             return $bookingInformation;
         } catch (Exception $ex) {
@@ -62,6 +62,8 @@ class BookingService implements CommonInterface
                     'trips.id as trip_id',
                     'trips.trip_name',
                     'trips.price',
+                    'trips.departure_time',
+                    'trips.arrival_time',
                     'bookings.status as payment_status',
                     'booking_seats.id as seat_id',
                     'payments.payment_method',

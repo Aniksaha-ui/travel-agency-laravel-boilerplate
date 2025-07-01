@@ -2,6 +2,7 @@
 
 namespace App\Repository\Services\Guide;
 
+use App\Helpers\admin\FileManageHelper;
 use App\Repository\Interfaces\CommonInterface;
 use App\route;
 use Exception;
@@ -177,11 +178,74 @@ class GuideService
         }
     }
 
-    public function costingByPackage($packageId)
+    public function costingByPackage($data)
     {
         try {
+
+            if (request()->hasFile('attachment')) {
+                $documentLink = FileManageHelper::uploadFile('costing', $data['attachment']);
+            } else {
+                $request['image'] = 'images/trips/default.png';
+            }
+
+            $tripId = DB::table('packages')->where('id', $data['package_id'])->value('trip_id');
+            $costing = DB::table('trip_package_costings')->insert([
+                'trip_id' => $tripId,
+                'package_id' => $data['package_id'],
+                'guide_id' => $data['guide_id'],
+                'cost_type' => $data['cost_type'],
+                'cost_amount' => $data['cost_amount'],
+                'description' => $data['description'],
+                'attachment' => $data['attachment'],
+            ]);
+            if ($costing) {
+                return ["status" => true, "data" => [], "message" => "Costing created successfully"];
+            } else {
+                return ["status" => false, "data" => [], "message" => "Costing not created"];
+            }
         } catch (Exception $ex) {
             Log::info("guideService costingByPackage" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+    public function getGuidesdropdown()
+    {
+        try {
+            $guides = DB::table('guides')
+                ->join('users', 'guides.user_id', '=', 'users.id')
+                ->select('guides.id', 'users.name')
+                ->get();
+            if ($guides->count() > 0) {
+                return ["status" => true, "data" => $guides, "message" => "Guides list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No guides found"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService getGuidesdropdown" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+    public function getGuidePackageAssign($page, $search)
+    {
+        try {
+            $perPage = 10;
+            $response = DB::table('guide_packages')
+                ->join('guides', 'guide_packages.guide_id', '=', 'guides.id')
+                ->join('packages', 'guide_packages.package_id', '=', 'packages.id')
+                ->join('users', 'guides.user_id', '=', 'users.id')
+                ->where('users.name', 'like', '%' . $search . '%')
+                ->orWhere('packages.name', 'like', '%' . $search . '%')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            if ($response->count() > 0) {
+                return ["status" => true, "data" => $response, "message" => "Guides list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No guides found"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService getGuidePackageAssign" . $ex->getMessage());
             return ["status" => false, "data" => [], "message" => "Internal server error"];
         }
     }

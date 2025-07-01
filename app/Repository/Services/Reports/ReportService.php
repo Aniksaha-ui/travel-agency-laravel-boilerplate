@@ -62,31 +62,36 @@ class ReportService
         }
     }
 
-    public function accountHistory($userAccountType){
-        try{
-            $accountHistory = DB::table('account_history')->where('user_account_type',$userAccountType)->get();
+    public function accountHistory($userAccountType)
+    {
+        try {
+            $accountHistory = DB::table('account_history')->where('user_account_type', $userAccountType)->get();
             return $accountHistory;
-        }catch(Exception $ex){
+        } catch (Exception $ex) {
             Log::alert($ex->getMessage());
         }
     }
 
-    public function vehicleWiseBookingReport()
+    public function packageWiseBookingReport()
     {
         try {
-            $report = DB::table('bookings')
-                        ->join('package_bookings', 'bookings.package_id', '=', 'package_bookings.package_id')
-                        ->join('packages', 'bookings.package_id', '=', 'packages.id')
-                        ->select('packages.name', DB::raw('COUNT(packages.name) as number_of_bookings'))
-                        ->where('booking_type', 'package')
-                        ->groupBy('packages.name')
-                        ->get();
-                    if ($report->count() > 0) {
-                            return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
-                    } else {
-                        return ["status" => true, "data" => [], "message" => "No Report found"];
-                    }
-
+            $report =  DB::table('package_bookings as pb')
+                ->join('packages as p', 'pb.package_id', '=', 'p.id')
+                ->select(
+                    'pb.package_id',
+                    'p.name as package_name',
+                    DB::raw('COUNT(pb.id) as number_of_bookings'),
+                    DB::raw('SUM(pb.total_adult) as total_adult'),
+                    DB::raw('SUM(pb.total_child) as total_child')
+                )
+                ->groupBy('pb.package_id', 'p.name')
+                ->orderByDesc('number_of_bookings')
+                ->get();
+            if ($report->count() > 0) {
+                return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
             return ["status" => false, "data" => [], "message" => "server error"];
@@ -94,26 +99,27 @@ class ReportService
     }
 
 
-    function useageOfVehicle($page,$search,$start_date, $end_date){
-        try{
+    function useageOfVehicle($page, $search, $start_date, $end_date)
+    {
+        try {
             $perPage = 10;
             $query = DB::table('vehicle_trip_trackings')
-                    ->join('vehicles', 'vehicle_trip_trackings.vehicle_id', '=', 'vehicles.id')
-                    ->join('trips', 'vehicle_trip_trackings.trip_id', '=', 'trips.id');
-            if($start_date && $end_date){
+                ->join('vehicles', 'vehicle_trip_trackings.vehicle_id', '=', 'vehicles.id')
+                ->join('trips', 'vehicle_trip_trackings.trip_id', '=', 'trips.id');
+            if ($start_date && $end_date) {
                 $query = $query->whereBetween('vehicle_trip_trackings.travel_start_date', [$start_date, $end_date]);
             }
             $query = $query->when($search, function ($query, $search) {
                 return $query->where('vehicles.vehicle_name', 'like', '%' . $search . '%')
-                             ->orWhere('trips.trip_name', 'like', '%' . $search . '%');
+                    ->orWhere('trips.trip_name', 'like', '%' . $search . '%');
             });
-            $report = $query->paginate($perPage, ['vehicle_trip_trackings.*','trips.trip_name','vehicles.vehicle_name'], 'page', $page);
-            if($report->count() > 0){
+            $report = $query->paginate($perPage, ['vehicle_trip_trackings.*', 'trips.trip_name', 'vehicles.vehicle_name'], 'page', $page);
+            if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
-            }else{
+            } else {
                 return ["status" => true, "data" => [], "message" => "No report found"];
             }
-        }catch(Exception $ex){
+        } catch (Exception $ex) {
             Log::alert($ex->getMessage());
             return ["status" => false, "data" => [], "message" => "server error"];
         }
@@ -140,6 +146,4 @@ class ReportService
             return ["status" => false, "data" => [], "message" => "server error"];
         }
     }
-
-
 }

@@ -20,7 +20,7 @@ class PackageController extends Controller
     public function getPackages()
     {
         try {
-            $packageData = $this->packageService->index();
+            $packageData = $this->packageService->indepackageBookingx();
             return response()->json([
                 'data' => $packageData,
                 'message' => 'success'
@@ -133,6 +133,9 @@ class PackageController extends Controller
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
+
+
+                $updateBookingId = DB::table('package_bookings')->where('id', $bookingId)->update(['booking_id' => $lastBookingId]);
 
                 foreach ($seatInformation as $seatId) {
                     DB::table('booking_seats')->insert([

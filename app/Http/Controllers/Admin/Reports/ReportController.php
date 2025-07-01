@@ -59,17 +59,17 @@ class ReportController extends Controller
 
     public function packageWiseBooking(Request $request)
     {
-    
-        try{
-            $response = $this->reportService->vehicleWiseBookingReport();
-            if($response['status'] ==true){
+
+        try {
+            $response = $this->reportService->packageWiseBookingReport();
+            if ($response['status'] == true) {
                 return response()->json([
                     "data" => $response['data'],
                     "status" => $response['status'],
                     "message" => $response['message']
                 ], 200);
             }
-        } catch(\Exception $ex){
+        } catch (\Exception $ex) {
             return response()->json([
                 "data" => [],
                 "status" => false,
@@ -85,7 +85,7 @@ class ReportController extends Controller
             $search = $request->query('search');
             $start_date = $request->input('start_date');
             $end_date = $request->input('end_date');
-            $response = $this->reportService->useageOfVehicle($page, $search,$start_date, $end_date);
+            $response = $this->reportService->useageOfVehicle($page, $search, $start_date, $end_date);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -117,6 +117,4 @@ class ReportController extends Controller
             ], 500);
         }
     }
-
-
 }

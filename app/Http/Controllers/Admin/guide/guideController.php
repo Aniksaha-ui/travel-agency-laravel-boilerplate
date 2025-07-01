@@ -135,11 +135,11 @@ class guideController extends Controller
     }
 
 
-    public function costingByPackage()
+    public function costingByPackage(Request $request)
     {
         try {
-            $packageId = request()->input('package_id');
-            $response = $this->guideService->costingByPackage($packageId);
+            $request = $request->all();
+            $response = $this->guideService->costingByPackage($request);
             Log::info("guideController costingByPackage response" . json_encode($response));
             return response()->json([
                 "data" => $response['data'],
@@ -148,6 +148,56 @@ class guideController extends Controller
             ]);
         } catch (Exception $ex) {
             Log::error("guideController costingByPackage" . $ex->getMessage());
+        }
+    }
+
+    public function getGuidesdropdown()
+    {
+        try {
+            $response = $this->guideService->getGuidesdropdown();
+            if ($response['status'] == true) {
+                return response()->json([
+                    "data" => $response['data'],
+                    "message" => $response['message'],
+                    "status" => $response['status']
+                ]);
+            } else {
+                return response()->json([
+                    "data" => [],
+                    "message" => $response['message'],
+                    "status" => $response['status']
+                ]);
+            }
+        } catch (Exception $ex) {
+            Log::error("guideController getGuidesdropdown" . $ex->getMessage());
+        }
+    }
+
+
+    public function getGuidePackageAssign(Request $request)
+    {
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
+            Log::info(json_encode($request->page));
+
+            $response = $this->guideService->getGuidePackageAssign($page, $search);
+            Log::info(json_encode($response));
+            if ($response['status'] == true) {
+                return response()->json([
+                    "data" => $response['data'],
+                    "message" => $response['message'],
+                    "status" => $response['status']
+                ]);
+            } else {
+                return response()->json([
+                    "data" => [],
+                    "message" => $response['message'],
+                    "status" => $response['status']
+                ]);
+            }
+        } catch (Exception $ex) {
+            Log::error("guideController getGuidePackageAssign" . $ex->getMessage());
         }
     }
 }

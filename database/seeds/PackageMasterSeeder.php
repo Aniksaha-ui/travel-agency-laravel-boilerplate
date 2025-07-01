@@ -41,7 +41,7 @@ class PackageMasterSeeder extends Seeder
         $packageIds = [];
         $tripIds = DB::table('trips')->pluck('id')->toArray();
 
-        for ($i = 1; $i <= 50; $i++) {
+        for ($i = 1; $i <= 2; $i++) {
             $id = DB::table('packages')->insertGetId([
                 'name' => 'Package ' . $i,
                 'description' => $faker->sentence(10),
@@ -68,7 +68,7 @@ class PackageMasterSeeder extends Seeder
 
         // === Package Inclusions ===
         $inclusionItems = ['Hotel Stay', 'Welcome Drink', 'City Tour', 'Lunch Buffet', 'Pickup & Drop'];
-        for ($i = 1; $i <= 50; $i++) {
+        for ($i = 1; $i <= 2; $i++) {
             DB::table('package_inclusions')->insert([
                 'package_id' => $faker->randomElement($packageIds),
                 'item_name' => $faker->randomElement($inclusionItems),
@@ -79,7 +79,7 @@ class PackageMasterSeeder extends Seeder
 
         // === Package Exclusions ===
         $exclusionItems = ['Laundry', 'Drinks', 'Personal Expense', 'Tips', 'Additional Meals'];
-        for ($i = 1; $i <= 50; $i++) {
+        for ($i = 1; $i <= 2; $i++) {
             DB::table('package_exclusions')->insert([
                 'package_id' => $faker->randomElement($packageIds),
                 'item_name' => $faker->randomElement($exclusionItems),
@@ -89,7 +89,7 @@ class PackageMasterSeeder extends Seeder
         }
 
         // === Guide-Package Assignments ===
-        for ($i = 1; $i <= 50; $i++) {
+        for ($i = 1; $i <= 2; $i++) {
             DB::table('guide_packages')->insert([
                 'guide_id' => $faker->randomElement($guideIds),
                 'package_id' => $faker->randomElement($packageIds),
@@ -99,7 +99,7 @@ class PackageMasterSeeder extends Seeder
         }
 
         // === Guide Performance ===
-        for ($i = 1; $i <= 50; $i++) {
+        for ($i = 1; $i <= 2; $i++) {
             DB::table('guide_performances')->insert([
                 'guide_id' => $faker->randomElement($guideIds),
                 'package_id' => $faker->randomElement($packageIds),

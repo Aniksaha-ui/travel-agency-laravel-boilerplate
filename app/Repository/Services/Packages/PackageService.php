@@ -2,6 +2,7 @@
 
 namespace App\Repository\Services\Packages;
 
+use App\Helpers\admin\FileManageHelper;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use DB;
@@ -125,6 +126,7 @@ class PackageService
             DB::beginTransaction();
             Log::info("PackageService - requestdata" . json_encode($data));
 
+
             $packageId = DB::table('packages')->insertGetId([
                 "name" => $data['name'],
                 "trip_id" => $data['trip_id'],
@@ -162,6 +164,15 @@ class PackageService
                     ]);
                 }
             }
+
+
+            if ($data['guide_id']) {
+                DB::table('guide_packages')->insert([
+                    'package_id' => $packageId,
+                    'guide_id' => $data['guide_id']
+                ]);
+            }
+
             DB::commit();
             return true;
         } catch (Exception $ex) {
