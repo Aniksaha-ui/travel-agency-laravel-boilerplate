@@ -104,9 +104,13 @@ class GuideService
             $userInformation = [
                 'name' => $data['name'],
                 'email' => $data['email']
+
             ];
+            Log::info("user_id" . json_encode($data['user_id']));
+
 
             $userId = DB::table('users')->where('id', $data['user_id'])->update($userInformation);
+            Log::info("Update" . json_encode($userId));
 
             if (!$userId) {
                 DB::rollBack();
@@ -117,6 +121,7 @@ class GuideService
                 'phone' => $data['phone']
             ];
             $guideInformation = DB::table('guides')->where('user_id', $data['user_id'])->update($guideInformation);
+
             Log::info("guideService guideInformation" . json_encode($guideInformation));
 
             if ($guideInformation) {
