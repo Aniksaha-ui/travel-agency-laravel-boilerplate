@@ -120,6 +120,7 @@ class GuideService
                 'bio' => $data['bio'],
                 'phone' => $data['phone']
             ];
+            
             $guideInformation = DB::table('guides')->where('user_id', $data['user_id'])->update($guideInformation);
 
             Log::info("guideService guideInformation" . json_encode($guideInformation));
