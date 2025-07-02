@@ -142,7 +142,6 @@ Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
 
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
-    Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/booking', 'User\booking\bookingController@tripBooking');
     Route::post('/mybookings', 'User\booking\bookingController@mybookings');
     Route::post('/invoice', 'User\booking\bookingController@invoice');
@@ -153,6 +152,7 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 
 
 /************************************* User api start *******************************/
+Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
 
 Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
 Route::get('admin/guidepackagesassign', 'Admin\guide\guideController@getGuidePackageAssign');
