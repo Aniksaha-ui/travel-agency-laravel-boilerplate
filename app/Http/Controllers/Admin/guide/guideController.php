@@ -139,6 +139,8 @@ class guideController extends Controller
     {
         try {
             $request = $request->all();
+            
+            
             $response = $this->guideService->costingByPackage($request);
             Log::info("guideController costingByPackage response" . json_encode($response));
             return response()->json([

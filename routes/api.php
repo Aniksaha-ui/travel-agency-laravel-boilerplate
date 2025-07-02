@@ -99,6 +99,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/packageWiseBooking', 'Admin\Reports\ReportController@packageWiseBooking');
     Route::post('/admin/useageOfVehicle', 'Admin\Reports\ReportController@useageOfVehicle');
     Route::get('/admin/tripwiseBookingUsers/{id}', 'Admin\Reports\ReportController@tripwiseBookingUsers');
+    Route::get('/admin/tripPerformance', 'Admin\Reports\ReportController@tripPerformance');
+    Route::get('/admin/packagePerformance', 'Admin\Reports\ReportController@packagePerformance');
+    Route::get('/admin/guideEfficency', 'Admin\Reports\ReportController@guideEfficencyReport');
+    Route::get('/admin/customerValue', 'Admin\Reports\ReportController@customerValueReport');
     /*************************************Report api start **********************************/
 
 
@@ -142,6 +146,7 @@ Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
 
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
+    Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/booking', 'User\booking\bookingController@tripBooking');
     Route::post('/mybookings', 'User\booking\bookingController@mybookings');
     Route::post('/invoice', 'User\booking\bookingController@invoice');
@@ -152,7 +157,6 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 
 
 /************************************* User api start *******************************/
-Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
 
 Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
 Route::get('admin/guidepackagesassign', 'Admin\guide\guideController@getGuidePackageAssign');

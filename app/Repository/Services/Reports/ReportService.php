@@ -146,4 +146,162 @@ class ReportService
             return ["status" => false, "data" => [], "message" => "server error"];
         }
     }
+
+    public function tripPerformance()
+    {
+        try {
+            $report =  DB::table('trips as t')
+                ->leftJoin(DB::raw('(
+        SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked
+        FROM bookings b
+        JOIN booking_seats bs ON bs.booking_id = b.id
+        GROUP BY b.trip_id
+    ) as bs'), 'bs.trip_id', '=', 't.id')
+
+                ->leftJoin(DB::raw('(
+        SELECT trip_id, COUNT(*) AS total_seats_available
+        FROM seat_availablities
+        WHERE is_available = 1
+        GROUP BY trip_id
+    ) as sa'), 'sa.trip_id', '=', 't.id')
+
+                ->leftJoin(DB::raw('(
+        SELECT b.trip_id, SUM(p.amount) AS total_paid_amount
+        FROM payments p
+        JOIN bookings b ON p.booking_id = b.id
+        GROUP BY b.trip_id
+    ) as pay'), 'pay.trip_id', '=', 't.id')
+
+                ->leftJoin(DB::raw('(
+        SELECT trip_id, SUM(cost_amount) AS total_cost
+        FROM trip_package_costings
+        GROUP BY trip_id
+    ) as tc'), 'tc.trip_id', '=', 't.id')
+
+                ->select(
+                    't.id as trip_id',
+                    't.trip_name',
+                    't.departure_time',
+                    't.arrival_time',
+                    DB::raw('IFNULL(bs.total_seats_booked, 0) as total_seats_booked'),
+                    DB::raw('IFNULL(sa.total_seats_available, 0) as total_seats_available'),
+                    DB::raw('IFNULL(pay.total_paid_amount, 0) as total_income'),
+                    DB::raw('IFNULL(tc.total_cost, 0) as total_cost'),
+                    DB::raw('(IFNULL(pay.total_paid_amount, 0) - IFNULL(tc.total_cost, 0)) as profit')
+                )
+                ->get();
+
+            if ($report->count() > 0) {
+                return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "server error"];
+        }
+    }
+
+
+    public function packagePerformance()
+    {
+        try {
+            $report =  DB::table('packages as p')
+                ->leftJoin(DB::raw('(
+        SELECT 
+            package_id,
+            COUNT(*) AS total_bookings,
+            SUM(total_cost) AS total_income
+        FROM package_bookings
+        GROUP BY package_id
+    ) as pb_data'), 'pb_data.package_id', '=', 'p.id')
+
+                ->leftJoin(DB::raw('(
+        SELECT 
+            package_id,
+            SUM(cost_amount) AS total_expense
+        FROM trip_package_costings
+        GROUP BY package_id
+    ) as tc_data'), 'tc_data.package_id', '=', 'p.id')
+
+                ->select(
+                    'p.id as package_id',
+                    'p.name as package_name',
+                    DB::raw('COALESCE(pb_data.total_bookings, 0) as total_bookings'),
+                    DB::raw('COALESCE(pb_data.total_income, 0) as total_income'),
+                    DB::raw('COALESCE(tc_data.total_expense, 0) as total_expense'),
+                    DB::raw('(COALESCE(pb_data.total_income, 0) - COALESCE(tc_data.total_expense, 0)) as net_profit')
+                )
+                ->get();
+
+            if ($report->count() > 0) {
+                return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+    public function guideEfficencyReport()
+    {
+        try {
+            $report = DB::table('users as u')
+                ->join('guide_packages as gp', 'gp.guide_id', '=', 'u.id')
+                ->leftJoin('guide_performances as gperf', 'gperf.guide_id', '=', 'u.id')
+                ->leftJoin('trip_package_costings as tpc', 'tpc.guide_id', '=', 'u.id')
+                ->select(
+                    'u.id as guide_id',
+                    'u.name as guide_name',
+                    DB::raw('COUNT(DISTINCT gp.package_id) as total_packages'),
+                    DB::raw('ROUND(AVG(gperf.rating), 2) as avg_rating'),
+                    DB::raw('COALESCE(SUM(tpc.cost_amount), 0) as total_trip_cost')
+                )
+                ->groupBy('u.id', 'u.name') // Include name if strict SQL mode is enabled
+                ->get();
+            if ($report->count() > 0) {
+                return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
+        } catch (\Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "server error"];
+        }
+    }
+    public function customerValueReport()
+    {
+        try {
+            $report =  DB::table('users as u')
+                ->leftJoin('bookings as b', 'u.id', '=', 'b.user_id')
+                ->leftJoin('payments as p', 'p.booking_id', '=', 'b.id')
+                ->leftJoin('refunds as r', 'r.booking_id', '=', 'b.id')
+                ->leftJoin('package_bookings as pb', 'pb.user_id', '=', 'u.id')
+                ->select(
+                    'u.id as user_id',
+                    'u.name',
+                    DB::raw('COUNT(DISTINCT b.id) as total_trip_bookings'),
+                    DB::raw('COUNT(DISTINCT pb.id) as total_package_bookings'),
+                    DB::raw('COALESCE(SUM(p.amount), 0) as total_paid'),
+                    DB::raw('COALESCE(SUM(r.amount), 0) as total_refunded'),
+                    DB::raw('(COALESCE(SUM(p.amount), 0) - COALESCE(SUM(r.amount), 0)) as net_spent')
+                )
+                ->groupBy('u.id', 'u.name') // include 'u.name' if using strict SQL mode
+                ->get();
+            if ($report->count() > 0) {
+                return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
+        } catch (\Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "server error"];
+        }
+    }
 }

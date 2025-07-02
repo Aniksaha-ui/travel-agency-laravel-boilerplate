@@ -117,4 +117,79 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    public function tripPerformance(){
+        try {
+            $response = $this->reportService->tripPerformance();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+    public function packagePerformance()
+    {
+        try {
+            $response = $this->reportService->packagePerformance();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+    public function guideEfficencyReport()
+    {
+        try {
+            $response = $this->reportService->guideEfficencyReport();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function customerValueReport()
+    {
+        try {
+            $response = $this->reportService->customerValueReport();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
 }

@@ -120,7 +120,7 @@ class GuideService
                 'bio' => $data['bio'],
                 'phone' => $data['phone']
             ];
-            
+
             $guideInformation = DB::table('guides')->where('user_id', $data['user_id'])->update($guideInformation);
 
             Log::info("guideService guideInformation" . json_encode($guideInformation));
@@ -188,11 +188,8 @@ class GuideService
     {
         try {
 
-            if (request()->hasFile('attachment')) {
-                $documentLink = FileManageHelper::uploadFile('costing', $data['attachment']);
-            } else {
-                $request['image'] = 'images/trips/default.png';
-            }
+
+
 
             $tripId = DB::table('packages')->where('id', $data['package_id'])->value('trip_id');
             $costing = DB::table('trip_package_costings')->insert([
@@ -202,7 +199,7 @@ class GuideService
                 'cost_type' => $data['cost_type'],
                 'cost_amount' => $data['cost_amount'],
                 'description' => $data['description'],
-                'attachment' => $data['attachment'],
+                'attachment' => '',
             ]);
             if ($costing) {
                 return ["status" => true, "data" => [], "message" => "Costing created successfully"];
