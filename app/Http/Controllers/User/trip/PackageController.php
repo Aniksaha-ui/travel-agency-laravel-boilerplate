@@ -20,7 +20,7 @@ class PackageController extends Controller
     public function getPackages()
     {
         try {
-            $packageData = $this->packageService->indepackageBookingx();
+            $packageData = $this->packageService->index();
             return response()->json([
                 'data' => $packageData,
                 'message' => 'success'
