@@ -8,6 +8,9 @@ use App\route;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
 
 class GuideService
 {
@@ -184,8 +187,6 @@ class GuideService
         try {
 
 
-
-
             $tripId = DB::table('packages')->where('id', $data['package_id'])->value('trip_id');
             $costing = DB::table('trip_package_costings')->insert([
                 'trip_id' => $tripId,
@@ -195,6 +196,20 @@ class GuideService
                 'cost_amount' => $data['cost_amount'],
                 'description' => $data['description'],
                 'attachment' => '',
+            ]);
+
+            $transactionRef = strtoupper(Str::random(10));
+            DB::table('account_history')->insert([
+                'user_id' => $data['guide_id'],
+                'user_account_type' => 'card',
+                'user_account_no' => '01628781323',
+                'getaway' => 'card',
+                'amount' => $data['cost_amount'],
+                'com_account_no' => DB::table('company_accounts')->where('type', 'card')->value('account_number'),
+                'transaction_reference' => $transactionRef,
+                'transaction_type' => 'd',
+                'purpose' => 'package costing',
+                'tran_date' => now(),
             ]);
             if ($costing) {
                 return ["status" => true, "data" => [], "message" => "Costing created successfully"];
