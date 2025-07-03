@@ -108,14 +108,9 @@ class GuideService
             ];
             Log::info("user_id" . json_encode($data['user_id']));
 
-
             $userId = DB::table('users')->where('id', $data['user_id'])->update($userInformation);
             Log::info("Update" . json_encode($userId));
 
-            if (!$userId) {
-                DB::rollBack();
-                return ["status" => false, "data" => [], "message" => "Guide not updated"];
-            }
             $guideInformation = [
                 'bio' => $data['bio'],
                 'phone' => $data['phone']
@@ -125,7 +120,7 @@ class GuideService
 
             Log::info("guideService guideInformation" . json_encode($guideInformation));
 
-            if ($guideInformation) {
+            if ($guideInformation || $userId) {
                 DB::commit();
                 return ["status" => true, "data" => [], "message" => "Guide updated successfully"];
             } else {
