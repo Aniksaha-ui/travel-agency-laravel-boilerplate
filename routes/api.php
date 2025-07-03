@@ -103,6 +103,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/packagePerformance', 'Admin\Reports\ReportController@packagePerformance');
     Route::get('/admin/guideEfficency', 'Admin\Reports\ReportController@guideEfficencyReport');
     Route::get('/admin/customerValue', 'Admin\Reports\ReportController@customerValueReport');
+    Route::get('/admin/transactionHistory', 'Admin\Reports\ReportController@transactionHistoryReport');
+    Route::get('/admin/monthRunningBalance', 'Admin\Reports\ReportController@monthRunningBalanceReport');
+    Route::get('/admin/dailyBalanceReport', 'Admin\Reports\ReportController@dailyBalanceReport');
     /*************************************Report api start **********************************/
 
 

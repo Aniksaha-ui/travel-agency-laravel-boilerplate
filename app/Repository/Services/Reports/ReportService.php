@@ -239,7 +239,7 @@ class ReportService
             } else {
                 return ["status" => true, "data" => [], "message" => "No Report found"];
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             return response()->json([
                 "data" => [],
                 "status" => false,
@@ -270,7 +270,7 @@ class ReportService
             } else {
                 return ["status" => true, "data" => [], "message" => "No Report found"];
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             Log::alert($ex->getMessage());
             return ["status" => false, "data" => [], "message" => "server error"];
         }
@@ -299,9 +299,140 @@ class ReportService
             } else {
                 return ["status" => true, "data" => [], "message" => "No Report found"];
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             Log::alert($ex->getMessage());
             return ["status" => false, "data" => [], "message" => "server error"];
+        }
+    }
+
+
+    public function transactionHistoryReport()
+    {
+        try {
+            $report = DB::table('transactions as t')
+                ->join('payments as p', 't.payment_id', '=', 'p.id')
+                ->select(
+                    't.*',
+                    'p.amount',
+                    'p.payment_method'
+                )
+                ->orderBy('t.created_at', 'desc')
+                ->get();
+            if ($report->count() > 0) {
+                return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Report found"];
+            }
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "server error"];
+        }
+    }
+
+    public function monthRunningBalanceReport()
+    {
+        try {
+            // Fetch the monthly summary data
+            $report = DB::select("
+            SELECT
+                DATE_FORMAT(tran_date, '%Y-%m') AS month,
+                COUNT(*) AS tx_count,
+                SUM(CASE WHEN transaction_type = 'c' THEN amount ELSE 0 END) AS total_credit,
+                SUM(CASE WHEN transaction_type = 'd' THEN amount ELSE 0 END) AS total_debit
+            FROM account_history
+            GROUP BY DATE_FORMAT(tran_date, '%Y-%m')
+            ORDER BY month
+        ");
+
+            if ($report) {
+                // Manually calculate the running balance
+                $runningBalance = 0;
+                foreach ($report as $index => $data) {
+                    // Calculate net change
+                    $netChange = $data->total_credit - $data->total_debit;
+
+                    // Opening balance is the previous balance (or 0 for the first month)
+                    $openingBalance = $index == 0 ? 0 : $runningBalance;
+
+                    // Closing balance (running balance)
+                    $closingBalance = $runningBalance + $netChange;
+
+                    // Store the results back to the report
+                    $data->opening_balance = $openingBalance;
+                    $data->closing_balance = $closingBalance;
+
+                    // Update running balance for the next month
+                    $runningBalance = $closingBalance;
+                }
+
+                return [
+                    "status" => true,
+                    "data" => $report,
+                    "message" => "Report retrieved successfully"
+                ];
+            } else {
+                return [
+                    "status" => true,
+                    "data" => [],
+                    "message" => "No Report found"
+                ];
+            }
+        } catch (Exception $ex) {
+            Log::alert('Running Balance Error: ' . $ex->getMessage());
+            return [
+                "status" => false,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function dailyBalanceReport()
+    {
+        try {
+            // Fetch the daily summary data
+            $report = DB::select("
+    WITH daily_summary AS (
+        SELECT
+            DATE(ah.tran_date) AS date,
+            COUNT(*) AS tx_count,
+            SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
+            SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
+        FROM account_history ah
+        WHERE MONTH(ah.tran_date) = MONTH(CURDATE())
+            AND YEAR(ah.tran_date) = YEAR(CURDATE())
+        GROUP BY DATE(ah.tran_date)
+    )
+    SELECT
+        date,
+        tx_count,
+        total_credit,
+        total_debit,
+        SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance
+    FROM daily_summary
+    ORDER BY date ASC
+");
+
+            if ($report) {
+                return [
+                    "status" => true,
+                    "data" => $report,
+                    "message" => "Report retrieved successfully"
+                ];
+            } else {
+                return [
+                    "status" => true,
+                    "data" => [],
+                    "message" => "No Report found"
+                ];
+            }
+        } catch (Exception $ex) {
+            Log::alert('Daily Balance Error: ' . $ex->getMessage());
+            return [
+                "status" => false,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
         }
     }
 }

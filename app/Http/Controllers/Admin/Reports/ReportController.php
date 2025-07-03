@@ -190,6 +190,59 @@ class ReportController extends Controller
             ], 500);
         }
     }
+    
+
+    public function transactionHistoryReport(){
+        try {
+            $response = $this->reportService->transactionHistoryReport();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    function monthRunningBalanceReport(){
+        try {
+            $response = $this->reportService->monthRunningBalanceReport();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+    function dailyBalanceReport(){
+        try {
+            $response = $this->reportService->dailyBalanceReport();
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
 
 
 }
