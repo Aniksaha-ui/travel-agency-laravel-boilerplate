@@ -4,6 +4,7 @@ namespace App\Repository\Services\Trip;
 
 use App\Helpers\admin\FileManageHelper;
 use App\Repository\Interfaces\CommonInterface;
+use App\Repository\Services\Vehicles\VehicleService;
 use App\route;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +12,14 @@ use DB;
 
 class TripService implements CommonInterface
 {
+
+
+
+    protected $vehicleService;
+    public function __construct(VehicleService $vehicleService)
+    {
+        $this->vehicleService = $vehicleService;
+    }
 
     protected $contact;
 
@@ -40,8 +49,8 @@ class TripService implements CommonInterface
 
     public function store($request)
     {
+        DB::beginTransaction();
         try {
-
             if (request()->hasFile('image')) {
                 $documentLink = FileManageHelper::uploadFile('travel', $request['image']);
             } else {
@@ -59,14 +68,44 @@ class TripService implements CommonInterface
                 'route_id' => $request['route_id'],
                 'is_active' => 1,
             ];
-            $routeInsert = DB::table('trips')->insert($insertedData);
-            Log::info("Trip inserted: " . $routeInsert);
-            if ($routeInsert) {
-                return true;
+
+
+            $tripLastInsert = DB::table('trips')->insertGetId($insertedData);
+
+            if ($tripLastInsert) {
+                $vehicleBookingData = [
+                    'trip_id' => $tripLastInsert,
+                    'vehicle_id' => $request['vehicle_id']
+                ];
+                $response = $this->vehicleService->vehicleBooking($vehicleBookingData);
+                if ($response['status'] == true) {
+                    DB::commit();
+                    return response()->json([
+                        'isExecute' => true,
+                        'data' => [],
+                        'message' => "Trip Created And " . $response['message'],
+                    ], 200);
+                } else {
+                    $responseData = ["isExecute" => false, "data" => [], "message" => $response['message']];
+                    DB::rollBack();
+                    return response()->json($responseData, 200);
+                }
+            } else {
+                DB::rollBack();
+                return response()->json([
+                    'isExecute' => false,
+                    'data' => [],
+                    'message' => "Trip not inserted",
+                ], 200);
             }
-            return false;
         } catch (Exception $ex) {
+            DB::rollBack();
             Log::alert("Insert error: " . $ex->getMessage());
+            return response()->json([
+                'isExecute' => false,
+                'data' => [],
+                'message' => "Trip not inserted",
+            ], 200);
         }
     }
 

@@ -100,6 +100,7 @@ class VehicleService implements CommonInterface
             $tripId = $data['trip_id'];
             $vehicleId = $data['vehicle_id'];
             $tripInformation = DB::table('trips')->where('id', $tripId)->first();
+
             $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $vehicleId)
                 ->where(function ($query) use ($tripInformation) {
                     $query->whereBetween('travel_start_date', [$tripInformation->departure_time, $tripInformation->arrival_time])
