@@ -74,6 +74,7 @@ class TripService implements CommonInterface
             $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $request['vehicle_id'])
                 ->whereBetween('travel_start_date', [$request['departure_time'], $request['arrival_time']])
                 ->orWhereBetween('travel_end_date', [$request['departure_time'], $request['arrival_time']])
+                ->where('vehicle_id', $request['vehicle_id'])
                 ->first();
 
             if ($alreadyBooked) {
