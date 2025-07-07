@@ -33,18 +33,20 @@ class TripController extends Controller
         try {
             Log::info($request->all());
             $response = $this->tripService->store($request->all());
-            if ($response == true) {
+            Log::info('orginal res ' . json_encode($response));
+            if ($response['isExecute'] == true) {
                 return response()->json([
                     'isExecute' => true,
-                    'data' => $response,
-                    'message' => 'New Trip Created',
+                    'data' => [],
+                    'message' => $response['message'],
+                ], 200);
+            } else {
+                return response()->json([
+                    'isExecute' => false,
+                    'data' => [],
+                    'message' => $response['message'],
                 ], 200);
             }
-
-            return response()->json([
-                'isExecute' => true,
-                'message' => 'New Trip Cannot be Created'
-            ], 200);
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
         }

@@ -70,9 +70,31 @@ class TripService implements CommonInterface
             ];
 
 
+
+            $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $request['vehicle_id'])
+                ->whereBetween('travel_start_date', [$request['departure_time'], $request['arrival_time']])
+                ->orWhereBetween('travel_end_date', [$request['departure_time'], $request['arrival_time']])
+                ->first();
+
+            if ($alreadyBooked) {
+                return ['isExecute' => false, 'message' => 'This Vehicle Is Already Booked For Given Trip Dates. Please change the trip date'];
+            }
+
             $tripLastInsert = DB::table('trips')->insertGetId($insertedData);
 
             if ($tripLastInsert) {
+
+                $vehicleTrackingData = [
+                    'trip_id' => $tripLastInsert,
+                    'vehicle_id' => $request['vehicle_id'],
+                    'travel_start_date' => $request['departure_time'],
+                    'travel_end_date' => $request['arrival_time']
+                ];
+
+                $vehicleTrackingInsert = DB::table('vehicle_trip_trackings')->insert($vehicleTrackingData);
+                Log::info("Vehicle Trip Tracking Inserted: " . $vehicleTrackingInsert);
+
+
                 $vehicleBookingData = [
                     'trip_id' => $tripLastInsert,
                     'vehicle_id' => $request['vehicle_id']
@@ -80,11 +102,7 @@ class TripService implements CommonInterface
                 $response = $this->vehicleService->vehicleBooking($vehicleBookingData);
                 if ($response['status'] == true) {
                     DB::commit();
-                    return response()->json([
-                        'isExecute' => true,
-                        'data' => [],
-                        'message' => "Trip Created And " . $response['message'],
-                    ], 200);
+                    return ['isExecute' => true, 'data' => [], 'message' => "Trip Created And " . $response['message']];
                 } else {
                     $responseData = ["isExecute" => false, "data" => [], "message" => $response['message']];
                     DB::rollBack();

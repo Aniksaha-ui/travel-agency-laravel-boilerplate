@@ -99,17 +99,7 @@ class VehicleService implements CommonInterface
         try {
             $tripId = $data['trip_id'];
             $vehicleId = $data['vehicle_id'];
-            $tripInformation = DB::table('trips')->where('id', $tripId)->first();
 
-            $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $vehicleId)
-                ->where(function ($query) use ($tripInformation) {
-                    $query->whereBetween('travel_start_date', [$tripInformation->departure_time, $tripInformation->arrival_time])
-                        ->orWhereBetween('travel_end_date', [$tripInformation->departure_time, $tripInformation->arrival_time]);
-                })->first();
-
-            if ($alreadyBooked) {
-                return ['status' => false, 'message' => 'This Vehicle Is Already Booked For Given Trip Dates. Please change the trip date'];
-            }
             $seats = DB::table('seats')->where('vehicle_id', $vehicleId)->get();
             $insertedData = [];
             foreach ($seats as $seat) {
