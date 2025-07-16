@@ -20,6 +20,8 @@ class CreateTripsTable extends Migration
             $table->string('trip_name');
             $table->dateTime('departure_time');
             $table->dateTime('arrival_time');
+            $table->string('departure_at')->nullable();
+            $table->string('arrival_at')->nullable();
             $table->decimal('price', 8, 2);
             $table->boolean('is_active')->default(true);
             $table->timestamps(); // Includes created_at and updated_at

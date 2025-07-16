@@ -60,6 +60,8 @@ class TripService implements CommonInterface
                 'trip_name' => $request['trip_name'],
                 'departure_time' => $request['departure_time'],
                 'arrival_time' => $request['arrival_time'],
+                'departure_at' => $request['departure_at'],
+                'arrival_at' => $request['arrival_at'],
                 'price' => $request['price'],
                 'description' => $request['description'] ?? '',
                 'image' => $documentLink ?? $request['image'],
@@ -71,14 +73,31 @@ class TripService implements CommonInterface
 
 
 
-            $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $request['vehicle_id'])
-                ->whereBetween('travel_start_date', [$request['departure_time'], $request['arrival_time']])
-                ->orWhereBetween('travel_end_date', [$request['departure_time'], $request['arrival_time']])
+            // $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $request['vehicle_id'])
+            //     ->whereBetween('travel_start_date', [$request['departure_time'], $request['arrival_time']])
+            //     ->orWhereBetween('travel_end_date', [$request['departure_time'], $request['arrival_time']])
+            //     ->where('vehicle_id', $request['vehicle_id'])
+            //     ->first();
+
+            $alreadyBooked = DB::table('trips')
                 ->where('vehicle_id', $request['vehicle_id'])
+                ->where(function ($query) use ($request) {
+                    $query->where(function ($q) use ($request) {
+                        $q->where('departure_time', $request['departure_time'])
+                            ->where('departure_at', $request['departure_at'])
+                            ->orWhereBetween('departure_at', [strtotime($request['departure_time']), strtotime($request['arrival_time'])]);
+                    })
+                        ->orWhere(function ($q) use ($request) {
+                            $q->where('arrival_time', $request['arrival_time'])
+                                ->where('arrival_at', $request['arrival_at'])
+                                ->orWhereBetween('arrival_at', [strtotime($request['departure_time']), strtotime($request['arrival_time'])]);
+                        });
+                })
                 ->first();
 
+
             if ($alreadyBooked) {
-                return ['isExecute' => false, 'message' => 'This Vehicle Is Already Booked For Given Trip Dates. Please change the trip date'];
+                return ['isExecute' => false, 'message' => 'This Vehicle Is Already Booked For Given Trip Dates and Time. Please change the trip date or time'];
             }
 
             $tripLastInsert = DB::table('trips')->insertGetId($insertedData);
@@ -143,6 +162,8 @@ class TripService implements CommonInterface
                 'trip_name' => $request['trip_name'],
                 'departure_time' => $request['departure_time'],
                 'arrival_time' => $request['arrival_time'],
+                'departure_at' => $request['departure_at'],
+                'arrival_at' => $request['arrival_at'],
                 'price' => $request['price'],
                 'description' => $request['description'] ?? '',
                 'image' => $documentLink ?? $request['image'],

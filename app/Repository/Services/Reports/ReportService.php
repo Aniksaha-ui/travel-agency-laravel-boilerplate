@@ -293,6 +293,7 @@ class ReportService
                     DB::raw('(COALESCE(SUM(p.amount), 0) - COALESCE(SUM(r.amount), 0)) as net_spent')
                 )
                 ->where('role', 'users')
+                ->orderBy('net_spent', 'desc')
                 ->groupBy('u.id', 'u.name') // include 'u.name' if using strict SQL mode
                 ->get();
             if ($report->count() > 0) {
@@ -317,6 +318,8 @@ class ReportService
                     'p.amount',
                     'p.payment_method'
                 )
+                ->whereMonth('t.created_at', '=', date('m'))
+                ->whereYear('t.created_at', '=', date('Y'))
                 ->orderBy('t.created_at', 'desc')
                 ->get();
             if ($report->count() > 0) {
