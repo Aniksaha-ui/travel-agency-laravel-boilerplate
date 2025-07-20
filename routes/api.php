@@ -137,12 +137,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('admin/refund/disburse', 'Admin\refund\refundController@disburseRefund');
 
     /******************************************Hotel Management api start ***********************************/
-    Route::get('admin/hotel', 'Admin\hotel\hotelController@getGuides');
+    Route::get('admin/hotel', 'Admin\hotel\hotelController@getHotels');
     Route::post('admin/hotel', 'Admin\hotel\hotelController@store');
-    Route::post('admin/hotel/update', 'Admin\hotel\hotelController@update');
-
-
-
+    Route::post('admin/hotel/update/{hotel_id}', 'Admin\hotel\hotelController@update');
 });
 
 /************************************* User api start *******************************/
