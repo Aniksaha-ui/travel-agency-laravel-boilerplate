@@ -146,6 +146,10 @@ class hotelController extends Controller
                 'hotel' => [
                     'id' => $hotel->id,
                     'name' => $hotel->name,
+                    'email' => $hotel->email,
+                    'city' => $hotel->city,
+                    'website' => $hotel->website,
+                    'description' => $hotel->description,
                     'location' => $hotel->location,
                     'star_rating' => $hotel->star_rating,
                     'description' => $hotel->description,

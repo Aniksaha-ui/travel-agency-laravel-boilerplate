@@ -17,14 +17,14 @@ class HotelService
             $hotelId = DB::table('hotels')->insertGetId([
                 'name' => $request['name'],
                 'location' => $request['location'],
-                'star_rating' => $request['star_rating'],
-                'description' => $request['description'],
-                'facilities' => $request['facilities'],
-                'email' => $request['email'],
-                'website' => $request['website'],
-                'city' => $request['city'],
-                'country' => $request['country'],
-                'status' => $request['status'],
+                'star_rating' => $request['star_rating'] ?? '',
+                'description' => $request['description'] ?? '',
+                'facilities' => $request['facilities'] ?? '',
+                'email' => $request['email'] ?? '',
+                'website' => $request['website'] ?? '',
+                'city' => $request['city'] ?? '',
+                'country' => $request['country'] ?? '',
+                'status' => $request['status'] ?? '',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);

@@ -207,14 +207,24 @@ class ReportService
     {
         try {
             $report =  DB::table('packages as p')
-                ->leftJoin(DB::raw('(
+                ->leftJoin(
+                    DB::raw('(
         SELECT 
             package_id,
             COUNT(*) AS total_bookings,
             SUM(total_cost) AS total_income
         FROM package_bookings
-        GROUP BY package_id
-    ) as pb_data'), 'pb_data.package_id', '=', 'p.id')
+    ) as pb_data'),
+                    'pb_data.package_id',
+                    '=',
+                    'p.id'
+
+
+                )
+                ->join('bookings as b', function ($join) {
+                    $join->on('p.id', '=', 'b.package_id')
+                        ->where('b.status', '!=', 'cancelled');
+                })
 
                 ->leftJoin(DB::raw('(
         SELECT 
@@ -223,7 +233,6 @@ class ReportService
         FROM trip_package_costings
         GROUP BY package_id
     ) as tc_data'), 'tc_data.package_id', '=', 'p.id')
-
                 ->select(
                     'p.id as package_id',
                     'p.name as package_name',
@@ -233,6 +242,9 @@ class ReportService
                     DB::raw('(COALESCE(pb_data.total_income, 0) - COALESCE(tc_data.total_expense, 0)) as net_profit')
                 )
                 ->get();
+
+
+
 
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
