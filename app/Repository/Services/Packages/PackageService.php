@@ -76,7 +76,7 @@ class PackageService
             $package->trip = DB::table('trips')
                 ->join('routes', 'trips.route_id', '=', 'routes.id')
                 ->where('trips.id', $package->trip_id)
-                ->select('trips.id as trip_id', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'route_name')
+                ->select('trips.id as trip_id', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'departure_at','arrival_at','route_name')
                 ->first();
 
             Log::info("Package Service - response singlePackage function" . json_encode($package));
