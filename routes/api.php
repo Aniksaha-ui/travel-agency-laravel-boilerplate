@@ -141,6 +141,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('admin/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
     Route::post('admin/hotel', 'Admin\hotel\hotelController@store');
     Route::post('admin/hotel/update/{hotel_id}', 'Admin\hotel\hotelController@update');
+
+
+    Route::post('/hotel/update/checkin', 'User\hotel\hotelController@hotelCheckinStatusUpdate');
 });
 
 /************************************* User api start *******************************/
@@ -150,9 +153,12 @@ Route::get('/trip/{id}', 'User\trip\TripController@singleTrip');
 Route::get('/packages', 'User\trip\PackageController@getPackages');
 Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformation');   //can be also used for admin
 Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePackages');
+Route::post('/hotels', 'User\hotel\hotelController@index')->name('hotel.list');
+
+
+
 Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
 Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
-
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
@@ -162,6 +168,7 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/refund', 'User\refund\refundController@refund');
     Route::post('/booking/cancle', 'User\booking\bookingController@cancleBooking');
     Route::post('/packages/booking', 'User\trip\PackageController@packageBooking');
+    Route::post('/hotel/booking', 'User\hotel\hotelController@hotelBookings');
 });
 
 

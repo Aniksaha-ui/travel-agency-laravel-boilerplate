@@ -188,4 +188,8 @@ class HotelService
             Log::info("getguide functions" . $ex->getMessage());
         }
     }
+
+
+    
+
 }
