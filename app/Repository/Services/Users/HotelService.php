@@ -8,6 +8,8 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
 
 class HotelService
 {
@@ -131,14 +133,70 @@ class HotelService
                     'status' => 'pending',
                 ];
                 $hotelCheckin = DB::table('checkins')->insert($payloadForHotelCheckin);
-            }
-            if ($hotelBookings && $hotelCheckin) {
-                DB::commit();
-                return [
-                    'status' => true,
-                    'data' => $hotelBookings,
-                    'message' => 'Hotel booking successfully',
+                $bookingInformation = [
+                    'hotel_booking_id' => $hotelBookings,
+                    'status' => 'paid',
+                    'user_id' => $userId,
+                    'booking_type' => 'hotel booking'
                 ];
+                $bookings = DB::table('bookings')->insertGetId($bookingInformation);
+
+                $paymentInformation = [
+                    'booking_id' => $bookings,
+                    'amount' => $data['total_cost'],
+                    'payment_method' => $data['payment_method'],
+
+                ];
+
+                $accountHistoryInformation = [];
+
+                if ($data['payment_method'] == 'card') {
+                    $paymentInformation['card'] = $data['card'];
+                    $accountHistoryInformation['user_account_no'] = $data['card'];
+                }
+                if ($data['payment_method'] == 'bkash') {
+                    $paymentInformation['bkash'] = $data['bkash'];
+                    $accountHistoryInformation['user_account_no'] = $data['bkash'];
+                }
+                if ($data['payment_method'] == 'nagad') {
+                    $paymentInformation['nagad'] = $data['nagad'];
+                    $accountHistoryInformation['user_account_no'] = $data['nagad'];
+                }
+
+                $payment = DB::table('payments')->insert($paymentInformation);
+
+                $accountHistoryInformation = [
+                    'user_id' => $userId,
+                    'user_account_type' => $data['payment_method'],
+                    'getaway' => $data['payment_method'],
+                    'amount' => $data['total_cost'],
+                    'com_account_no' => DB::table('company_accounts')->where('type', $data['payment_method'])->value('account_number'),
+                    'transaction_reference' => Str::uuid(),
+                    'transaction_type' => 'c',
+                    'purpose' => 'hotel booking',
+                    'tran_date' => now(),
+                    'user_account_no' => $accountHistoryInformation['user_account_no'] ?? null
+                ];
+                dd($accountHistoryInformation);
+                ## Account History
+                $accountHistory = DB::table('account_history')->insert($accountHistoryInformation);
+
+
+                if ($hotelBookings && $hotelCheckin && $bookings && $accountHistory && $payment) {
+                    DB::commit();
+                    return [
+                        'status' => true,
+                        'data' => $bookings,
+                        'message' => 'Hotel booking successfully',
+                    ];
+                } else {
+                    DB::rollBack();
+                    return [
+                        'status' => false,
+                        'data' => [],
+                        'message' => 'Hotel booking failed',
+                    ];
+                }
             } else {
                 DB::rollBack();
                 return [

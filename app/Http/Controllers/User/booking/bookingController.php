@@ -71,7 +71,7 @@ class bookingController extends Controller
                 "user_id" => $request->user()->id,
                 "trip_id" => $tripId,
                 "seat_ids" => implode(",", $seatIds),
-                "status" => "payment init",
+                "status" => "paid",
                 'booking_type' => 'trip',
                 "created_at" => now(),
                 "updated_at" => now()

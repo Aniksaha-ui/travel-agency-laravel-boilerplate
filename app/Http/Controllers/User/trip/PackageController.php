@@ -128,7 +128,7 @@ class PackageController extends Controller
                     'trip_id' => $trip->id,
                     'package_id' => $package->id,
                     'seat_ids' => implode(',', $seatInformation),
-                    'status' => 'payment init',
+                    'status' => 'paid',
                     'booking_type' => 'package',
                     'created_at' => now(),
                     'updated_at' => now()
@@ -154,7 +154,7 @@ class PackageController extends Controller
                     'user_id' => $request->user()->id,
                     'trip_id' => $trip->id,
                     'seat_ids' => '',
-                    'status' => 'payment init',
+                    'status' => 'paid',
                     'booking_type' => 'package',
                     'created_at' => now(),
                     'updated_at' => now()
