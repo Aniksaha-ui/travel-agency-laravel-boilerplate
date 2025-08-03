@@ -24,20 +24,9 @@ class HotelService
     public function index($hotelName, $city, $country, $guests)
     {
         try {
-            $hotelInformation = DB::table('hotel_rooms')
-                ->join('room_prices', 'hotel_rooms.id', '=', 'room_prices.hotel_room_id')
-                ->join('hotels', 'hotels.id', '=', 'hotel_rooms.hotel_id')
-                ->join('room_types', 'hotel_rooms.room_type_id', '=', 'room_types.id')
+            $hotelInformation = DB::table('hotels')
                 ->select(
                     'hotels.*',
-                    'hotel_rooms.id as room_id',
-                    'hotel_rooms.max_occupancy',
-                    'hotel_rooms.id as hotel_room_number',
-                    'hotel_rooms.room_size',
-                    'room_prices.season_start',
-                    'room_prices.season_end',
-                    'room_prices.price_per_night',
-                    'room_types.type_name'
                 )
                 ->when($hotelName, function ($query) use ($hotelName) {
                     return $query->where('hotels.name', 'like', '%' . $hotelName . '%');
@@ -177,7 +166,7 @@ class HotelService
                     'tran_date' => now(),
                     'user_account_no' => $accountHistoryInformation['user_account_no'] ?? null
                 ];
-                dd($accountHistoryInformation);
+
                 ## Account History
                 $accountHistory = DB::table('account_history')->insert($accountHistoryInformation);
 
