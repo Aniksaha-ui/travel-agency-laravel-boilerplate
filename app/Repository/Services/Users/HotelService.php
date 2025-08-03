@@ -30,7 +30,7 @@ class HotelService
                 ->join('room_types', 'hotel_rooms.room_type_id', '=', 'room_types.id')
                 ->select(
                     'hotels.*',
-                    'hotel_rooms.id',
+                    'hotel_rooms.id as room_id',
                     'hotel_rooms.max_occupancy',
                     'hotel_rooms.id as hotel_room_number',
                     'hotel_rooms.room_size',
@@ -40,7 +40,7 @@ class HotelService
                     'room_types.type_name'
                 )
                 ->when($hotelName, function ($query) use ($hotelName) {
-                    return $query->where('hotels.hotel_name', 'like', '%' . $hotelName . '%');
+                    return $query->where('hotels.name', 'like', '%' . $hotelName . '%');
                 })
                 ->when($city, function ($query) use ($city) {
                     return $query->where('hotels.city', 'like', '%' . $city . '%');

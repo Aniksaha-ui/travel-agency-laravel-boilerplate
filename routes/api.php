@@ -138,7 +138,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /******************************************Hotel Management api start ***********************************/
     Route::get('admin/hotel', 'Admin\hotel\hotelController@getHotels');
-    Route::get('admin/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
     Route::post('admin/hotel', 'Admin\hotel\hotelController@store');
     Route::post('admin/hotel/update/{hotel_id}', 'Admin\hotel\hotelController@update');
 
@@ -154,6 +153,7 @@ Route::get('/packages', 'User\trip\PackageController@getPackages');
 Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformation');   //can be also used for admin
 Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePackages');
 Route::post('/hotels', 'User\hotel\hotelController@index')->name('hotel.list');
+Route::get('/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
 
 
 
