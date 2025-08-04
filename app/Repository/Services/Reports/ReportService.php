@@ -113,7 +113,7 @@ class ReportService
                 return $query->where('vehicles.vehicle_name', 'like', '%' . $search . '%')
                     ->orWhere('trips.trip_name', 'like', '%' . $search . '%');
             });
-            $report = $query->paginate($perPage, ['vehicle_trip_trackings.*', 'trips.trip_name', 'vehicles.vehicle_name','trips.arrival_at','trips.departure_at'], 'page', $page);
+            $report = $query->paginate($perPage, ['vehicle_trip_trackings.*', 'trips.trip_name', 'vehicles.vehicle_name', 'trips.arrival_at', 'trips.departure_at'], 'page', $page);
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
             } else {
@@ -147,9 +147,10 @@ class ReportService
         }
     }
 
-    public function tripPerformance()
+    public function tripPerformance($page, $search)
     {
         try {
+            $perPage = 10;
             $report =  DB::table('trips as t')
                 ->leftJoin(DB::raw('(
         SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked
@@ -177,6 +178,11 @@ class ReportService
         FROM trip_package_costings
         GROUP BY trip_id
     ) as tc'), 'tc.trip_id', '=', 't.id')
+                ->where(function ($query) use ($search) {
+                    $query->where('t.trip_name', 'like', '%' . $search . '%')
+                        ->orWhere('t.departure_time', 'like', '%' . $search . '%')
+                        ->orWhere('t.arrival_time', 'like', '%' . $search . '%');
+                })
 
                 ->select(
                     't.id as trip_id',
@@ -189,7 +195,7 @@ class ReportService
                     DB::raw('IFNULL(tc.total_cost, 0) as total_cost'),
                     DB::raw('(IFNULL(pay.total_paid_amount, 0) - IFNULL(tc.total_cost, 0)) as profit')
                 )
-                ->get();
+                ->paginate($perPage);
 
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
@@ -203,9 +209,10 @@ class ReportService
     }
 
 
-    public function packagePerformance()
+    public function packagePerformance($page, $search)
     {
         try {
+            $perPage = 10;
             $report =  DB::table('packages as p')
                 ->leftJoin(
                     DB::raw('(
@@ -241,10 +248,10 @@ class ReportService
                     DB::raw('COALESCE(tc_data.total_expense, 0) as total_expense'),
                     DB::raw('(COALESCE(pb_data.total_income, 0) - COALESCE(tc_data.total_expense, 0)) as net_profit')
                 )
-                ->get();
-
-
-
+                ->where(function ($query) use ($search) {
+                    $query->where('p.name', 'like', '%' . $search . '%');
+                })
+                ->paginate($perPage);
 
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
@@ -287,9 +294,11 @@ class ReportService
             return ["status" => false, "data" => [], "message" => "server error"];
         }
     }
-    public function customerValueReport()
+    public function customerValueReport($page, $search)
     {
         try {
+            $perPage = 10;
+
             $report =  DB::table('users as u')
                 ->leftJoin('bookings as b', 'u.id', '=', 'b.user_id')
                 ->leftJoin('payments as p', 'p.booking_id', '=', 'b.id')
@@ -304,10 +313,13 @@ class ReportService
                     DB::raw('COALESCE(SUM(r.amount), 0) as total_refunded'),
                     DB::raw('(COALESCE(SUM(p.amount), 0) - COALESCE(SUM(r.amount), 0)) as net_spent')
                 )
+                ->when($search, function ($query, $search) {
+                    return $query->where('u.name', 'like', '%' . $search . '%');
+                })
                 ->where('role', 'users')
                 ->orderBy('net_spent', 'desc')
-                ->groupBy('u.id', 'u.name') // include 'u.name' if using strict SQL mode
-                ->get();
+                ->groupBy('u.id', 'u.name')
+                ->paginate($perPage);
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
             } else {

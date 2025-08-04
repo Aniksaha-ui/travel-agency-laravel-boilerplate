@@ -197,6 +197,10 @@ class BookingService
                     'packages.name as package_name',
                     'payments.amount as total_payment_amount',
                     'hotels.name as hotel_name',
+                    'hotels.city as hotel_city',
+                    'hotels.country as hotel_country',
+                    'hotel_bookings.check_in_date',
+                    'hotel_bookings.check_out_date',
                 )
                 ->where('bookings.id', $bookingId)
                 ->groupBy(

@@ -118,9 +118,13 @@ class ReportController extends Controller
         }
     }
 
-    public function tripPerformance(){
+    public function tripPerformance(Request $request)
+    {
         try {
-            $response = $this->reportService->tripPerformance();
+            $page = $request->query('page');
+            $search = $request->query('search');
+
+            $response = $this->reportService->tripPerformance($page, $search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -136,10 +140,12 @@ class ReportController extends Controller
     }
 
 
-    public function packagePerformance()
+    public function packagePerformance(Request $request)
     {
         try {
-            $response = $this->reportService->packagePerformance();
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->packagePerformance($page, $search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -173,10 +179,15 @@ class ReportController extends Controller
         }
     }
 
-    public function customerValueReport()
+    public function customerValueReport(Request $request)
     {
         try {
-            $response = $this->reportService->customerValueReport();
+
+            $page = $request->query('page');
+            $search = $request->query('search');
+
+
+            $response = $this->reportService->customerValueReport($page, $search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -190,9 +201,10 @@ class ReportController extends Controller
             ], 500);
         }
     }
-    
 
-    public function transactionHistoryReport(){
+
+    public function transactionHistoryReport()
+    {
         try {
             $response = $this->reportService->transactionHistoryReport();
             return response()->json([
@@ -209,7 +221,8 @@ class ReportController extends Controller
         }
     }
 
-    function monthRunningBalanceReport(){
+    function monthRunningBalanceReport()
+    {
         try {
             $response = $this->reportService->monthRunningBalanceReport();
             return response()->json([
@@ -227,7 +240,8 @@ class ReportController extends Controller
     }
 
 
-    function dailyBalanceReport(){
+    function dailyBalanceReport()
+    {
         try {
             $response = $this->reportService->dailyBalanceReport();
             return response()->json([
@@ -243,6 +257,4 @@ class ReportController extends Controller
             ], 500);
         }
     }
-
-
 }
