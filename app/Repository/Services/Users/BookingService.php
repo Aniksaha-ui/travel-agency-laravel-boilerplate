@@ -31,11 +31,21 @@ class BookingService implements CommonInterface
     public function mybookings($userId)
     {
         try {
-            $bookingInformation = DB::table("bookings")
-                ->join('trips', 'bookings.trip_id', "=", "trips.id")
-                ->join('users', 'bookings.user_id', "=", "users.id")
-                ->select("bookings.*", "trips.trip_name", "users.name", "users.email")
-                ->where("user_id", $userId)
+            $bookingInformation = DB::table('bookings')
+                ->leftJoin('users', 'bookings.user_id', '=', 'users.id')
+                ->leftJoin('trips', 'bookings.trip_id', '=', 'trips.id')
+                ->leftJoin('packages', 'bookings.package_id', '=', 'packages.id')
+                ->leftJoin('hotel_bookings', 'hotel_bookings.id', '=', 'bookings.hotel_booking_id')
+                ->leftJoin('hotels', 'hotels.id', '=', 'hotel_bookings.hotel_id')
+                ->select(
+                    'bookings.*',
+                    'trips.trip_name',
+                    'users.name',
+                    'users.email',
+                    'packages.name as package_name',
+                    'hotels.name as hotel_name'
+                )
+                ->where("bookings.user_id", $userId)
                 ->get();
 
             Log::info("booking information" . json_encode($bookingInformation));
@@ -50,13 +60,17 @@ class BookingService implements CommonInterface
         try {
             $invoiceInfo = DB::table('bookings')
                 ->leftJoin('booking_seats', 'booking_seats.booking_id', '=', 'bookings.id')
-                ->join('payments', 'payments.booking_id', '=', 'bookings.id')
-                ->join('transactions', 'transactions.payment_id', '=', 'payments.id')
-                ->join('trips', 'trips.id', '=', 'bookings.trip_id')
-                ->join('users', 'users.id', '=', 'bookings.user_id')
+                ->leftJoin('payments', 'payments.booking_id', '=', 'bookings.id')
+                ->leftJoin('transactions', 'transactions.payment_id', '=', 'payments.id')
+                ->leftJoin('trips', 'trips.id', '=', 'bookings.trip_id')
+                ->leftJoin('users', 'users.id', '=', 'bookings.user_id')
                 ->leftJoin('seats', 'seats.id', '=', 'booking_seats.seat_id')
+                ->leftJoin('packages', 'packages.id', '=', 'bookings.package_id')
+                ->leftJoin('hotel_bookings', 'hotel_bookings.id', '=', 'bookings.hotel_booking_id')
+                ->leftJoin('hotels', 'hotel_bookings.hotel_id', '=', 'hotels.id')
                 ->select(
                     'bookings.id as booking_id',
+                    'bookings.status as booking_status',
                     'users.name as user_name',
                     'users.email as user_email',
                     'trips.id as trip_id',
@@ -65,60 +79,46 @@ class BookingService implements CommonInterface
                     'trips.departure_time',
                     'trips.arrival_time',
                     'bookings.status as payment_status',
-                    'booking_seats.id as seat_id',
+                    'bookings.booking_type',
+                    DB::raw('GROUP_CONCAT(seats.seat_number) as seat_numbers'),
+                    'bookings.seat_ids as booked_seats',
                     'payments.payment_method',
                     'payments.nagad',
-                    'seats.seat_number',
                     'payments.bkash',
                     'payments.card',
                     'transactions.transaction_reference',
+                    'packages.name as package_name',
+                    'payments.amount as total_payment_amount',
+                    'hotels.name as hotel_name',
+                )
+                ->where('bookings.id', $bookingId)
+                ->groupBy(
+                    'bookings.id',
+                    'booking_status',
+                    'users.name',
+                    'users.email',
+                    'trips.id',
+                    'trips.trip_name',
+                    'trips.price',
+                    'bookings.status',
+                    'bookings.booking_type',
+                    'payments.payment_method',
+                    'payments.nagad',
+                    'payments.bkash',
+                    'payments.card',
+                    'transactions.transaction_reference',
+                    'packages.name',
+                    'trips.departure_time',
+                    'trips.arrival_time',
+                    'hotels.name'
                 )
                 ->where('bookings.id', $bookingId)
                 ->where('bookings.user_id', $userId)
                 ->get();
             Log::info("invoice info" . json_encode($invoiceInfo));
             // Organize into a parent-child structure
-            $organizedData = [];
 
-            foreach ($invoiceInfo as $row) {
-                $bookingId = $row->booking_id;
-
-                if (!isset($organizedData[$bookingId])) {
-                    $organizedData[$bookingId] = [
-                        'booking_id' => $bookingId,
-                        'transaction_reference' => $row->transaction_reference,
-                        'user' => [
-                            'name' => $row->user_name,
-                            'email' => $row->user_email,
-                        ],
-                        'trip' => [
-                            'trip_id' => $row->trip_id,
-                            'trip_name' => $row->trip_name,
-                        ],
-                        'payment' => [
-                            'status' => $row->payment_status,
-                            'method' => $row->payment_method,
-                            'nagad' => $row->nagad,
-                            'bkash' => $row->bkash,
-                            'card' => $row->card,
-                        ],
-                        'seats' => [],
-                    ];
-                }
-
-                // Add seat data under the booking
-                $organizedData[$bookingId]['seats'][] = [
-                    'seat_id' => $row->seat_id,
-                    'seat_number' => $row->seat_number,
-                    'price' => $row->price,
-                ];
-            }
-
-            // Convert array values into an indexed array
-            $organizedData = array_values($organizedData);
-
-            // Output the structured data
-            return $organizedData;
+            return $invoiceInfo;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
         }

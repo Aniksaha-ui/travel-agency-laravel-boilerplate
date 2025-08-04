@@ -17,14 +17,18 @@ class BookingService
         try {
             $perPage = 10;
             $bookings = DB::table('bookings')
-                ->join('users', 'bookings.user_id', '=', 'users.id')
-                ->join('trips', 'bookings.trip_id', '=', 'trips.id')
+                ->leftJoin('users', 'bookings.user_id', '=', 'users.id')
+                ->leftJoin('trips', 'bookings.trip_id', '=', 'trips.id')
                 ->leftJoin('packages', 'bookings.package_id', '=', 'packages.id')
-                ->where('bookings.seat_ids', 'like', '%' . $search . '%')
-                ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
-                ->orWhere('trips.price', 'like', '%' . $search . '%')
-                ->whereIn('bookings.booking_type', ['trips', 'trip', 'package'])
-                ->paginate($perPage, ['bookings.id', 'bookings.user_id', 'bookings.seat_ids', 'bookings.booking_type', 'bookings.created_at', 'bookings.status', 'bookings.booking_type', 'trips.trip_name', 'trips.price', 'users.name as username', 'packages.name as package_name', 'users.name', 'users.email'], 'page', $page);
+                ->leftJoin('hotel_bookings', 'hotel_bookings.id', '=', 'bookings.hotel_booking_id')
+                ->leftJoin('hotels', 'hotels.id', '=', 'hotel_bookings.hotel_id')
+                ->when($search, function ($query, $search) {
+                    return $query->where('bookings.seat_ids', 'like', '%' . $search . '%')
+                        ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
+                        ->orWhere('trips.price', 'like', '%' . $search . '%')
+                        ->orWhere('hotels.name', 'like', '%' . $search . '%');
+                })
+                ->paginate($perPage, ['bookings.id', 'bookings.user_id', 'bookings.seat_ids', 'bookings.booking_type', 'bookings.created_at', 'bookings.status', 'bookings.booking_type', 'trips.trip_name', 'trips.price', 'users.name as username', 'packages.name as package_name', 'users.name', 'users.email', 'hotels.name as hotel_name'], 'page', $page);
             return $bookings;
         } catch (Exception $ex) {
             Log::alert("bookingService-index function" . $ex->getMessage());
@@ -161,16 +165,16 @@ class BookingService
     public function invoice($bookingId)
     {
         try {
-
-
             $invoice = DB::table('bookings')
                 ->leftJoin('booking_seats', 'booking_seats.booking_id', '=', 'bookings.id')
-                ->join('payments', 'payments.booking_id', '=', 'bookings.id')
-                ->join('transactions', 'transactions.payment_id', '=', 'payments.id')
-                ->join('trips', 'trips.id', '=', 'bookings.trip_id')
-                ->join('users', 'users.id', '=', 'bookings.user_id')
+                ->leftJoin('payments', 'payments.booking_id', '=', 'bookings.id')
+                ->leftJoin('transactions', 'transactions.payment_id', '=', 'payments.id')
+                ->leftJoin('trips', 'trips.id', '=', 'bookings.trip_id')
+                ->leftJoin('users', 'users.id', '=', 'bookings.user_id')
                 ->leftJoin('seats', 'seats.id', '=', 'booking_seats.seat_id')
                 ->leftJoin('packages', 'packages.id', '=', 'bookings.package_id')
+                ->leftJoin('hotel_bookings', 'hotel_bookings.id', '=', 'bookings.hotel_booking_id')
+                ->leftJoin('hotels', 'hotel_bookings.hotel_id', '=', 'hotels.id')
                 ->select(
                     'bookings.id as booking_id',
                     'bookings.status as booking_status',
@@ -191,7 +195,8 @@ class BookingService
                     'payments.card',
                     'transactions.transaction_reference',
                     'packages.name as package_name',
-                    'payments.amount as total_payment_amount'
+                    'payments.amount as total_payment_amount',
+                    'hotels.name as hotel_name',
                 )
                 ->where('bookings.id', $bookingId)
                 ->groupBy(
@@ -212,6 +217,7 @@ class BookingService
                     'packages.name',
                     'trips.departure_time',
                     'trips.arrival_time',
+                    'hotels.name'
                 )
                 ->get();
 
