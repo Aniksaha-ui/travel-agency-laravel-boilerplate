@@ -169,6 +169,7 @@ class HotelService
 
                 ## Account History
                 $accountHistory = DB::table('account_history')->insert($accountHistoryInformation);
+                $accountAmountIncrease = DB::table('company_accounts')->where('type', $paymentInformation['payment_method'])->increment('amount', $paymentInformation['amount']);
 
 
                 if ($hotelBookings && $hotelCheckin && $bookings && $accountHistory && $payment) {
