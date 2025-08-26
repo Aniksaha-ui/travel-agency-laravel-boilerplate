@@ -189,6 +189,23 @@ class HotelService
         }
     }
 
+    public function hotelCheckinList($page,$search){
+        try {
+            $perPage = 10;
+            $hotels = DB::table('hotel_bookings')
+                ->join('checkins', 'hotel_bookings.id', '=', 'checkins.hotel_booking_id')
+                ->join('hotels', 'hotels.id', '=', 'hotel_bookings.hotel_id')
+                ->where('name', 'like', '%' . $search . '%')
+                ->paginate($perPage, ['hotels.name','checkins.hotel_booking_id','checkins.hotel_booking_id','checkins.check_in_time','checkins.check_out_time','checkins.status'], 'page', $page);
+            if ($hotels->count() > 0) {
+                return ["status" => true, "data" => $hotels, "message" => "Hotels Checking list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Hotel found"];
+            }
+        } catch (Exception $ex) {
+            Log::info("HotelService hotelCheckinList functions" . $ex->getMessage());
+        }
+    }
 
     
 

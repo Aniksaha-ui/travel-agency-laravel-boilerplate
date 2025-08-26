@@ -134,6 +134,8 @@ class HotelService
                     'booking_id' => $bookings,
                     'amount' => $data['total_cost'],
                     'payment_method' => $data['payment_method'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
 
                 ];
 
@@ -152,7 +154,15 @@ class HotelService
                     $accountHistoryInformation['user_account_no'] = $data['nagad'];
                 }
 
-                $payment = DB::table('payments')->insert($paymentInformation);
+                $payment = DB::table('payments')->insertGetId($paymentInformation);
+                $transactionInfo = [
+                    'payment_id' => $payment,
+                    'transaction_reference' => Str::uuid(),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+
+                $transaction = DB::table('transactions')->insert($transactionInfo);
 
                 $accountHistoryInformation = [
                     'user_id' => $userId,

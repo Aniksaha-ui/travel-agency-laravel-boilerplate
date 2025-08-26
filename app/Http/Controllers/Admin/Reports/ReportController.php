@@ -203,10 +203,13 @@ class ReportController extends Controller
     }
 
 
-    public function transactionHistoryReport()
+    public function transactionHistoryReport(Request $request)
     {
         try {
-            $response = $this->reportService->transactionHistoryReport();
+
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->transactionHistoryReport($page,$search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -221,10 +224,12 @@ class ReportController extends Controller
         }
     }
 
-    function monthRunningBalanceReport()
+    function monthRunningBalanceReport(Request $request)
     {
         try {
-            $response = $this->reportService->monthRunningBalanceReport();
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->monthRunningBalanceReport($page,$search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],

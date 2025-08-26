@@ -162,4 +162,23 @@ class hotelController extends Controller
             Log::error($ex->getMessage());
         }
     }
+
+    public function hotelCheckinList(Request $request)
+    {
+        try {
+
+             $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->hotelService->hotelCheckinList($page,$search);
+            return response()->json([
+                'isExecute' => true,
+                'data' => $response['data'],
+                'message' => $response['message'],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+        }
+    }
+
 }

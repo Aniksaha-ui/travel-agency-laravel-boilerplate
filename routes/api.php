@@ -141,7 +141,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('admin/hotel', 'Admin\hotel\hotelController@store');
     Route::post('admin/hotel/update/{hotel_id}', 'Admin\hotel\hotelController@update');
 
-
+    Route::get('admin/hotel/checkin', 'Admin\hotel\hotelController@hotelCheckinList');
     Route::post('/hotel/update/checkin', 'User\hotel\hotelController@hotelCheckinStatusUpdate');
 });
 

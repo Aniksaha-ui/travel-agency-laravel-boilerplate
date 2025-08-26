@@ -332,9 +332,10 @@ class ReportService
     }
 
 
-    public function transactionHistoryReport()
+    public function transactionHistoryReport($page,$search)
     {
         try {
+            $perPage = 50;
             $report = DB::table('transactions as t')
                 ->join('payments as p', 't.payment_id', '=', 'p.id')
                 ->select(
@@ -345,7 +346,7 @@ class ReportService
                 ->whereMonth('t.created_at', '=', date('m'))
                 ->whereYear('t.created_at', '=', date('Y'))
                 ->orderBy('t.created_at', 'desc')
-                ->get();
+                ->paginate($perPage);
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
             } else {
@@ -357,20 +358,21 @@ class ReportService
         }
     }
 
-    public function monthRunningBalanceReport()
+    public function monthRunningBalanceReport($page, $search)
     {
         try {
+            $perPage = 10;
             // Fetch the monthly summary data
-            $report = DB::select("
-            SELECT
-                DATE_FORMAT(tran_date, '%Y-%m') AS month,
-                COUNT(*) AS tx_count,
-                SUM(CASE WHEN transaction_type = 'c' THEN amount ELSE 0 END) AS total_credit,
-                SUM(CASE WHEN transaction_type = 'd' THEN amount ELSE 0 END) AS total_debit
-            FROM account_history
-            GROUP BY DATE_FORMAT(tran_date, '%Y-%m')
-            ORDER BY month
-        ");
+            $report = DB::table('account_history')
+                ->select(
+                    DB::raw('DATE_FORMAT(tran_date, "%M %Y") AS month'),
+                    DB::raw('COUNT(*) AS tx_count'),
+                    DB::raw('SUM(CASE WHEN transaction_type = "c" THEN amount ELSE 0 END) AS total_credit'),
+                    DB::raw('SUM(CASE WHEN transaction_type = "d" THEN amount ELSE 0 END) AS total_debit')
+                )
+                ->groupBy(DB::raw('DATE_FORMAT(tran_date, "%Y-%m")'))
+                ->orderBy('month')
+                ->paginate($perPage);
 
             if ($report) {
                 // Manually calculate the running balance
