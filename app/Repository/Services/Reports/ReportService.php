@@ -417,31 +417,32 @@ class ReportService
         }
     }
 
-    public function dailyBalanceReport()
+    public function dailyBalanceReport($page,$search)
     {
         try {
             // Fetch the daily summary data
-            $report = DB::select("
-    WITH daily_summary AS (
-        SELECT
-            DATE(ah.tran_date) AS date,
-            COUNT(*) AS tx_count,
-            SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
-            SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
-        FROM account_history ah
-        WHERE MONTH(ah.tran_date) = MONTH(CURDATE())
-            AND YEAR(ah.tran_date) = YEAR(CURDATE())
-        GROUP BY DATE(ah.tran_date)
-    )
-    SELECT
-        date,
-        tx_count,
-        total_credit,
-        total_debit,
-        SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance
-    FROM daily_summary
-    ORDER BY date ASC
-");
+            $perPage = 10;
+            $report = DB::table(DB::raw("
+                (SELECT
+                    DATE(ah.tran_date) AS date,
+                    COUNT(*) AS tx_count,
+                    SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
+                    SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
+                FROM account_history ah
+                WHERE MONTH(ah.tran_date) = MONTH(CURDATE())
+                    AND YEAR(ah.tran_date) = YEAR(CURDATE())
+                GROUP BY DATE(ah.tran_date)
+                ) AS daily_summary"
+            ))
+            ->select(
+                'date',
+                'tx_count',
+                'total_credit',
+                'total_debit',
+                DB::raw('SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance')
+            )
+            ->orderBy('date')
+            ->paginate($perPage, ['date', 'tx_count', 'total_credit', 'total_debit', 'balance'], 'page', $page);
 
             if ($report) {
                 return [

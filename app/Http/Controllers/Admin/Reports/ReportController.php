@@ -245,10 +245,12 @@ class ReportController extends Controller
     }
 
 
-    function dailyBalanceReport()
+    function dailyBalanceReport(Request $request)
     {
         try {
-            $response = $this->reportService->dailyBalanceReport();
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->dailyBalanceReport($page,$search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
