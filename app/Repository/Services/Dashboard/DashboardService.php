@@ -70,15 +70,71 @@ class DashboardService
                 "totalPackageBookings" => $totalPackageBookings,
                 "totalTransaction" => $totalTransaction,
                 "totalTable" => $totalTable,
-                 "totalTours" => $totalTours, 
+                "totalTours" => $totalTours,
                 "totalVehicles" => $totalVehicles,
                 "totalPayments" => $totalPayments,
                 "monthlyPayments" => $monthlyPayments,
-                "tripData" => $tripData, 
+                "tripData" => $tripData,
                 "paymentData" => $paymentData
             ];
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
         }
+    }
+
+
+    public function databaseList()
+    {
+        try {
+            $tables = DB::select('SHOW TABLES');
+
+            $structure = [];
+
+            foreach ($tables as $table) {
+                $tableName = $table->{'Tables_in_' . env('DB_DATABASE')};
+                $columns = DB::select('DESCRIBE ' . $tableName);
+                $tableStructure = [];
+
+                foreach ($columns as $column) {
+                    $fieldName = $column->Field;
+                    $fieldType = $this->getColumnType($column->Type);
+                    $tableStructure[] = [
+                        $fieldName => $fieldType
+                    ];
+                }
+                $structure[] = [
+                    $tableName => $tableStructure
+                ];
+            }
+
+            // Return the structure in JSON format
+            return ["status" => true, "data" => $structure, "message" => "Database list retrived successfully"];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+        }
+    }
+
+
+    private function getColumnType($dbType)
+    {
+        // Check if the column type includes a size (e.g., varchar(255))
+        if (strpos($dbType, '(') !== false) {
+            $dbType = explode('(', $dbType)[0];
+        }
+
+        $typeMap = [
+            'int' => 'integer',
+            'varchar' => 'string',
+            'text' => 'text',
+            'datetime' => 'datetime',
+            'timestamp' => 'timestamp',
+            'float' => 'float',
+            'decimal' => 'decimal',
+            'boolean' => 'boolean',
+            'tinyint' => 'boolean',
+            'longtext' => 'longtext'
+        ];
+
+        return $typeMap[$dbType] ?? 'unknown';
     }
 }
