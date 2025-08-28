@@ -207,6 +207,24 @@ class HotelService
         }
     }
 
+
+    public function hotelBooking($page,$search){
+        try{
+            $perPage = 10;
+            $hotels = DB::table('hotel_bookings')
+                ->join('hotels', 'hotels.id', '=', 'hotel_bookings.hotel_id')
+                ->where('name', 'like', '%' . $search . '%')
+                ->paginate($perPage, ['hotels.name','hotels.email','hotels.website','hotel_bookings.*'], 'page', $page);
+            if ($hotels->count() > 0) {
+                return ["status" => true, "data" => $hotels, "message" => "Hotels Booking list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No Hotel found"];
+            }
+        }catch(Exception $ex){
+            Log::info("HotelService hotelBooking functions" . $ex->getMessage());
+        }
+    }
+
     
 
 }
