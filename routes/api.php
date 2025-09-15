@@ -183,11 +183,12 @@ Route::middleware(['auth:sanctum', 'guide'])->group(function () {
     Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
     Route::post('guide/costingByPackageList', 'Admin\guide\guideController@costingByPackageList');
     Route::post('guide/myAssignPackage', 'Admin\guide\guideController@myAssignPackages');
+    Route::post('guide/myFeedBackByPackage', 'Admin\guide\guideController@myFeedBackByPackage');
 });
 
 
 
-Route::get('admin/guidepackagesassign', 'Admin\guide\guideController@getGuidePackageAssign');
+// Route::get('admin/guidepackagesassign', 'Admin\guide\guideController@getGuidePackageAssign');
 
 
 

@@ -208,10 +208,22 @@ class guideController extends Controller
     public function costingByPackageList(Request $request)
     {
         try {
-
             $page = $request->query('page');
             $search = $request->query('search');
             $packageId = $request->input('package_id');
+            $validator = Validator::make($request->query(), [
+                'package_id' => 'required|integer|not_empty',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+
             $response = $this->guideService->CostingByPackageList($page, $search, $packageId);
             return response()->json([
                 'isExecute' => true,
@@ -220,7 +232,7 @@ class guideController extends Controller
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+            return response()->json(['error' => 'Internal Server Error', 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -241,7 +253,30 @@ class guideController extends Controller
             ], 200);
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'No package found', 'message' => $e->getMessage()], 500);
+            return response()->json(['error' => 'No packages found', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function myFeedBackByPackage(Request $request)
+    {
+        try {
+
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $packageId = $request->input('package_id');
+
+
+
+            $response = $this->guideService->myFeedBackByPackage($page, $search, $packageId);
+            return response()->json([
+                'isExecute' => true,
+                'data' => $response['data'],
+                'message' => $response['message'],
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'No feedbacks found', 'message' => $e->getMessage()], 500);
         }
     }
 }

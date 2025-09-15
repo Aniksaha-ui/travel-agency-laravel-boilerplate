@@ -267,6 +267,36 @@ class GuideService
         }
     }
 
+    public function myAssignPackages($page, $search)
+    {
+        try {
+
+            $perPage = 10;
+            $guideEmployeeId = DB::table('guides')->where('user_id', Auth::id())->value('id');
+            $costingList = DB::table('guide_packages')
+                ->join('packages', 'guide_packages.package_id', '=', 'packages.id')
+                ->join('trips', 'packages.trip_id', '=', 'trips.id')
+                ->where('guide_id', $guideEmployeeId)
+                ->select('trips.trip_name', 'packages.name as package_name', 'packages.id as id', 'packages.image')
+                ->where(function ($query) use ($search) {
+                    $query->where('packages.name', 'like', '%' . $search . '%')
+                        ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
+                        ->orWhere('packages.name', 'like', '%' . $search . '%');
+                })
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            if ($costingList->count() > 0) {
+                return ["status" => true, "data" => $costingList, "message" => "Package list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No package assigned yet"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService getGuidePackageAssign" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+
     public function CostingByPackageList($page, $search, $packageId)
     {
         try {
@@ -296,18 +326,18 @@ class GuideService
         }
     }
 
-
-    public function myAssignPackages($page, $search)
+    public function myFeedBackByPackage($page, $search, $packageId)
     {
         try {
 
             $perPage = 10;
             $guideEmployeeId = DB::table('guides')->where('user_id', Auth::id())->value('id');
-            $costingList = DB::table('guide_packages')
-                ->join('packages', 'guide_packages.package_id', '=', 'packages.id')
+            $costingList = DB::table('guide_performances')
+                ->join('packages', 'guide_performances.package_id', '=', 'packages.id')
                 ->join('trips', 'packages.trip_id', '=', 'trips.id')
                 ->where('guide_id', $guideEmployeeId)
-                ->select('trips.trip_name', 'packages.name as package_name', 'packages.image')
+                ->where('package_id', $packageId)
+                ->select('guide_performances.*')
                 ->where(function ($query) use ($search) {
                     $query->where('packages.name', 'like', '%' . $search . '%')
                         ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
