@@ -186,7 +186,10 @@ class GuideService
     {
         try {
 
-
+            $documentLink = '';
+            if (request()->hasFile('attachment')) {
+                $documentLink = FileManageHelper::uploadFile('travel', request()->file('attachment'));
+            }
             $tripId = DB::table('packages')->where('id', $data['package_id'])->value('trip_id');
             $costing = DB::table('trip_package_costings')->insert([
                 'trip_id' => $tripId,
@@ -195,7 +198,8 @@ class GuideService
                 'cost_type' => $data['cost_type'],
                 'cost_amount' => $data['cost_amount'],
                 'description' => $data['description'],
-                'attachment' => '',
+                'attachment' => $documentLink,
+                'created_at' => now(),
             ]);
 
             $transactionRef = strtoupper(Str::random(10));
@@ -256,6 +260,65 @@ class GuideService
                 return ["status" => true, "data" => $response, "message" => "Guides list retrived successfully"];
             } else {
                 return ["status" => true, "data" => [], "message" => "No guides found"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService getGuidePackageAssign" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+    public function CostingByPackageList($page, $search, $packageId)
+    {
+        try {
+            $perPage = 10;
+            $guideId = Auth::id();
+            $costingList = DB::table('trip_package_costings')
+                ->join('packages', 'trip_package_costings.package_id', '=', 'packages.id')
+
+                ->where('package_id', $packageId)
+                ->where('guide_id', $guideId)
+                ->select('trip_package_costings.*', 'packages.name as package_name')
+                ->where(function ($query) use ($search) {
+                    $query->where('packages.name', 'like', '%' . $search . '%')
+                        ->orWhere('trip_package_costings.cost_amount', 'like', '%' . $search . '%')
+                        ->orWhere('trip_package_costings.cost_type', 'like', '%' . $search . '%');
+                })
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            if ($costingList->count() > 0) {
+                return ["status" => true, "data" => $costingList, "message" => "Costing list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No costing yet"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService getGuidePackageAssign" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+
+    public function myAssignPackages($page, $search)
+    {
+        try {
+
+            $perPage = 10;
+            $guideEmployeeId = DB::table('guides')->where('user_id', Auth::id())->value('id');
+            $costingList = DB::table('guide_packages')
+                ->join('packages', 'guide_packages.package_id', '=', 'packages.id')
+                ->join('trips', 'packages.trip_id', '=', 'trips.id')
+                ->where('guide_id', $guideEmployeeId)
+                ->select('trips.trip_name', 'packages.name as package_name', 'packages.image')
+                ->where(function ($query) use ($search) {
+                    $query->where('packages.name', 'like', '%' . $search . '%')
+                        ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
+                        ->orWhere('packages.name', 'like', '%' . $search . '%');
+                })
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            if ($costingList->count() > 0) {
+                return ["status" => true, "data" => $costingList, "message" => "Package list retrived successfully"];
+            } else {
+                return ["status" => true, "data" => [], "message" => "No package assigned yet"];
             }
         } catch (Exception $ex) {
             Log::info("guideService getGuidePackageAssign" . $ex->getMessage());

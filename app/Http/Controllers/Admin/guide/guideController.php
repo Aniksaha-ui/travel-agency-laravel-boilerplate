@@ -139,8 +139,8 @@ class guideController extends Controller
     {
         try {
             $request = $request->all();
-            
-            
+
+
             $response = $this->guideService->costingByPackage($request);
             Log::info("guideController costingByPackage response" . json_encode($response));
             return response()->json([
@@ -200,6 +200,48 @@ class guideController extends Controller
             }
         } catch (Exception $ex) {
             Log::error("guideController getGuidePackageAssign" . $ex->getMessage());
+        }
+    }
+
+
+
+    public function costingByPackageList(Request $request)
+    {
+        try {
+
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $packageId = $request->input('package_id');
+            $response = $this->guideService->CostingByPackageList($page, $search, $packageId);
+            return response()->json([
+                'isExecute' => true,
+                'data' => $response['data'],
+                'message' => $response['message'],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
+
+    public function myAssignPackages(Request $request)
+    {
+        try {
+
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $packageId = $request->input('package_id');
+            $response = $this->guideService->myAssignPackages($page, $search);
+            return response()->json([
+                'isExecute' => true,
+                'data' => $response['data'],
+                'message' => $response['message'],
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'No package found', 'message' => $e->getMessage()], 500);
         }
     }
 }

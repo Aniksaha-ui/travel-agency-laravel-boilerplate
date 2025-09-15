@@ -45,7 +45,7 @@ class Kernel extends HttpKernel
             // 'throttle:60,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Fruitcake\Cors\HandleCors::class,  
+            \Fruitcake\Cors\HandleCors::class,
         ],
     ];
 
@@ -69,5 +69,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\CheckAdmin::class,
         'users' => \App\Http\Middleware\CheckUser::class,
+        'guide' => \App\Http\Middleware\CheckGuide::class,
     ];
 }

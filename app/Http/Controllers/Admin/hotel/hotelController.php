@@ -167,9 +167,9 @@ class hotelController extends Controller
     {
         try {
 
-             $page = $request->query('page');
+            $page = $request->query('page');
             $search = $request->query('search');
-            $response = $this->hotelService->hotelCheckinList($page,$search);
+            $response = $this->hotelService->hotelCheckinList($page, $search);
             return response()->json([
                 'isExecute' => true,
                 'data' => $response['data'],
@@ -181,23 +181,20 @@ class hotelController extends Controller
         }
     }
 
-    public function hotelBooking(Request $request){
-        try{
+    public function hotelBooking(Request $request)
+    {
+        try {
             $page = $request->query('page');
             $search = $request->query('search');
 
-            $response = $this->hotelService->hotelBooking($page,$search);
+            $response = $this->hotelService->hotelBooking($page, $search);
             return response()->json([
                 'isExecute' => true,
                 'data' => $response['data'],
                 'message' => $response['message'],
             ], 200);
-
-            
-        }catch(Exception $ex){
+        } catch (Exception $ex) {
             Log::info("hotelController hotelBooking function" . $ex->getMessage());
         }
     }
-
-
 }
