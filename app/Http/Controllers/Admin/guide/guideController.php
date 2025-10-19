@@ -279,4 +279,34 @@ class guideController extends Controller
             return response()->json(['error' => 'No feedbacks found', 'message' => $e->getMessage()], 500);
         }
     }
+
+    public function updatePackageCosting(Request $request)
+    {
+        try {
+            $response = $this->guideService->updatePackageCosting($request->all());
+            return response()->json([
+                "data" => $response['data'],
+                "message" => $response['message'],
+                "status" => $response['status']
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function findCostingById($id)
+    {
+        try {
+
+            $response = $this->guideService->findCostingById($id);
+            return response()->json([
+                "data" => $response['data'],
+                "message" => $response['message'],
+                "status" => $response['status']
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'No feedbacks found', 'message' => $e->getMessage()], 500);
+        }
+    }
 }

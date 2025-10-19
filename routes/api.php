@@ -181,6 +181,8 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 /************************************* User api start *******************************/
 Route::middleware(['auth:sanctum', 'guide'])->group(function () {
     Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
+    Route::post('admin/guide/costingbypackage/update', 'Admin\guide\guideController@updatePackageCosting');
+    Route::post('admin/guide/costingbypackage/{id}', 'Admin\guide\guideController@findCostingById');
     Route::post('guide/costingByPackageList', 'Admin\guide\guideController@costingByPackageList');
     Route::post('guide/myAssignPackage', 'Admin\guide\guideController@myAssignPackages');
     Route::post('guide/myFeedBackByPackage', 'Admin\guide\guideController@myFeedBackByPackage');

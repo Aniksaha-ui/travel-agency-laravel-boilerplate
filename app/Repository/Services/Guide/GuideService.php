@@ -182,49 +182,7 @@ class GuideService
         }
     }
 
-    public function costingByPackage($data)
-    {
-        try {
 
-            $documentLink = '';
-            if (request()->hasFile('attachment')) {
-                $documentLink = FileManageHelper::uploadFile('travel', request()->file('attachment'));
-            }
-            $tripId = DB::table('packages')->where('id', $data['package_id'])->value('trip_id');
-            $costing = DB::table('trip_package_costings')->insert([
-                'trip_id' => $tripId,
-                'package_id' => $data['package_id'],
-                'guide_id' => $data['guide_id'],
-                'cost_type' => $data['cost_type'],
-                'cost_amount' => $data['cost_amount'],
-                'description' => $data['description'],
-                'attachment' => $documentLink,
-                'created_at' => now(),
-            ]);
-
-            $transactionRef = strtoupper(Str::random(10));
-            DB::table('account_history')->insert([
-                'user_id' => $data['guide_id'],
-                'user_account_type' => 'card',
-                'user_account_no' => '01628781323',
-                'getaway' => 'card',
-                'amount' => $data['cost_amount'],
-                'com_account_no' => DB::table('company_accounts')->where('type', 'card')->value('account_number'),
-                'transaction_reference' => $transactionRef,
-                'transaction_type' => 'd',
-                'purpose' => 'package costing',
-                'tran_date' => now(),
-            ]);
-            if ($costing) {
-                return ["status" => true, "data" => [], "message" => "Costing created successfully"];
-            } else {
-                return ["status" => false, "data" => [], "message" => "Costing not created"];
-            }
-        } catch (Exception $ex) {
-            Log::info("guideService costingByPackage" . $ex->getMessage());
-            return ["status" => false, "data" => [], "message" => "Internal server error"];
-        }
-    }
 
     public function getGuidesdropdown()
     {
@@ -353,6 +311,108 @@ class GuideService
         } catch (Exception $ex) {
             Log::info("guideService getGuidePackageAssign" . $ex->getMessage());
             return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+
+
+    public function costingByPackage($data)
+    {
+        try {
+
+            $documentLink = '';
+            if (request()->hasFile('attachment')) {
+                $documentLink = FileManageHelper::uploadFile('travel', request()->file('attachment'));
+            }
+            $tripId = DB::table('packages')->where('id', $data['package_id'])->value('trip_id');
+            $costing = DB::table('trip_package_costings')->insert([
+                'trip_id' => $tripId,
+                'package_id' => $data['package_id'],
+                'guide_id' => $data['guide_id'],
+                'cost_type' => $data['cost_type'],
+                'cost_amount' => $data['cost_amount'],
+                'description' => $data['description'],
+                'attachment' => $documentLink,
+                'created_at' => now(),
+            ]);
+
+            $transactionRef = strtoupper(Str::random(10));
+            DB::table('account_history')->insert([
+                'user_id' => $data['guide_id'],
+                'user_account_type' => 'card',
+                'user_account_no' => '01628781323',
+                'getaway' => 'card',
+                'amount' => $data['cost_amount'],
+                'com_account_no' => DB::table('company_accounts')->where('type', 'card')->value('account_number'),
+                'transaction_reference' => $transactionRef,
+                'transaction_type' => 'd',
+                'purpose' => 'package costing',
+                'tran_date' => now(),
+            ]);
+            if ($costing) {
+                return ["status" => true, "data" => [], "message" => "Costing created successfully"];
+            } else {
+                return ["status" => false, "data" => [], "message" => "Costing not created"];
+            }
+        } catch (Exception $ex) {
+            Log::info("guideService costingByPackage" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
+        }
+    }
+
+    public function updatePackageCosting($data)
+    {
+        try {
+
+            DB::beginTransaction();
+            $packageInformation = [];
+            $documentLink = '';
+            if (request()->hasFile('attachment')) {
+                $documentLink = FileManageHelper::uploadFile('travel', request()->file('attachment'));
+                $packageInformation['attachment'] = $documentLink;
+            }
+
+
+            $packageInformation = [
+                'cost_type' => $data['cost_type'],
+                'cost_amount' => $data['cost_amount'],
+                'description' => $data['description'],
+            ];
+
+            $PackageCostingUpdate = DB::table('trip_package_costings')
+                ->where('guide_id', Auth::id())
+                ->where('package_id', $data['package_id'])
+                ->where('id', $data['costing_id'])
+                ->update($packageInformation);
+
+            if ($PackageCostingUpdate) {
+                DB::commit();
+                return ["status" => true, "data" => [], "message" => "Costing updated successfully"];
+            } else {
+                DB::rollBack();
+                return ["status" => false, "data" => [], "message" => "Costing not updated"];
+            }
+        } catch (Exception $ex) {
+            DB::rollBack();
+            Log::alert("updatePackageCosting function error:" . $ex->getMessage());
+        }
+    }
+
+    public function findCostingById($id)
+    {
+        try {
+
+            $costingInformation = DB::table('trip_package_costings')->where('id', $id)->first();
+
+            if (!isset($costingInformation)) {
+                return ["status" => false, "data" => [], "message" => "Cost details not found"];
+            } else {
+                return ["status" => true, "data" => $costingInformation, "message" => "Cost details retrived successfully"];
+            }
+        } catch (Exception $ex) {
+            DB::rollBack();
+            Log::alert("updatePackageCosting function error:" . $ex->getMessage());
+            return ["status" => false, "data" => [], "message" => ""];
         }
     }
 }
