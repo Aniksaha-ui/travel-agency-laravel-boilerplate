@@ -402,7 +402,7 @@ class GuideService
     {
         try {
 
-            $costingInformation = DB::table('trip_package_costings')->where('id', $id)->first();
+            $costingInformation = DB::table('trip_package_costings')->where('id', $id)->get();
 
             if (!isset($costingInformation)) {
                 return ["status" => false, "data" => [], "message" => "Cost details not found"];
