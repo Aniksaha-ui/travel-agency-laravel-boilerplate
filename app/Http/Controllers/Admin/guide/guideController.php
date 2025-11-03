@@ -208,23 +208,16 @@ class guideController extends Controller
     public function costingByPackageList(Request $request)
     {
         try {
+
             $page = $request->query('page');
             $search = $request->query('search');
             $packageId = $request->input('package_id');
-            $validator = Validator::make($request->query(), [
-                'package_id' => 'required|integer|not_empty',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
-
+      
+            Log::info(json_encode($packageId));
 
             $response = $this->guideService->CostingByPackageList($page, $search, $packageId);
+            
+            
             return response()->json([
                 'isExecute' => true,
                 'data' => $response['data'],
