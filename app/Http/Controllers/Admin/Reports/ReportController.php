@@ -209,7 +209,7 @@ class ReportController extends Controller
 
             $page = $request->query('page');
             $search = $request->query('search');
-            $response = $this->reportService->transactionHistoryReport($page,$search);
+            $response = $this->reportService->transactionHistoryReport($page, $search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -229,7 +229,7 @@ class ReportController extends Controller
         try {
             $page = $request->query('page');
             $search = $request->query('search');
-            $response = $this->reportService->monthRunningBalanceReport($page,$search);
+            $response = $this->reportService->monthRunningBalanceReport($page, $search);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
@@ -250,7 +250,47 @@ class ReportController extends Controller
         try {
             $page = $request->query('page');
             $search = $request->query('search');
-            $response = $this->reportService->dailyBalanceReport($page,$search);
+            $response = $this->reportService->dailyBalanceReport($page, $search);
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    function financialReport(Request $request)
+    {
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->financialReport($page, $search);
+            return response()->json([
+                "data" => $response['data'],
+                "status" => $response['status'],
+                "message" => $response['message']
+            ], 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                "data" => [],
+                "status" => false,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    function financialReportById($financialReportId)
+    {
+
+        try {
+
+            $response = $this->reportService->financialReportById($financialReportId);
             return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],

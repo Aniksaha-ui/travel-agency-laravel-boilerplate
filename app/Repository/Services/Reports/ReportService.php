@@ -251,6 +251,7 @@ class ReportService
                 ->where(function ($query) use ($search) {
                     $query->where('p.name', 'like', '%' . $search . '%');
                 })
+                ->groupBy('pb_data.package_id')
                 ->paginate($perPage);
 
             if ($report->count() > 0) {
@@ -332,7 +333,7 @@ class ReportService
     }
 
 
-    public function transactionHistoryReport($page,$search)
+    public function transactionHistoryReport($page, $search)
     {
         try {
             $perPage = 50;
@@ -417,12 +418,13 @@ class ReportService
         }
     }
 
-    public function dailyBalanceReport($page,$search)
+    public function dailyBalanceReport($page, $search)
     {
         try {
             // Fetch the daily summary data
             $perPage = 10;
-            $report = DB::table(DB::raw("
+            $report = DB::table(DB::raw(
+                "
                 (SELECT
                     DATE(ah.tran_date) AS date,
                     COUNT(*) AS tx_count,
@@ -434,15 +436,15 @@ class ReportService
                 GROUP BY DATE(ah.tran_date)
                 ) AS daily_summary"
             ))
-            ->select(
-                'date',
-                'tx_count',
-                'total_credit',
-                'total_debit',
-                DB::raw('SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance')
-            )
-            ->orderBy('date')
-            ->paginate($perPage, ['date', 'tx_count', 'total_credit', 'total_debit', 'balance'], 'page', $page);
+                ->select(
+                    'date',
+                    'tx_count',
+                    'total_credit',
+                    'total_debit',
+                    DB::raw('SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance')
+                )
+                ->orderBy('date')
+                ->paginate($perPage, ['date', 'tx_count', 'total_credit', 'total_debit', 'balance'], 'page', $page);
 
             if ($report) {
                 return [
@@ -459,6 +461,45 @@ class ReportService
             }
         } catch (Exception $ex) {
             Log::alert('Daily Balance Error: ' . $ex->getMessage());
+            return [
+                "status" => false,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function financialReport($page, $search)
+    {
+        try {
+            $financialReport = DB::table('fy_report')->get();
+            if ($financialReport->count() > 0) {
+                return ['status' => true, 'data' => $financialReport, 'message' => "Financial report retrieved"];
+            } else {
+                return ['status' => true, 'data' => [], 'message' => "No financial report retrieved"];
+            }
+        } catch (Exception $ex) {
+            Log::alert('ReportService - financialReport function error: ' . $ex->getMessage());
+            return [
+                "status" => false,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function financialReportById($financialReportId)
+    {
+        try {
+            $financialReport = DB::table('fy_report')->where('id', $financialReportId)->first();
+
+            if ($financialReport) {
+                return ['status' => true, 'data' => $financialReport, 'message' => "Financial report retrieved"];
+            } else {
+                return ['status' => true, 'data' => [], 'message' => "No financial report retrieved"];
+            }
+        } catch (Exception $ex) {
+            Log::alert('ReportService - financialReport function error: ' . $ex->getMessage());
             return [
                 "status" => false,
                 "data" => [],

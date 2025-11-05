@@ -43,10 +43,10 @@ class FinancialYear extends Command
     {
         Log::info('Financial Year Report Command executed at ' . now());
 
-        try{
+        try {
             $financialYear = $this->getFinancialYear();
             $alreadyExist = $this->alreadyExist($financialYear);
-            if($alreadyExist){
+            if ($alreadyExist) {
                 Log::info('Already generated Financial Report');
             }
 
@@ -63,8 +63,7 @@ class FinancialYear extends Command
             } else {
                 Log::error('Financial Report could not be generated.');
             }
-
-        }catch(Exception $ex){
+        } catch (Exception $ex) {
             Log::error($ex->getMessage());
         }
         return 0;
@@ -107,7 +106,7 @@ class FinancialYear extends Command
     {
         $refundAmount = DB::table('refunds')
             ->whereBetween('created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
-            ->where('status','disbursed')
+            ->where('status', 'disbursed')
             ->sum('amount');
         return $refundAmount;
     }
@@ -115,19 +114,18 @@ class FinancialYear extends Command
     function totalCosting($financialYear)
     {
 
-        $totalCosting = DB::table('account_history')
-            ->whereBetween('tran_date', [$financialYear['fy_start'], $financialYear['fy_end']])
-            ->where('transaction_type','d')
-            ->sum('amount');
+        $totalCosting = DB::table('trip_package_costings')
+            ->whereBetween('created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
+            ->sum('cost_amount');
         return $totalCosting;
     }
 
-    function alreadyExist($financialYear){
+    function alreadyExist($financialYear)
+    {
         $isExist = DB::table('fy_report')
             ->where('fy_start', $financialYear['fy_start'])
             ->where('fy_end', $financialYear['fy_end'])
             ->first();
         return $isExist;
     }
-
 }

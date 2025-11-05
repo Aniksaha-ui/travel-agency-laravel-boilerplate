@@ -107,6 +107,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/transactionHistory', 'Admin\Reports\ReportController@transactionHistoryReport');
     Route::get('/admin/monthRunningBalance', 'Admin\Reports\ReportController@monthRunningBalanceReport');
     Route::get('/admin/monthlyDailyBalanceReport', 'Admin\Reports\ReportController@dailyBalanceReport');
+    Route::get('admin/financial_report', 'Admin\Reports\ReportController@financialReport');
+    Route::get('/admin/financial_report/{financialReportId}', 'Admin\Reports\ReportController@financialReportById');
+
     /*************************************Report api start **********************************/
 
 
@@ -180,13 +183,12 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
 
 /************************************* User api start *******************************/
 Route::middleware(['auth:sanctum', 'guide'])->group(function () {
-     Route::post('guide/costingByPackageList', 'Admin\guide\guideController@costingByPackageList');
+    Route::post('guide/costingByPackageList', 'Admin\guide\guideController@costingByPackageList');
     Route::post('guide/myAssignPackage', 'Admin\guide\guideController@myAssignPackages');
     Route::post('guide/myFeedBackByPackage', 'Admin\guide\guideController@myFeedBackByPackage');
     Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
     Route::post('admin/guide/costingbypackage/update', 'Admin\guide\guideController@updatePackageCosting');
     Route::post('admin/guide/costingbypackage/{id}', 'Admin\guide\guideController@findCostingById');
-   
 });
 
 

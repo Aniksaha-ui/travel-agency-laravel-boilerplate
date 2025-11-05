@@ -24,6 +24,6 @@ class CheckGuide
 
     public function isGuide($user)
     {
-        return $user->role == 'guide' ? true : false;
+        return $user->role == 'guide'  ? true : false;
     }
 }
