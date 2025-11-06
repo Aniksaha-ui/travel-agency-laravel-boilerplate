@@ -48,7 +48,6 @@ class FinancialYear extends Command
             $alreadyExist = $this->alreadyExist($financialYear);
             if ($alreadyExist) {
                 Log::info('Already generated Financial Report');
-                return 0;
             }
 
             $insertedInformation = [
