@@ -173,7 +173,17 @@ class TripService implements CommonInterface
                 'is_active' => 1,
             ];
             $routeInsert = DB::table('trips')->where('id', $id)->update($updatedData);
-            Log::info("Trip updated: " . $routeInsert);
+            Log::info("updated trips". $routeInsert);
+            
+            if($routeInsert){
+                $updatedSchedule = [
+                    'travel_start_date' => $request['departure_time'],
+                    'travel_end_date'   => $request['arrival_time']
+                    ];
+                 Log::info("Tracking updated init: " .json_encode($updatedSchedule));
+                $updateTime = DB::table('vehicle_trip_trackings')->where('trip_id',$id)->update($$updatedSchedule);
+            }    
+           
             if ($routeInsert) {
                 return true;
             }
