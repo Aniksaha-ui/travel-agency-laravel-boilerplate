@@ -26,8 +26,12 @@ class BookingService
                     return $query->where('bookings.seat_ids', 'like', '%' . $search . '%')
                         ->orWhere('trips.trip_name', 'like', '%' . $search . '%')
                         ->orWhere('trips.price', 'like', '%' . $search . '%')
+                        ->orWhere('packages.name', 'like', '%' . $search . '%')
+                        ->orWhere('users.name', 'like', '%' . $search . '%')
+                        ->orWhere('bookings.booking_type', 'like', '%' . $search . '%')
                         ->orWhere('hotels.name', 'like', '%' . $search . '%');
                 })
+                ->orderBy('bookings.id','desc')
                 ->paginate($perPage, ['bookings.id', 'bookings.user_id', 'bookings.seat_ids', 'bookings.booking_type', 'bookings.created_at', 'bookings.status', 'bookings.booking_type', 'trips.trip_name', 'trips.price', 'users.name as username', 'packages.name as package_name', 'users.name', 'users.email', 'hotels.name as hotel_name'], 'page', $page);
             return $bookings;
         } catch (Exception $ex) {
