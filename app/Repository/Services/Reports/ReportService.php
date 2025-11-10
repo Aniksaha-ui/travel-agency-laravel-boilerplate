@@ -372,7 +372,7 @@ class ReportService
                     DB::raw('SUM(CASE WHEN transaction_type = "d" THEN amount ELSE 0 END) AS total_debit')
                 )
                 ->groupBy(DB::raw('DATE_FORMAT(tran_date, "%Y-%m")'))
-                ->orderBy('month')
+                ->orderBy('tran_date')
                 ->paginate($perPage);
 
             if ($report) {
