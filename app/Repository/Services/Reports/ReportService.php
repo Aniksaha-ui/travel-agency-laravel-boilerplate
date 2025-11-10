@@ -359,40 +359,95 @@ class ReportService
         }
     }
 
+    // public function monthRunningBalanceReport($page, $search)
+    // {
+    //     try {
+    //         $perPage = 10;
+    //         // Fetch the monthly summary data
+    //         $report = DB::table('account_history')
+    //             ->select(
+    //                 DB::raw('DATE_FORMAT(tran_date, "%M %Y") AS month'),
+    //                 DB::raw('COUNT(*) AS tx_count'),
+    //                 DB::raw('SUM(CASE WHEN transaction_type = "c" THEN amount ELSE 0 END) AS total_credit'),
+    //                 DB::raw('SUM(CASE WHEN transaction_type = "d" THEN amount ELSE 0 END) AS total_debit')
+    //             )
+    //             ->groupBy(DB::raw('DATE_FORMAT(tran_date, "%Y-%m")'))
+    //             ->orderBy('month')
+    //             ->paginate($perPage);
+
+    //         if ($report) {
+    //             // Manually calculate the running balance
+    //             $runningBalance = 0;
+    //             foreach ($report as $index => $data) {
+    //                 // Calculate net change
+    //                 $netChange = $data->total_credit - $data->total_debit;
+
+    //                 // Opening balance is the previous balance (or 0 for the first month)
+    //                 $openingBalance = $index == 0 ? 0 : $runningBalance;
+
+    //                 // Closing balance (running balance)
+    //                 $closingBalance = $runningBalance + $netChange;
+
+    //                 // Store the results back to the report
+    //                 $data->opening_balance = $openingBalance;
+    //                 $data->closing_balance = $closingBalance;
+
+    //                 // Update running balance for the next month
+    //                 $runningBalance = $closingBalance;
+    //             }
+
+    //             return [
+    //                 "status" => true,
+    //                 "data" => $report,
+    //                 "message" => "Report retrieved successfully"
+    //             ];
+    //         } else {
+    //             return [
+    //                 "status" => true,
+    //                 "data" => [],
+    //                 "message" => "No Report found"
+    //             ];
+    //         }
+    //     } catch (Exception $ex) {
+    //         Log::alert('Running Balance Error: ' . $ex->getMessage());
+    //         return [
+    //             "status" => false,
+    //             "data" => [],
+    //             "message" => "Server error occurred while generating the report"
+    //         ];
+    //     }
+    // }
+
+
+
     public function monthRunningBalanceReport($page, $search)
     {
         try {
             $perPage = 10;
-            // Fetch the monthly summary data
+
+            // Fetch the monthly summary data, sorted by year and month
             $report = DB::table('account_history')
                 ->select(
                     DB::raw('DATE_FORMAT(tran_date, "%M %Y") AS month'),
+                    DB::raw('DATE_FORMAT(tran_date, "%Y-%m") AS year_month'),
                     DB::raw('COUNT(*) AS tx_count'),
                     DB::raw('SUM(CASE WHEN transaction_type = "c" THEN amount ELSE 0 END) AS total_credit'),
                     DB::raw('SUM(CASE WHEN transaction_type = "d" THEN amount ELSE 0 END) AS total_debit')
                 )
-                ->groupBy(DB::raw('DATE_FORMAT(tran_date, "%Y-%m")'))
-                ->orderBy('month')
+                ->groupBy('year_month')
+                ->orderBy(DB::raw('MIN(tran_date)'), 'asc') // ensures proper chronological order
                 ->paginate($perPage);
 
-            if ($report) {
-                // Manually calculate the running balance
+            if ($report->count() > 0) {
                 $runningBalance = 0;
+
                 foreach ($report as $index => $data) {
-                    // Calculate net change
                     $netChange = $data->total_credit - $data->total_debit;
-
-                    // Opening balance is the previous balance (or 0 for the first month)
                     $openingBalance = $index == 0 ? 0 : $runningBalance;
-
-                    // Closing balance (running balance)
                     $closingBalance = $runningBalance + $netChange;
 
-                    // Store the results back to the report
                     $data->opening_balance = $openingBalance;
                     $data->closing_balance = $closingBalance;
-
-                    // Update running balance for the next month
                     $runningBalance = $closingBalance;
                 }
 
@@ -417,6 +472,8 @@ class ReportService
             ];
         }
     }
+
+
 
     public function dailyBalanceReport($page, $search)
     {
