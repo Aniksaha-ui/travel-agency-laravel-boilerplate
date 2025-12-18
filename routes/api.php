@@ -152,6 +152,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     /*** transactions and payment api */
 
     Route::get('admin/transaction', 'Admin\transaction\transactionController@getTransactions');
+
+    /*****Tickets */
+    Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
+    Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
 });
 
 /************************************* User api start *******************************/
@@ -178,6 +182,8 @@ Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/booking/cancle', 'User\booking\bookingController@cancleBooking');
     Route::post('/packages/booking', 'User\trip\PackageController@packageBooking');
     Route::post('/hotel/booking', 'User\hotel\hotelController@hotelBookings');
+    Route::post('/user/createTicket', 'User\ticket\ticketController@createTicket');
+    Route::get('/user/ticketList', 'User\ticket\ticketController@ticketList');
 });
 
 
