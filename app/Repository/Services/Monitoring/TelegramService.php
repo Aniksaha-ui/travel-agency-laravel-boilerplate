@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Monitoring;
+namespace App\Repository\Services\Monitoring;
 
 use Illuminate\Support\Facades\Http;
 
