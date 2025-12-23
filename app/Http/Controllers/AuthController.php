@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Services\Monitoring\TelegramService;
 use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
@@ -16,10 +17,19 @@ class AuthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
+ public function send(TelegramService $telegram)
+    {
+        $telegram->sendMessage("✅ <b>Payment Successful</b>\nOrder ID: #12345");
+
+        return 1;
+    }
+
+
+
     public function login(Request $request)
     {
-
-        Log::info(Hash::make($request->password));
+        $this->send(app(TelegramService::class));
+      Log::info(Hash::make($request->password));
         // Validate the request
         $request->validate([
             'email' => 'required|email',
