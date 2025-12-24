@@ -28,7 +28,8 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $this->send(app(TelegramService::class),"New Login");
+
+        
       Log::info(Hash::make($request->password));
         // Validate the request
         $request->validate([
@@ -48,6 +49,8 @@ class AuthController extends Controller
 
         // Generate a token for the user
         $token = $user->createToken('Personal Access Token')->plainTextToken;
+        $msg= $user->name ." login now!";
+        $this->send(app(TelegramService::class),$msg);
 
         // Return the response with the token
         return response()->json([
