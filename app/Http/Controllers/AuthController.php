@@ -50,7 +50,7 @@ class AuthController extends Controller
         // Generate a token for the user
         $token = $user->createToken('Personal Access Token')->plainTextToken;
         $msg= $user->name ." login now!";
-        $this->send(app(TelegramService::class),$msg);
+        // $this->send(app(TelegramService::class),$msg);
 
         // Return the response with the token
         return response()->json([

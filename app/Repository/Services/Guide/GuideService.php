@@ -3,8 +3,6 @@
 namespace App\Repository\Services\Guide;
 
 use App\Helpers\admin\FileManageHelper;
-use App\Repository\Interfaces\CommonInterface;
-use App\route;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use DB;
@@ -162,15 +160,16 @@ class GuideService
     public function getGuidePerformance($page, $search = null)
     {
         try {
-            Log::info("guideService getGuidePerformance");
 
             $perPage = 10;
             $guides = DB::table('guides')
                 ->join('users', 'guides.user_id', '=', 'users.id')
                 ->join('guide_performances', 'guides.id', '=', 'guide_performances.guide_id')
-                ->where('name', 'like', '%' . $search . '%')
+                ->join('packages','guide_performances.package_id','packages.id')
+                ->where('users.name', 'like', '%' . $search . '%')
+                ->orWhere('packages.name', 'like', '%' . $search . '%')
                 ->orWhere('email', 'like', '%' . $search . '%')
-                ->paginate($perPage, ['guide_performances.*', 'name', 'email'], 'page', $page);
+                ->paginate($perPage, ['guide_performances.*', 'users.name', 'email','packages.name as package_name'], 'page', $page);
             if ($guides->count() > 0) {
                 return ["status" => true, "data" => $guides, "message" => "Guides performance list retrived successfully"];
             } else {

@@ -117,7 +117,6 @@ class guideController extends Controller
 
     public function getGuidePerformance(Request $request)
     {
-        Log::info("guideController getGuidePerformance  qwerty");
         try {
             $page = $request->query('page');
             $search = $request->query('search');

@@ -170,8 +170,8 @@ Route::get('/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
 
 
 
-Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
-Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
+// Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
+// Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
 
 Route::middleware(['auth:sanctum', 'users'])->group(function () {
     Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
