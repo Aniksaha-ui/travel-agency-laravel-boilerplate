@@ -3,6 +3,7 @@
 namespace App\Repository\Services\Tickets;
 
 use App\Constants\NotificationStatus;
+use App\Constants\TicketStatus;
 use App\Helpers\admin\FileManageHelper;
 use App\Repository\Services\Notification\NotificationService;
 use Exception;
@@ -47,7 +48,7 @@ class TicketsService
 
             $notificationData =[
                 'title' => 'Ticket Status Updated',
-                'content' => 'Your ticket ' . $ticket->title . ' status has been updated to ' . $statusInfo,
+                'content' => 'Your ticket ' . $ticket->title . ' status has been updated to ' . TicketStatus::labels()[$statusInfo],
                 'user_id' => $ticket->generate_by,
                 'schedule_start' => now(),
                 'schedule_end' => now()->addDays(30),
