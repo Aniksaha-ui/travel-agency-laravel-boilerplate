@@ -48,7 +48,8 @@ class UpdateTripStatus extends Command
     public function handle()
     {
          DB::table('trips')
-        ->where('status', 1)
+         ->where('status', TripStatus::ACTIVE)
+         ->Where('is_active', TripStatus::ACTIVE)
         ->where('departure_time', '<', now())
         ->update(['status' => TripStatus::INACTIVE,'is_active'=>TripStatus::INACTIVE]);
         $msg ="Departed trips become inactive";

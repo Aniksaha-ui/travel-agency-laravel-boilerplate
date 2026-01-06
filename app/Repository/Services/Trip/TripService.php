@@ -163,10 +163,8 @@ class TripService implements CommonInterface
                 'price' => $request['price'],
                 'description' => $request['description'] ?? '',
                 'image' => $documentLink ?? $request['image'],
-                'status' => 1,
                 'vehicle_id' => $request['vehicle_id'],
                 'route_id' => $request['route_id'],
-                'is_active' => 1,
             ];
             $routeInsert = DB::table('trips')->where('id', $id)->update($updatedData);
             Log::info("updated trips". $routeInsert);
@@ -273,6 +271,7 @@ class TripService implements CommonInterface
                 ->whereNotIn('trips.id', function ($query) {
                     $query->select('vehicle_trip_trackings.trip_id')->from('vehicle_trip_trackings');
                 })
+                ->where('status',TripStatus::ACTIVE)
                 ->get();
 
 
