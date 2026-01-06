@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
             $schedule->command('report:financial_year')->everyMinute();
+            $schedule->command('trip:inactiveTrips')->everyFourMinutes();
 
         // $schedule->command('report:financial_year')->everyMinute();
     }
