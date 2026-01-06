@@ -178,6 +178,7 @@ class HotelService
             $perPage = 10;
             $hotels = DB::table('hotels')
                 ->where('name', 'like', '%' . $search . '%')
+                ->orderBy('id','desc')
                 ->paginate($perPage, ['hotels.*'], 'page', $page);
             if ($hotels->count() > 0) {
                 return ["status" => true, "data" => $hotels, "message" => "Hotels list retrived successfully"];
@@ -196,6 +197,7 @@ class HotelService
                 ->join('checkins', 'hotel_bookings.id', '=', 'checkins.hotel_booking_id')
                 ->join('hotels', 'hotels.id', '=', 'hotel_bookings.hotel_id')
                 ->where('name', 'like', '%' . $search . '%')
+                ->orderBy('hotel_bookings.id','desc')
                 ->paginate($perPage, ['hotels.name','checkins.hotel_booking_id','checkins.hotel_booking_id','checkins.check_in_time','checkins.check_out_time','checkins.status'], 'page', $page);
             if ($hotels->count() > 0) {
                 return ["status" => true, "data" => $hotels, "message" => "Hotels Checking list retrived successfully"];
