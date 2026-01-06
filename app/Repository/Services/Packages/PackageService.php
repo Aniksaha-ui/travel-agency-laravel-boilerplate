@@ -124,7 +124,11 @@ class PackageService
     {
         try {
             DB::beginTransaction();
-            Log::info("PackageService - requestdata" . json_encode($data));
+            if (!isset($data['image'])) {
+                $documentLink = FileManageHelper::uploadFile('packages', $data['image']);
+            } else {
+                $data['image'] = 'images/trips/default.png';
+            }
 
 
             $packageId = DB::table('packages')->insertGetId([
@@ -155,15 +159,21 @@ class PackageService
                     ]);
                 }
             }
-            if ($data['pricing']) {
+            if (isset($data['pricing']) && is_array($data['pricing'])) {
                 foreach ($data['pricing'] as $price) {
-                    DB::table('price_packages')->insert([
-                        'package_id' => $packageId,
-                        'adult_price' => $price['adult_price'],
-                        'child_price' => $price['child_price']
-                    ]);
+                    // Make sure it's an array and has the necessary fields
+                    if (isset($price['adult_price']) && isset($price['child_price'])) {
+                        DB::table('price_packages')->insert([
+                            'package_id' => $packageId,
+                            'adult_price' => $price['adult_price'],
+                            'child_price' => $price['child_price']
+                        ]);
+                    } else {
+                        Log::alert("Invalid pricing data: " . json_encode($price));
+                    }
                 }
             }
+
 
 
             if ($data['guide_id']) {

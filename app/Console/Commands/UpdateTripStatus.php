@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Constants\TripStatus;
 use App\Repository\Services\Monitoring\TelegramService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ class UpdateTripStatus extends Command
          DB::table('trips')
         ->where('status', 1)
         ->where('departure_time', '<', now())
-        ->update(['status' => 0,'is_active'=>0]);
+        ->update(['status' => TripStatus::INACTIVE,'is_active'=>TripStatus::INACTIVE]);
         $msg ="Departed trips become inactive";
         $this->send(app(TelegramService::class),$msg);
         

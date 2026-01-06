@@ -2,6 +2,7 @@
 
 namespace App\Repository\Services\Trip;
 
+use App\Constants\TripStatus;
 use App\Helpers\admin\FileManageHelper;
 use App\Repository\Interfaces\CommonInterface;
 use App\Repository\Services\Vehicles\VehicleService;
@@ -73,12 +74,7 @@ class TripService implements CommonInterface
 
 
 
-            // $alreadyBooked = DB::table('vehicle_trip_trackings')->where('vehicle_id', $request['vehicle_id'])
-            //     ->whereBetween('travel_start_date', [$request['departure_time'], $request['arrival_time']])
-            //     ->orWhereBetween('travel_end_date', [$request['departure_time'], $request['arrival_time']])
-            //     ->where('vehicle_id', $request['vehicle_id'])
-            //     ->first();
-
+      
             $alreadyBooked = DB::table('trips')
                 ->where('vehicle_id', $request['vehicle_id'])
                 ->where(function ($query) use ($request) {
@@ -230,7 +226,7 @@ class TripService implements CommonInterface
                 $query->where('arrival_time', '>=', $data['end_date']);
             }
 
-            $query->where('is_active', 1);
+            $query->where('status', TripStatus::ACTIVE);
             $query->orderBy('id', 'desc');
 
             $trips = $query->get();
@@ -258,7 +254,7 @@ class TripService implements CommonInterface
             if (!$trip) {
                 return ["status" => false, "message" => "Trip not found"];
             }
-            $inactiveTrip = DB::table('trips')->where('id', $tripId)->update(['is_active' => 0]);
+            $inactiveTrip = DB::table('trips')->where('id', $tripId)->update(['is_active' => TripStatus::INACTIVE]);
             if ($inactiveTrip) {
                 return ["status" => true, "message" => "Trip Inactive successfully"];
             } else {
