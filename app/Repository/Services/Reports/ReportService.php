@@ -2,6 +2,7 @@
 
 namespace App\Repository\Services\Reports;
 
+use App\Constants\BookingStatus;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use DB;
@@ -132,8 +133,8 @@ class ReportService
             $report = DB::table('bookings')
                 ->join('users', 'bookings.user_id', '=', 'users.id')
                 ->where('bookings.trip_id', $tripId)
-                ->where('bookings.status', '!=', 'cancelled')
-                ->select('users.name', 'users.email', 'bookings.created_at as booking_date', 'bookings.status')
+                ->where('bookings.status', '!=', BookingStatus::CANCELLED)
+                ->select('users.name', 'users.email', 'bookings.created_at as booking_date', 'bookings.status',"bookings.package_id")
                 ->get();
 
             if ($report->count() > 0) {
@@ -153,37 +154,33 @@ class ReportService
             $perPage = 10;
             $report =  DB::table('trips as t')
                 ->leftJoin(DB::raw('(
-        SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked
-        FROM bookings b
-        JOIN booking_seats bs ON bs.booking_id = b.id
-        GROUP BY b.trip_id
-    ) as bs'), 'bs.trip_id', '=', 't.id')
-
+                            SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked
+                            FROM bookings b
+                            JOIN booking_seats bs ON bs.booking_id = b.id
+                            GROUP BY b.trip_id
+                        ) as bs'), 'bs.trip_id', '=', 't.id')
                 ->leftJoin(DB::raw('(
-        SELECT trip_id, COUNT(*) AS total_seats_available
-        FROM seat_availablities
-        WHERE is_available = 1
-        GROUP BY trip_id
-    ) as sa'), 'sa.trip_id', '=', 't.id')
-
+                                SELECT trip_id, COUNT(*) AS total_seats_available
+                                FROM seat_availablities
+                                WHERE is_available = 1
+                                GROUP BY trip_id
+                            ) as sa'), 'sa.trip_id', '=', 't.id')
                 ->leftJoin(DB::raw('(
-        SELECT b.trip_id, SUM(p.amount) AS total_paid_amount
-        FROM payments p
-        JOIN bookings b ON p.booking_id = b.id
-        GROUP BY b.trip_id
-    ) as pay'), 'pay.trip_id', '=', 't.id')
-
+                            SELECT b.trip_id, SUM(p.amount) AS total_paid_amount
+                            FROM payments p
+                            JOIN bookings b ON p.booking_id = b.id
+                            GROUP BY b.trip_id
+                        ) as pay'), 'pay.trip_id', '=', 't.id')
                 ->leftJoin(DB::raw('(
-        SELECT trip_id, SUM(cost_amount) AS total_cost
-        FROM trip_package_costings
-        GROUP BY trip_id
-    ) as tc'), 'tc.trip_id', '=', 't.id')
-                ->where(function ($query) use ($search) {
-                    $query->where('t.trip_name', 'like', '%' . $search . '%')
-                        ->orWhere('t.departure_time', 'like', '%' . $search . '%')
-                        ->orWhere('t.arrival_time', 'like', '%' . $search . '%');
-                })
-
+                                SELECT trip_id, SUM(cost_amount) AS total_cost
+                                FROM trip_package_costings
+                                GROUP BY trip_id
+                            ) as tc'), 'tc.trip_id', '=', 't.id')
+                                        ->where(function ($query) use ($search) {
+                                            $query->where('t.trip_name', 'like', '%' . $search . '%')
+                                                ->orWhere('t.departure_time', 'like', '%' . $search . '%')
+                                                ->orWhere('t.arrival_time', 'like', '%' . $search . '%');
+                                        })
                 ->select(
                     't.id as trip_id',
                     't.trip_name',
@@ -195,6 +192,7 @@ class ReportService
                     DB::raw('IFNULL(tc.total_cost, 0) as total_cost'),
                     DB::raw('(IFNULL(pay.total_paid_amount, 0) - IFNULL(tc.total_cost, 0)) as profit')
                 )
+                ->orderBy('t.id','desc')
                 ->paginate($perPage);
 
             if ($report->count() > 0) {
@@ -216,12 +214,12 @@ class ReportService
             $report =  DB::table('packages as p')
                 ->leftJoin(
                     DB::raw('(
-        SELECT 
-            package_id,
-            COUNT(*) AS total_bookings,
-            SUM(total_cost) AS total_income
-        FROM package_bookings
-    ) as pb_data'),
+                                SELECT 
+                                    package_id,
+                                    COUNT(*) AS total_bookings,
+                                    SUM(total_cost) AS total_income
+                                FROM package_bookings
+                            ) as pb_data'),
                     'pb_data.package_id',
                     '=',
                     'p.id'
@@ -230,16 +228,16 @@ class ReportService
                 )
                 ->join('bookings as b', function ($join) {
                     $join->on('p.id', '=', 'b.package_id')
-                        ->where('b.status', '!=', 'cancelled');
+                        ->where('b.status', '!=', BookingStatus::CANCELLED);
                 })
 
                 ->leftJoin(DB::raw('(
-        SELECT 
-            package_id,
-            SUM(cost_amount) AS total_expense
-        FROM trip_package_costings
-        GROUP BY package_id
-    ) as tc_data'), 'tc_data.package_id', '=', 'p.id')
+                    SELECT 
+                        package_id,
+                        SUM(cost_amount) AS total_expense
+                    FROM trip_package_costings
+                    GROUP BY package_id
+                ) as tc_data'), 'tc_data.package_id', '=', 'p.id')
                 ->select(
                     'p.id as package_id',
                     'p.name as package_name',
