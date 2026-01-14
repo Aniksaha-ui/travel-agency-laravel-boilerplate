@@ -152,48 +152,78 @@ class ReportService
     {
         try {
             $perPage = 10;
-            $report =  DB::table('trips as t')
-                ->leftJoin(DB::raw('(
+            $report = DB::table('trips as t')
+                        ->leftJoin(DB::raw('(
                             SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked
                             FROM bookings b
                             JOIN booking_seats bs ON bs.booking_id = b.id
+                            WHERE b.booking_type = "trip"  -- Filter for Trip bookings
                             GROUP BY b.trip_id
                         ) as bs'), 'bs.trip_id', '=', 't.id')
-                ->leftJoin(DB::raw('(
-                                SELECT trip_id, COUNT(*) AS total_seats_available
-                                FROM seat_availablities
-                                WHERE is_available = 1
-                                GROUP BY trip_id
-                            ) as sa'), 'sa.trip_id', '=', 't.id')
-                ->leftJoin(DB::raw('(
+                        
+                        ->leftJoin(DB::raw('(
+                            SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked_package
+                            FROM bookings b
+                            JOIN booking_seats bs ON bs.booking_id = b.id
+                            WHERE b.booking_type = "package"  -- Filter for Package bookings
+                            GROUP BY b.trip_id
+                        ) as bp'), 'bp.trip_id', '=', 't.id')
+
+                        ->leftJoin(DB::raw('(
+                            SELECT trip_id, COUNT(*) AS total_seats_available
+                            FROM seat_availablities
+                            WHERE is_available = 1
+                            GROUP BY trip_id
+                        ) as sa'), 'sa.trip_id', '=', 't.id')
+
+                        ->leftJoin(DB::raw('(
                             SELECT b.trip_id, SUM(p.amount) AS total_paid_amount
                             FROM payments p
                             JOIN bookings b ON p.booking_id = b.id
+                            WHERE b.booking_type = "trip"  -- Filter for Trip payments
                             GROUP BY b.trip_id
                         ) as pay'), 'pay.trip_id', '=', 't.id')
-                ->leftJoin(DB::raw('(
-                                SELECT trip_id, SUM(cost_amount) AS total_cost
-                                FROM trip_package_costings
-                                GROUP BY trip_id
-                            ) as tc'), 'tc.trip_id', '=', 't.id')
-                                        ->where(function ($query) use ($search) {
-                                            $query->where('t.trip_name', 'like', '%' . $search . '%')
-                                                ->orWhere('t.departure_time', 'like', '%' . $search . '%')
-                                                ->orWhere('t.arrival_time', 'like', '%' . $search . '%');
-                                        })
-                ->select(
-                    't.id as trip_id',
-                    't.trip_name',
-                    't.departure_time',
-                    't.arrival_time',
-                    DB::raw('IFNULL(bs.total_seats_booked, 0) as total_seats_booked'),
-                    DB::raw('IFNULL(sa.total_seats_available, 0) as total_seats_available'),
-                    DB::raw('IFNULL(pay.total_paid_amount, 0) as total_income'),
-                    DB::raw('IFNULL(tc.total_cost, 0) as total_cost'),
-                    DB::raw('(IFNULL(pay.total_paid_amount, 0) - IFNULL(tc.total_cost, 0)) as profit')
-                )
-                ->orderBy('t.id','desc')
-                ->paginate($perPage);
+
+                        ->leftJoin(DB::raw('(
+                            SELECT b.trip_id, SUM(p.amount) AS total_paid_amount_package
+                            FROM payments p
+                            JOIN bookings b ON p.booking_id = b.id
+                            WHERE b.booking_type = "package"  -- Filter for Package payments
+                            GROUP BY b.trip_id
+                        ) as pay_package'), 'pay_package.trip_id', '=', 't.id')
+
+                        ->leftJoin(DB::raw('(
+                            SELECT trip_id, SUM(cost_amount) AS total_cost
+                            FROM trip_package_costings
+                            GROUP BY trip_id
+                        ) as tc'), 'tc.trip_id', '=', 't.id')
+                        
+                        ->where(function ($query) use ($search) {
+                            $query->where('t.trip_name', 'like', '%' . $search . '%')
+                                ->orWhere('t.departure_time', 'like', '%' . $search . '%')
+                                ->orWhere('t.arrival_time', 'like', '%' . $search . '%');
+                        })
+
+                        ->select(
+                            't.id as trip_id',
+                            't.trip_name',
+                            't.departure_time',
+                            't.arrival_time',
+                            DB::raw('IFNULL(bs.total_seats_booked, 0) as total_seats_booked_trip'),
+                            DB::raw('IFNULL(bp.total_seats_booked_package, 0) as total_seats_booked_package'),
+                            DB::raw('IFNULL(sa.total_seats_available, 0) as total_seats_available'),
+                            DB::raw('IFNULL(pay.total_paid_amount, 0) as total_income_trip'),
+                            DB::raw('IFNULL(pay_package.total_paid_amount_package, 0) as total_income_package'),
+                            DB::raw('IFNULL(tc.total_cost, 0) as total_cost'),
+                            
+                            // Calculate profit for trip and package separately
+                            DB::raw('(IFNULL(pay.total_paid_amount, 0) - IFNULL(tc.total_cost, 0)) as profit_trip'),
+                            DB::raw('(IFNULL(pay_package.total_paid_amount_package, 0) - IFNULL(tc.total_cost, 0)) as profit_package')
+                        )
+                        ->orderBy('t.id', 'desc')
+                        ->paginate($perPage);
+
+
 
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];

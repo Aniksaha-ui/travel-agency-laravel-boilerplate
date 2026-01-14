@@ -53,7 +53,7 @@ class UpdateTripStatus extends Command
         ->where('departure_time', '<', now())
         ->update(['status' => TripStatus::INACTIVE,'is_active'=>TripStatus::INACTIVE]);
         $msg ="Departed trips become inactive";
-        $this->send(app(TelegramService::class),$msg);
+        // $this->send(app(TelegramService::class),$msg);   # send notification is off currently
         
         return 0;
     }
