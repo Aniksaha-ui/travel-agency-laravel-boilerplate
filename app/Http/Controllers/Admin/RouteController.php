@@ -46,8 +46,8 @@ class RouteController extends Controller
 
 
         $validator = Validator::make($request->all(), [
-            'origin'      => 'required|string',
-            'destination' => 'required|string',
+            'origin'      => 'required|string|max:255',
+            'destination' => 'required|string|max:255',
             'route_name'  => 'required|string|max:255',
         ], [
             'route_name.required' => 'Route name is required.',
