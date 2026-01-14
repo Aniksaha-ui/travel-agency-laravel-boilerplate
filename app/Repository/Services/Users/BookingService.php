@@ -116,7 +116,6 @@ class BookingService implements CommonInterface
                 ->where('bookings.user_id', $userId)
                 ->get();
             Log::info("invoice info" . json_encode($invoiceInfo));
-            // Organize into a parent-child structure
 
             return $invoiceInfo;
         } catch (Exception $ex) {

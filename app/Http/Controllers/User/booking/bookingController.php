@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\User\booking;
 
+use App\Constants\BookingType;
+use App\Constants\TripStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\Users\BookingService;
 use Illuminate\Http\Request;
@@ -39,19 +41,27 @@ class bookingController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'FAILED',
                 'message' => 'Validation failed',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            DB::beginTransaction(); // Start transaction
+            DB::beginTransaction(); 
 
             $seatInfo = $request->input('seatinfo');
             $seatIds = array_column($seatInfo, "seat_id");
-            $tripId = $seatInfo[0]['trip_id']; // Assuming all seats belong to the same trip
+            $tripId = $seatInfo[0]['trip_id']; 
             $paymentInfo = $request->input('paymentinfo');
+
+            $tripActive = DB::table('trips')->where('id',$tripId)->where('is_active',TripStatus::ACTIVE)->first();
+            if(!$tripActive){
+                return response()->json([
+                'status' => 'FAILED',
+                'message' => 'Trip is not available now!',
+                ], 422);
+            }
 
             // Check if any of the requested seats are already booked
             $existingSeats = DB::table('booking_seats')
@@ -62,9 +72,9 @@ class bookingController extends Controller
 
             if ($existingSeats) {
                 return response()->json([
-                    'status' => 'error',
+                    'status' => 'FAILED',
                     'message' => 'One or more selected seats are already booked.',
-                ], 409);
+                ], 422);
             }
 
             // Insert into bookings table
@@ -73,7 +83,7 @@ class bookingController extends Controller
                 "trip_id" => $tripId,
                 "seat_ids" => implode(",", $seatIds),
                 "status" => "paid",
-                'booking_type' => 'trip',
+                'booking_type' => BookingType::TRIP,
                 "created_at" => now(),
                 "updated_at" => now()
             ]);
@@ -108,7 +118,7 @@ class bookingController extends Controller
             $transactionRef = strtoupper(Str::random(10));
 
             // Insert into transactions table
-            DB::table('transactions')->insert([
+            $transactionRef =DB::table('transactions')->insertGetId([
                 "payment_id" => $lastPaymentId,
                 "transaction_reference" => $transactionRef,
                 "created_at" => now(),
@@ -120,10 +130,7 @@ class bookingController extends Controller
                 ->where('trip_id', $tripId)
                 ->whereIn('seat_id', $seatIds)
                 ->update(['is_available' => 0]);
-
-
-            Log::info($paymentInfo['payment_method']);
-            Log::info($paymentInfo['amount']);
+       
             DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->increment('amount', $paymentInfo['amount']);
             DB::table('account_history')->insert([
                 'user_id' => $request->user()->id,
@@ -141,7 +148,8 @@ class bookingController extends Controller
                 'tran_date' => now(),
             ]);
 
-            
+            $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
+            Log::info($msg);
             DB::commit();
 
             return response()->json([
@@ -158,7 +166,7 @@ class bookingController extends Controller
         } catch (\Exception $e) {
             DB::rollBack(); // Rollback transaction on error
             return response()->json([
-                'status' => 'error',
+                'status' => 'FAILED',
                 'message' => 'Something went wrong!',
                 'error' => $e->getMessage()
             ], 500);
