@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Constants\ApiResponseStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\RouteService;
 use Exception;
+use Facade\FlareClient\Api;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class RouteController extends Controller
 {
@@ -16,87 +19,115 @@ class RouteController extends Controller
         $this->routeService = $routeService;
     }
 
-    public function index(Request $request){
-        $page = $request->query('page');
-        $search = $request->query('search');
-      
-        $response = $this->routeService->index($page,$search);
-        return response()->json([
-            "data"=> $response,
-            "message"=> "success"
-        ],200);
-    }
+    public function index(Request $request)
+    {
 
-    public function insert(Request $request){
-     try{
-        $response = $this->routeService->store($request->all());
-        if($response==true){
-         return response()->json([
-             'isExecute' => true,
-             'data' => $response,
-             'message' => 'New Route Created',
-         ],200);
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
+
+            $response = $this->routeService->index($page, $search);
+            return response()->json([
+                "isExecute" => $response['status'],
+                "data" => $response['data'],
+                "message" => $response['message']
+            ], 200);
+        } catch (Exception $ex) {
+            return response()->json([
+                "status" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 200);
         }
-
-        return response()->json([
-            'isExecute' => true,
-            'message' => 'New Route Cannot be Created'
-        ],200);
-        
-     }catch(Exception $ex){
-        Log::error($ex->getMessage());
-     }
     }
 
-    public function findRouteById($id){
-        try{
+    public function insert(Request $request)
+    {
+        try {
+
+
+        $validator = Validator::make($request->all(), [
+            'origin'      => 'required|string',
+            'destination' => 'required|string',
+            'route_name'  => 'required|string|max:255',
+        ], [
+            'route_name.required' => 'Route name is required.',
+            'origin.required'     => 'Origin is required.',
+            'origin.email'        => 'Origin must be a valid email.',
+            'destination.required'=> 'Destination is required.',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error("Validation error".$validator->errors()->first());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message'   => $validator->errors()->first(),
+            ], 422);
+        }
+            $response = $this->routeService->store($request->all());
+            if ($response) {
+                return response()->json([
+                    'isExecute' => $response['status'],
+                    'data' => $response['data'],
+                    'message' => $response['message'],
+                ], 200);
+            }
+        } catch (Exception $ex) {
+            Log::error("Router Controller - insert function" . $ex->getMessage());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message' => config("message.server_error")
+            ], 500);
+        }
+    }
+
+    public function findRouteById($id)
+    {
+        try {
             $response = $this->routeService->findById($id);
-            if($response){
+            if ($response) {
                 return response()->json([
-                    "isExecute"=> true,
-                    "data"=> $response,
-                    "message"=> "Find Single Route"
-                ],200);
-            }else{
-                return response()->json([
-                    "isExecute"=> true,
-                    "message"=> "No Data Found"
-                ],200);
+                    "isExecute" => $response['status'],
+                    "data" => $response['data'],
+                    "message" => $response['message']
+                ], 200);
             }
-
-        }catch(Exception $ex){
-            Log::error($ex->getMessage());
+        } catch (Exception $ex) {
+            Log::error("Router Controller - findRouteById function" . $ex->getMessage());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message' => config("message.server_error")
+            ], 500);
         }
     }
 
 
-    public function delete($id){
-        try{
+    public function delete($id)
+    {
+        try {
             $response = $this->routeService->delete($id);
-            if($response){
+            if ($response) {
                 return response()->json([
-                    "isExecute"=> true,
-                    "data"=> $response,
-                    "message"=> "Route Deleted"
-                ],200);
-            }else{
-                return response()->json([
-                    "isExecute"=> true,
-                    "message"=> "Data Can not be deleted"
-                ],200);
+                    "isExecute" => $response['status'],
+                    "data" => $response['data'],
+                    "message" => $response['message']
+                ], 200);
             }
-        }catch(Exception $ex){
-            Log::error($ex->getMessage());
+        } catch (Exception $ex) {
+            Log::error("Router Controller - findRouteById function" . $ex->getMessage());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message' => config("message.server_error")
+            ], 500);
         }
     }
 
 
-    public function dropdown(){
+    public function dropdown()
+    {
         $response = $this->routeService->dropdownList();
         return response()->json([
-            "data"=> $response,
-            "message"=> "success"
-        ],200);
+            "data" => $response,
+            "message" => "success"
+        ], 200);
     }
-
 }

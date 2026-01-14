@@ -27,7 +27,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     /*************************************routes api start**************************************/
     Route::get('admin/dashboard', 'AdminController@dashboard');
-    Route::get('admin/dashboard/databaseList', action: 'AdminController@databaseList');
+    // Route::get('admin/dashboard/databaseList', action: 'AdminController@databaseList');
     Route::get('/admin/routes', 'Admin\RouteController@index');
     Route::get('/admin/routes/dropdown', 'Admin\RouteController@dropdown');
     Route::post('/admin/routes', 'Admin\RouteController@insert');
