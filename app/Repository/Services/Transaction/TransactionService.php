@@ -18,7 +18,8 @@ class TransactionService
             $transactions = DB::table('transactions')
                             ->join('payments', 'transactions.payment_id', '=', 'payments.id')
                             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-                            ->paginate($perPage, ['transactions.id as transaction_id','payments.id as payment_id','transactions.transaction_reference','payments.amount','payments.payment_method','bookings.booking_type as purpose','bookings.id as booking_id'], 'page', $page);
+                            ->orderBy('transactions.id', 'desc')
+                            ->paginate($perPage, ['transactions.id as transaction_id','transactions.created_at','payments.id as payment_id','transactions.transaction_reference','payments.amount','payments.payment_method','bookings.booking_type as purpose','bookings.id as booking_id'], 'page', $page);
              if ($transactions->count() > 0) {
                 return ["status" => true, "data" => $transactions, "message" => "Transaction information retrieved successfully"];
             } else {
