@@ -124,10 +124,21 @@ class RouteController extends Controller
 
     public function dropdown()
     {
-        $response = $this->routeService->dropdownList();
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+        try{
+            $response = $this->routeService->dropdownList();
+            return response()->json([
+                "data" => $response,
+                "message" => "success"
+            ], 200);
+
+        }catch(Exception $ex){
+            Log::error("Route Controller - dropdown function" . $ex->getMessage());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message' => config("message.server_error")
+            ], 500);
+        }
+
+     
     }
 }
