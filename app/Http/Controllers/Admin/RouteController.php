@@ -127,8 +127,9 @@ class RouteController extends Controller
         try{
             $response = $this->routeService->dropdownList();
             return response()->json([
-                "data" => $response,
-                "message" => "success"
+                "isExecute" => $response['status'],
+                "data" => $response['data'],
+                "message" => $response['message']
             ], 200);
 
         }catch(Exception $ex){
