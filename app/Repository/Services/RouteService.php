@@ -90,7 +90,7 @@ class RouteService
         try {
             $perPage = 10;
             $routes = DB::table('routes')->select('id', 'route_name')->get();
-            if ($routes->total() > 0) {
+            if ($routes->count() > 0) {
                 return ["status" => ApiResponseStatus::SUCCESS, "data" => $routes, "message" => "Route Information retrieved"];
             }
             return ["status" => ApiResponseStatus::SUCCESS, "data" => $routes, "message" => config("message.no_data_found")];
