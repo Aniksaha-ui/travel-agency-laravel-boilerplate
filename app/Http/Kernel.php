@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'admin' => \App\Http\Middleware\CheckAdmin::class,
         'users' => \App\Http\Middleware\CheckUser::class,
         'guide' => \App\Http\Middleware\CheckGuide::class,
+         'query.monitor' => \App\Http\Middleware\QueryMonitor::class,
     ];
 }

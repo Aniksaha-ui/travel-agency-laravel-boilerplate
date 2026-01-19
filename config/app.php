@@ -123,6 +123,9 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
+    'query_monitor' => env('QUERY_MONITOR', false),
+
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
