@@ -23,7 +23,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin','query.monitor'])->group(function () {
 
     /*************************************routes api start**************************************/
     Route::get('admin/dashboard', 'AdminController@dashboard');

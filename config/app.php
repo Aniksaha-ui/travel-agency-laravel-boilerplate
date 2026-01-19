@@ -230,5 +230,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
+    'query_monitor' => env('QUERY_MONITOR', true),
+
 
 ];
