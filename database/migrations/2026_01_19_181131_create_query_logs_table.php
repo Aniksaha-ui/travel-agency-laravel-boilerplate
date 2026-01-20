@@ -16,6 +16,8 @@ class CreateQueryLogsTable extends Migration
         Schema::create('query_logs', function (Blueprint $table) {
             $table->id();
             $table->uuid('request_id');
+            $table->text('controller')->nullable();
+            $table->string('route')->nullable();
             $table->text('sql');
             $table->longText('bindings')->nullable();
             $table->decimal('time_ms', 8, 2);

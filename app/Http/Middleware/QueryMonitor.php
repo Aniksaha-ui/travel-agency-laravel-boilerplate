@@ -6,6 +6,8 @@ use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QueryLog;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 class QueryMonitor
 {
@@ -13,12 +15,21 @@ class QueryMonitor
 
     public function handle($request, Closure $next)
     {
-        DB::listen(function ($query) use ($request) {
+
+        $route = Route::current();
+        $action    = $route->getActionName();
+        $uri       = $route->uri();
+        $requestId = Str::uuid();
+
+        DB::listen(function ($query) use ($request, $action, $uri, $requestId) {
 
             $sqlWithBindings = $this->getRealQuery($query->sql, $query->bindings);
             self::$queries[] = [
+                'request_id'=> $requestId,
                 'sql'        => $sqlWithBindings,
                 'bindings'   => json_encode($query->bindings),
+                'controller' => $action,
+                'route'      => $uri,
                 'time_ms'    => $query->time,
                 'url'        => $request->fullUrl(),
                 'method'     => $request->method(),
@@ -27,6 +38,7 @@ class QueryMonitor
                 'created_at'=> now(),
                 'updated_at'=> now(),
             ];
+
         });
 
         return $next($request);
