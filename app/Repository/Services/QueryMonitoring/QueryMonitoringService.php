@@ -30,43 +30,43 @@ class QueryMonitoringService
             /** 1️⃣ Request-wise performance (latest 5 requests) */
             $report = $this->getReport($fromDate, $showEntries);
 
-            if ($report->total() > 0) {
+            if ($report->count() > 0) {
                 $response['request_report'] = $report;
             }
 
             /** 2️⃣ Slow queries (latest 5) */
             $slowQueries = $this->getSlowQueries($fromDate, $showEntries);
-            if ($slowQueries->total() > 0) {
+            if ($slowQueries->count() > 0) {
                 $response['slow_queries'] = $slowQueries;
             }
 
             /** 3️⃣ Route-wise performance (latest 5 routes) */
             $routeReport = $this->getRouteReport($fromDate, $showEntries);
-            if ($routeReport->total() > 0) {
+            if ($routeReport->count() > 0) {
                 $response['route_report'] = $routeReport;
             }
 
             /** 4️⃣ Controller-wise load (latest 5 controllers) */
             $controllerReport = $this->getControllerReport($fromDate, $showEntries);
-            if ($controllerReport->total() > 0) {
+            if ($controllerReport->count() > 0) {
                 $response['controller_report'] = $controllerReport;
             }
 
             /** 5️⃣ User-wise usage (latest 5 users) */
             $userReport = $this->getUserReport($fromDate, $showEntries);
-            if ($userReport->total() > 0) {
+            if ($userReport->count() > 0) {
                 $response['user_report'] = $userReport;
             }
 
             /** 6️⃣ Daily summary (latest 5 days) */
             $dailyReport = $this->getDailyReport($fromDate, $showEntries);
-            if ($dailyReport->total() > 0) {
+            if ($dailyReport->count() > 0) {
                 $response['daily_report'] = $dailyReport;
             }
 
             /** 7️⃣ Latest raw logs (latest 5 rows) */
             $logs = $this->getLatestLogs($fromDate, $showEntries);
-            if ($logs->total() > 0) {
+            if ($logs->count() > 0) {
                 $response['latest_logs'] = $logs;
             }
 
