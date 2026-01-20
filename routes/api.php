@@ -23,7 +23,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware(['auth:sanctum', 'admin','query.monitor'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function () {
 
     /*************************************routes api start**************************************/
     Route::get('admin/dashboard', 'AdminController@dashboard');
@@ -156,6 +156,7 @@ Route::middleware(['auth:sanctum', 'admin','query.monitor'])->group(function () 
     /*****Tickets */
     Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
+    Route::get('admin/monitoring', 'Admin\monitoring\monitoringController@monitoring');
 });
 
 /************************************* User api start *******************************/
