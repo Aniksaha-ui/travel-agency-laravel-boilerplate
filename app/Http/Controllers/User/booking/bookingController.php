@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\User\booking;
 
+use App\Constants\ApiResponseStatus;
+use App\Constants\BookingStatus;
 use App\Constants\BookingType;
 use App\Constants\TripStatus;
 use App\Http\Controllers\Controller;
@@ -64,6 +66,7 @@ class bookingController extends Controller
             $paymentInfo = $request->input('paymentinfo');
 
             $tripActive = DB::table('trips')->where('id',$tripId)->where('is_active',TripStatus::ACTIVE)->first();
+
             if(!$tripActive){
                 return response()->json([
                 'status' => 'FAILED',
@@ -72,18 +75,19 @@ class bookingController extends Controller
             }
 
             // Check if any of the requested seats are already booked
-            // $existingSeats = DB::table('booking_seats')
-            //     ->join('bookings', 'booking_seats.booking_id', '=', 'bookings.id')
-            //     ->whereIn('seat_id', $seatIds)
-            //     ->where('trip_id', $tripId)
-            //     ->exists();
+            $existingSeats = DB::table('booking_seats')
+                ->join('bookings', 'booking_seats.booking_id', '=', 'bookings.id')
+                ->whereIn('seat_id', $seatIds)
+                ->where('bookings.status', "!=",BookingStatus::PENDING)
+                ->where('trip_id', $tripId)
+                ->exists();
 
-            // if ($existingSeats) {
-            //     return response()->json([
-            //         'status' => 'FAILED',
-            //         'message' => 'One or more selected seats are already booked.',
-            //     ], 422);
-            // }
+            if ($existingSeats) {
+                return response()->json([
+                    'status' => 'FAILED',
+                    'message' => 'One or more selected seats are already booked.',
+                ], 422);
+            }
 
             // Insert into bookings table
             $lastBookingId = DB::table('bookings')->insertGetId([
@@ -96,19 +100,7 @@ class bookingController extends Controller
                 "updated_at" => now()
             ]);
 
-            // Prepare data for booking_seats table
-            $bookingSeats = [];
-            foreach ($seatInfo as $seat) {
-                $bookingSeats[] = [
-                    'booking_id' => $lastBookingId,
-                    'seat_id' => $seat['seat_id'],
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ];
-            }
-
-            // Bulk insert into booking_seats table
-            DB::table('booking_seats')->insert($bookingSeats);
+           
 
             // Insert into payments table
             $lastPaymentId = DB::table('payments')->insertGetId([
@@ -133,16 +125,7 @@ class bookingController extends Controller
                 "updated_at" => now()
             ]);
 
-            // Update seat availability
-            DB::table('seat_availablities')
-                ->where('trip_id', $tripId)
-                ->whereIn('seat_id', $seatIds)
-                ->update(['is_available' => 0]);
-       
-            DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->increment('amount', $paymentInfo['amount']);
-       
 
-        
            $post_data = [
                 'store_id' => env('STORE_ID'),
                 'store_passwd' => env('STORE_PASSWORD'),
@@ -169,24 +152,36 @@ class bookingController extends Controller
                 'value_b' => json_encode($request->all()),
             ];
 
-
             $initPayment = $this->sslPayment->initSSLTransaction($post_data);
-            dd($initPayment);
-            $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
-            Log::info($msg);
-            DB::commit();
 
+            if(isset($initPayment) && $initPayment['status'] == 'success'){
+                $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
+                Log::info($msg);
+                DB::commit();   
+                return response()->json([
+                    'status' => ApiResponseStatus::SUCCESS,
+                    'message' => 'Booking successfully created!',
+                    'data' => [
+                        "redirected_url" => $initPayment['url'],
+                        'booking_id' => $lastBookingId,
+                        'trip_id' => $tripId,
+                        'seats' => $seatInfo,
+                        'payment_id' => $lastPaymentId,
+                        'transaction_reference' => $transactionRef
+                    ]
+                ], 201);
+            }
+
+            DB::rollBack();
             return response()->json([
-                'status' => 'success',
-                'message' => 'Booking successfully created!',
-                'data' => [
-                    'booking_id' => $lastBookingId,
-                    'trip_id' => $tripId,
-                    'seats' => $seatInfo,
-                    'payment_id' => $lastPaymentId,
-                    'transaction_reference' => $transactionRef
-                ]
-            ], 201);
+                    'status' => ApiResponseStatus::FAILED,
+                    'message' => 'Booking successfully created!',
+                    'data' => []
+                ], 422);
+
+
+
+       
         } catch (\Exception $e) {
             DB::rollBack(); // Rollback transaction on error
             return response()->json([
@@ -315,36 +310,41 @@ class bookingController extends Controller
             if ($verifyData['status'] === 'VALID' || $verifyData['status'] === 'VALIDATED') {
 
                 //information from verify data 
-
-                $settled_amount = $verifyData['store_amount'];
-                $customer_paid_amount = $verifyData['amount'];
-                $bank_transaction_id = $verifyData['bank_tran_id'];
-                $card_type = $verifyData['card_type'];
-                $card_brand = $verifyData['card_brand'];
-                $risk_title = $verifyData['risk_title'];
-                $settlement_status = $verifyData ['settlement_status'];
-                $bank_approval_id = $verifyData['bank_approval_id'];
-                $customer_name = $verifyData['cus_name'];
-                $customer_email =$verifyData['cus_email'];
+              $transactionInfo = [
+                                'val_id'               => $verifyData['val_id'] ?? null,
+                                'settled_amount'       => $verifyData['store_amount'] ?? 0,
+                                'customer_paid_amount' => $verifyData['amount'] ?? 0,
+                                'bank_transaction_id'  => $verifyData['bank_tran_id'] ?? null,
+                                'card_type'            => $verifyData['card_type'] ?? null,
+                                'card_brand'           => $verifyData['card_brand'] ?? null,
+                                'risk_title'           => $verifyData['risk_title'] ?? null,
+                                'settlement_status'    => $verifyData['settlement_status'] ?? null,
+                                'bank_approval_id'     => $verifyData['bank_approval_id'] ?? null,
+                                'customer_name'        => $verifyData['cus_name'] ?? null,
+                                'customer_email'       => $verifyData['cus_email'] ?? null,
+                            ];
+                $transactionUpdate = DB::table('transactions')->where('id',$tran_id)->update($transactionInfo);
 
                 $bookingInfo =  json_decode($verifyData['value_b'],true);
                 $bookingId = $verifyData['tran_id'];
-                $userId = $verifyData['value_c'];
+                // $userId = $verifyData['value_c'];
+
                 $booking_type = DB::table('bookings')->where('id',$bookingId)->value('booking_type');
-                $paymentInfo = $bookingInfo['paymentinfo'];
 
-
-                
+               
                 if($booking_type=="trip"){
-                  $response =  $this->tripBookingProcess($bookingId,$paymentInfo);
-                }
+                  $response =  $this->tripBookingProcess($bookingId, $bookingInfo);
 
-                if($response){
-                    $res = ['status' => "SUCCESS", "message" => "Payment Done!"];
-                    dd($res);
-                }
+                     $res = ['status' => "SUCCESS", "message" => "Payment Done!"];
+                        dd($res);
+                
+                  }
+
 
             }
+
+
+            
 
     }catch(Exception $ex){
         dd($ex->getMessage());
@@ -352,37 +352,72 @@ class bookingController extends Controller
     }
 
 
-    public function tripBookingProcess($bookingId,$paymentInfo){
+    public function tripBookingProcess($bookingId,$bookingInfo){
         
         try{
 
-            $accountInfo = DB::table('account_history')->insert([
-                'user_id' => 1,
-                'user_account_type' => $paymentInfo['payment_method'],
-                'user_account_no' => $paymentInfo['payment_method'] == 'card'
-                    ? $paymentInfo['card']
-                    : ($paymentInfo['payment_method'] == 'nagad'
-                        ? $paymentInfo['nagad']
-                        : $paymentInfo['bkash']),
-                'getaway' => $paymentInfo['payment_method'],
-                'amount' => $paymentInfo['amount'],
-                'com_account_no' => DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->value('account_number'),
-                'transaction_reference' => $bookingId,
-                'purpose' => 'Trip booking',
-                'tran_date' => now(),
-            ]);
+            #inputted information
+            $paymentInfo = $bookingInfo['paymentinfo'];
+            $seatInfo = $bookingInfo['seatinfo'];
+            $seatIds = array_column($seatInfo, "seat_id");
+            $tripId = $seatInfo[0]['trip_id']; 
 
+            #account information 
+            $accountInsertInformation = [
+                'user_id'                    => 1,
+                'user_account_type'          => $paymentInfo['payment_method'],
+                'user_account_no'            => $paymentInfo['payment_method'] == 'card' ? $paymentInfo['card']
+                                                : ($paymentInfo['payment_method'] == 'nagad'
+                                                    ? $paymentInfo['nagad']
+                                                    : $paymentInfo['bkash']),
+                'getaway'                   => $paymentInfo['payment_method'],
+                'amount'                     => $paymentInfo['amount'],
+                'com_account_no'             => DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->value('account_number'),
+                'transaction_reference'      => $bookingId,
+                'purpose'                    => 'Trip booking',
+                'tran_date'                  => now(),
+            ];
 
+            //add money to account
+            $accountAmountUpdate = DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->increment('amount', $paymentInfo['amount']);
+           
+         
+             //account history
+            $accountInfo = DB::table('account_history')->insert($accountInsertInformation);
+           
+           
             $updateBookingPaymentStatus = DB::table('bookings')->where('id', $bookingId)->update(['status' => 'paid']);
+
+            
             if ($updateBookingPaymentStatus) {
-                return true;
+                
+                $bookingSeats = [];
+                foreach ($seatInfo as $seat) {
+                    $bookingSeats[] = [
+                        'booking_id' => $bookingId,
+                        'seat_id' => $seat['seat_id'],
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+
+                // Bulk insert into booking_seats table
+                DB::table('booking_seats')->insert($bookingSeats);  
+                
+
+                 // Update seat availability
+                DB::table('seat_availablities')
+                ->where('trip_id', $tripId)
+                ->whereIn('seat_id', $seatIds)
+                ->update(['is_available' => 0]);
+
+                return ["status" => true, "message" => "Payment Successfully Done!"];
             }
-
-
 
 
         }catch(Exception $ex){
             dd($ex->getMessage());
+
         }
 
 

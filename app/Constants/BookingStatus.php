@@ -6,13 +6,8 @@ class BookingStatus
 {
 
     public const PAID = "paid";
+    public const PENDING = "pending";
     public const CANCELLED = "cancelled";
 
-    public static function all(): array
-    {
-        return [
-            self::ACTIVE,
-            self::INACTIVE
-        ];
-    }
+  
 }
