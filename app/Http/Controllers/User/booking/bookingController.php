@@ -90,13 +90,13 @@ class bookingController extends Controller
                     'message' => 'One or more selected seats are already booked.',
                 ], 422);
             }
-
+            Log::info("Online payment".$isOnlinePayment);
             // Insert into bookings table
             $lastBookingId = DB::table('bookings')->insertGetId([
                 "user_id" => $request->user()->id,
                 "trip_id" => $tripId,
                 "seat_ids" => implode(",", $seatIds),
-                "status" => $isOnlinePayment == 1 ? "pending" : "paid",
+                "status" => $isOnlinePayment === 1 ? "pending" : "paid",
                 'booking_type' => BookingType::TRIP,
                 "created_at" => now(),
                 "updated_at" => now()
