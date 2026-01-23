@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User\booking;
 use App\Constants\ApiResponseStatus;
 use App\Constants\BookingStatus;
 use App\Constants\BookingType;
+use App\Constants\PaymentForOnline;
 use App\Constants\TripStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\SSLPayment\SSLPaymentService;
@@ -59,6 +60,7 @@ class bookingController extends Controller
 
         try {
             DB::beginTransaction(); 
+            $isOnlinePayment = DB::table('payment_method_config')->where('payment_for',PaymentForOnline::TRIP)->value('online_payment');
 
             $seatInfo = $request->input('seatinfo');
             $seatIds = array_column($seatInfo, "seat_id");
@@ -94,7 +96,7 @@ class bookingController extends Controller
                 "user_id" => $request->user()->id,
                 "trip_id" => $tripId,
                 "seat_ids" => implode(",", $seatIds),
-                "status" => "pending",
+                "status" => $isOnlinePayment == 1 ? "pending" : "paid",
                 'booking_type' => BookingType::TRIP,
                 "created_at" => now(),
                 "updated_at" => now()
@@ -125,52 +127,98 @@ class bookingController extends Controller
                 "updated_at" => now()
             ]);
 
+           if(isset($isOnlinePayment) && $isOnlinePayment==1){
+                Log::info("online payment is enabled");
+                $post_data = [
+                        'store_id' => env('STORE_ID'),
+                        'store_passwd' => env('STORE_PASSWORD'),
+                        'total_amount' => $paymentInfo['amount'],
+                        'currency' => 'BDT',
+                        'tran_id' => $transactionRef,
+                        'success_url' => route('payment.success'),
+                        'fail_url' => route('payment.fail'),
+                        'cancel_url' => route('payment.cancel'),
+                        'emi_option' => 0,
+                        'cus_name' => Auth::user()->name,
+                        'cus_email' => Auth::user()->email,
+                        'cus_add1' => "Dhaka,Bangladesh",
+                        'cus_city' => 'Dhaka',
+                        'cus_state' => '7800',
+                        'cus_postcode' =>  '7800',
+                        'cus_country' => 'Bangladesh',
+                        'cus_phone' => "01628781323",
+                        'shipping_method' => 'NO',
+                        'product_name' => 'Ticket Booking Id #' . $lastBookingId,
+                        'product_category' => 'Education',
+                        'product_profile' => 'general',
+                        'value_a' => $lastBookingId, // Custom field to track order
+                        'value_b' => json_encode($request->all()),
+                    ];
 
-           $post_data = [
-                'store_id' => env('STORE_ID'),
-                'store_passwd' => env('STORE_PASSWORD'),
-                'total_amount' => $paymentInfo['amount'],
-                'currency' => 'BDT',
-                'tran_id' => $transactionRef,
-                'success_url' => route('payment.success'),
-                'fail_url' => route('payment.fail'),
-                'cancel_url' => route('payment.cancel'),
-                'emi_option' => 0,
-                'cus_name' => Auth::user()->name,
-                'cus_email' => Auth::user()->email,
-                'cus_add1' => "Dhaka,Bangladesh",
-                'cus_city' => 'Dhaka',
-                'cus_state' => '7800',
-                'cus_postcode' =>  '7800',
-                'cus_country' => 'Bangladesh',
-                'cus_phone' => "01628781323",
-                'shipping_method' => 'NO',
-                'product_name' => 'Ticket Booking Id #' . $lastBookingId,
-                'product_category' => 'Education',
-                'product_profile' => 'general',
-                'value_a' => $lastBookingId, // Custom field to track order
-                'value_b' => json_encode($request->all()),
-            ];
+                $initPayment = $this->sslPayment->initSSLTransaction($post_data);
 
-            $initPayment = $this->sslPayment->initSSLTransaction($post_data);
+                if(isset($initPayment) && $initPayment['status'] == 'success'){
+                    $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
+                    Log::info($msg);
+                    DB::commit();   
+                    return response()->json([
+                        'status' => ApiResponseStatus::SUCCESS,
+                        'message' => 'Booking successfully created!',
+                        'data' => [
+                            "redirected_url" => $initPayment['url'],
+                            'booking_id' => $lastBookingId,
+                            'trip_id' => $tripId,
+                            'seats' => $seatInfo,
+                            'payment_id' => $lastPaymentId,
+                            'transaction_reference' => $transactionRef
+                        ]
+                    ], 201);
+                } 
 
-            if(isset($initPayment) && $initPayment['status'] == 'success'){
-                $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
-                Log::info($msg);
-                DB::commit();   
-                return response()->json([
-                    'status' => ApiResponseStatus::SUCCESS,
-                    'message' => 'Booking successfully created!',
-                    'data' => [
-                        "redirected_url" => $initPayment['url'],
-                        'booking_id' => $lastBookingId,
-                        'trip_id' => $tripId,
-                        'seats' => $seatInfo,
-                        'payment_id' => $lastPaymentId,
-                        'transaction_reference' => $transactionRef
-                    ]
-                ], 201);
-            }
+
+           }
+
+
+        #if online payment is not enabled
+
+           DB::table('seat_availablities')
+                ->where('trip_id', $tripId)
+                ->whereIn('seat_id', $seatIds)
+                ->update(['is_available' => 0]);
+       
+            DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->increment('amount', $paymentInfo['amount']);
+            DB::table('account_history')->insert([
+                'user_id' => $request->user()->id,
+                'user_account_type' => $paymentInfo['payment_method'],
+                'user_account_no' => $paymentInfo['payment_method'] == 'card'
+                    ? $paymentInfo['card']
+                    : ($paymentInfo['payment_method'] == 'nagad'
+                        ? $paymentInfo['nagad']
+                        : $paymentInfo['bkash']),
+                'getaway' => $paymentInfo['payment_method'],
+                'amount' => $paymentInfo['amount'],
+                'com_account_no' => DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->value('account_number'),
+                'transaction_reference' => $transactionRef,
+                'purpose' => 'booking',
+                'tran_date' => now(),
+            ]);
+
+            $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
+            Log::info($msg);
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Booking successfully created!',
+                'data' => [
+                    'booking_id' => $lastBookingId,
+                    'trip_id' => $tripId,
+                    'seats' => $seatInfo,
+                    'payment_id' => $lastPaymentId,
+                    'transaction_reference' => $transactionRef
+                ]
+            ], 201);
+
 
             DB::rollBack();
             return response()->json([
@@ -334,13 +382,11 @@ class bookingController extends Controller
                
                 if($booking_type=="trip"){
                   $response =  $this->tripBookingProcess($bookingId, $bookingInfo);
-
-                     $res = ['status' => "SUCCESS", "message" => "Payment Done!"];
-                        dd($res);
-                
+                  if ($response) {
+                        $frontendUrl = env('FRONTEND_URL') . '/my-bookings';
+                        return redirect()->away($frontendUrl);
                   }
-
-
+                }
             }
 
 
@@ -384,8 +430,7 @@ class bookingController extends Controller
          
              //account history
             $accountInfo = DB::table('account_history')->insert($accountInsertInformation);
-           
-           
+
             $updateBookingPaymentStatus = DB::table('bookings')->where('id', $bookingId)->update(['status' => 'paid']);
 
             
@@ -402,17 +447,17 @@ class bookingController extends Controller
                 }
 
                 // Bulk insert into booking_seats table
-                DB::table('booking_seats')->insert($bookingSeats);  
-                
+                $assignSeats = DB::table('booking_seats')->insert($bookingSeats);  
 
                  // Update seat availability
-                DB::table('seat_availablities')
+                $seatAvailabilityUpdate = DB::table('seat_availablities')
                 ->where('trip_id', $tripId)
                 ->whereIn('seat_id', $seatIds)
                 ->update(['is_available' => 0]);
-
-                return ["status" => true, "message" => "Payment Successfully Done!"];
+                 
+                return true;
             }
+            return true;
 
 
         }catch(Exception $ex){
