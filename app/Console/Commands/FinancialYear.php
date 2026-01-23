@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Constants\BookingStatus;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
@@ -96,6 +97,8 @@ class FinancialYear extends Command
     {
 
         $paymentAmount = DB::table('payments')
+            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+            ->where('bookings.status', '=', BookingStatus::PAID)
             ->whereBetween('created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
             ->sum('amount');
 

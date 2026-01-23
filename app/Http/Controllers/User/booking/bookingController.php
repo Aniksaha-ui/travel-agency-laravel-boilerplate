@@ -174,12 +174,26 @@ class bookingController extends Controller
                         ]
                     ], 201);
                 } 
-
-
            }
 
 
         #if online payment is not enabled
+
+           // Prepare data for booking_seats table
+            $bookingSeats = [];
+            foreach ($seatInfo as $seat) {
+                $bookingSeats[] = [
+                    'booking_id' => $lastBookingId,
+                    'seat_id' => $seat['seat_id'],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+
+            // Bulk insert into booking_seats table
+            DB::table('booking_seats')->insert($bookingSeats);
+
+
 
            DB::table('seat_availablities')
                 ->where('trip_id', $tripId)

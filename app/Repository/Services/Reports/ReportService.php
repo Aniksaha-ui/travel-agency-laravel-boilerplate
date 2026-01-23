@@ -133,7 +133,7 @@ class ReportService
             $report = DB::table('bookings')
                 ->join('users', 'bookings.user_id', '=', 'users.id')
                 ->where('bookings.trip_id', $tripId)
-                ->where('bookings.status', '!=', BookingStatus::CANCELLED)
+                ->where('bookings.status', '=', BookingStatus::PAID)
                 ->select('users.name', 'users.email', 'bookings.created_at as booking_date', 'bookings.status',"bookings.package_id")
                 ->get();
 
@@ -346,6 +346,7 @@ class ReportService
                     return $query->where('u.name', 'like', '%' . $search . '%');
                 })
                 ->where('role', 'users')
+                ->where("b.status", '=', BookingStatus::PAID)
                 ->orderBy('net_spent', 'desc')
                 ->groupBy('u.id', 'u.name')
                 ->paginate($perPage);
