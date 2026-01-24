@@ -95,33 +95,47 @@ class FinancialYear extends Command
 
     function totalPayment($financialYear)
     {
-
-        $paymentAmount = DB::table('payments')
+        try{
+             $paymentAmount = DB::table('payments')
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
             ->where('bookings.status', '=', BookingStatus::PAID)
-            ->whereBetween('created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
+            ->whereBetween('payments.created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
             ->sum('amount');
 
-        return $paymentAmount;
+        return $paymentAmount;    
+        }catch(Exception $ex){
+            Log::error("Error in totalPayment".$ex->getMessage());
+        }
+       
     }
 
 
     function totalRefund($financialYear)
     {
+        try{
         $refundAmount = DB::table('refunds')
             ->whereBetween('created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
             ->where('status', 'disbursed')
             ->sum('amount');
         return $refundAmount;
+        }catch(Exception $ex){
+            Log::error("Error in totalRefund".$ex->getMessage());
+            
+        }
     }
 
     function totalCosting($financialYear)
     {
-
-        $totalCosting = DB::table('trip_package_costings')
+        try{
+  $totalCosting = DB::table('trip_package_costings')
             ->whereBetween('created_at', [$financialYear['fy_start'], $financialYear['fy_end']])
             ->sum('cost_amount');
-        return $totalCosting;
+            
+            return $totalCosting;
+        }catch(Exception $ex){
+            Log::error("Error in totalCosting".$ex->getMessage());  
+        }
+      
     }
 
     function alreadyExist($financialYear)
