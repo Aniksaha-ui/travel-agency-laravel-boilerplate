@@ -154,6 +154,8 @@ class bookingController extends Controller
                         'value_a' => $lastBookingId, // Custom field to track order
                         'value_b' => json_encode($request->all()),
                     ];
+                    
+                Log::info("init request".json_encode($post_data));
 
                 $initPayment = $this->sslPayment->initSSLTransaction($post_data);
 
