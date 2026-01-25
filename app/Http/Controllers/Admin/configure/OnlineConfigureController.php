@@ -120,6 +120,40 @@ class OnlineConfigureController extends Controller
     }
 
 
+    public function updateOnlineConfigure($data){
+        try{
+
+        $validator = Validator::make($request->all(), [
+            "configuration_id" =>'required',
+            'payment_for'      => 'required|string|max:255',
+            'online_payment' => 'required',
+        ], [
+            'payment_for.required' => 'Route name is required.',
+            'online_payment.required'     => 'Origin is required.',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error("Validation error".$validator->errors()->first());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message'   => $validator->errors()->first(),
+            ], 422);
+        }
+
+
+
+
+
+        }catch(Exception $ex){
+            Log::error("OnlineConfigureController - updateOnlineConfigure function" . $ex->getMessage());
+            return response()->json([
+                'isExecute' => ApiResponseStatus::FAILED,
+                'message' => config("message.server_error")
+            ], 500);
+        }
+    }
+
+
 
     
 
