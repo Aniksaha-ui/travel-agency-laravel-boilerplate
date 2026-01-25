@@ -57,6 +57,7 @@ class TicketsService
 
             $updateData = [
                 'status' => $statusInfo,
+                'resloved_status' => $statusInfo,
                 'resolved_by' => Auth::id(),
                 'updated_at' => now(),
             ];

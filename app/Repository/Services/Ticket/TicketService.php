@@ -22,7 +22,7 @@ class TicketService
                 $ticketData['attachment'] = '';
             }
 
-
+            $ticketData['created_at'] = now();
             $ticketData['generate_by'] = Auth::id();
             $ticketInsert = DB::table('tickets')->insert($ticketData);
 
@@ -138,8 +138,21 @@ class TicketService
         try {
                 $userId = Auth::id();
                 $ticketInformation = DB::table('tickets')
-                    ->where("generate_by", $userId)
-                    ->get();
+                                        ->leftJoin('users as resolved_user', 'tickets.resolved_by', '=', 'resolved_user.id')
+                                        ->where('tickets.generate_by', 3)
+                                        ->select([
+                                            'tickets.id',
+                                            'tickets.title',
+                                            'tickets.description',
+                                            'tickets.generate_by',
+                                            'tickets.status',
+                                            'tickets.remarks',
+                                            'tickets.attachment',
+                                            'tickets.created_at',
+                                            'tickets.updated_at',
+                                            DB::raw('resolved_user.name as resolved_by'),
+                                        ])
+                                        ->get();
                     
                 return $ticketInformation;
 
