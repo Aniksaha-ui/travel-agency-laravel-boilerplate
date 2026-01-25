@@ -57,7 +57,7 @@ class RouteService
             if (!$route) {
                 return ["status" => ApiResponseStatus::FAILED, "data" => null, "message" => config("message.no_data_found")];
             }
-            return $route;
+             return ["status" => ApiResponseStatus::SUCCESS, "data" => $route, "message" => config("message.app_data_retrieved")];
         } catch (Exception $ex) {
             Log::alert("Route Service - findById function" . $ex->getMessage());
             return ["status" => ApiResponseStatus::FAILED, "data" => null, "message" => config("message.server_error")];

@@ -157,6 +157,10 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
     Route::get('admin/monitoring', 'Admin\monitoring\monitoringController@monitoring');
+
+
+    Route::get('admin/online-configure', 'Admin\configure\OnlineConfigureController@onlineConfigureList');
+    Route::post('admin/online-configure', 'Admin\configure\OnlineConfigureController@storeNewConfigure');
 });
 
 /************************************* User api start *******************************/
