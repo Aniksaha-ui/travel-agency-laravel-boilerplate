@@ -120,7 +120,7 @@ class OnlineConfigureController extends Controller
     }
 
 
-    public function updateOnlineConfigure($data){
+    public function updateOnlineConfigure(Request $request){
         try{
 
         $validator = Validator::make($request->all(), [
@@ -139,6 +139,8 @@ class OnlineConfigureController extends Controller
                 'message'   => $validator->errors()->first(),
             ], 422);
         }
+
+       $updateConfigure = $this->configureService->updateConfigure($request->all());
 
 
 

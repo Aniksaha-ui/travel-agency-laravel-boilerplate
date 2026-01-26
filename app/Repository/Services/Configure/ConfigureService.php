@@ -54,7 +54,7 @@ class ConfigureService
     public function findConfigureById($id)
     {
         try {
-            $route = DB::table('routes')->where('id', $id)->first();
+            $route = DB::table('payment_method_config')->where('id', $id)->first();
             if (!$route) {
                 return ["status" => ApiResponseStatus::FAILED, "data" => null, "message" => config("message.no_data_found")];
             }
@@ -65,5 +65,29 @@ class ConfigureService
             return ["status" => ApiResponseStatus::FAILED, "data" => null, "message" => config("message.server_error")];
         }
     }
+
+
+    public function updateConfigure($configureInfo){
+        try{
+            
+            $configureId = $configureInfo['id'];
+            $configureData ['payment_for']= $configureInfo['payment_for'];
+            $configureData['online_payment'] = $configureInfo['online_payment'];
+            
+            $updateConfigure = DB::table('payment_method_config')->where('id',$configureId)->update($configureData);
+
+            if($updateConfigure){
+                return ["status" => ApiResponseStatus::SUCCESS, "data" => $updateConfigure, "message" => config("message.app_updated")];
+            }
+
+            return ["status" => ApiResponseStatus::FAILED, "data" => $updateConfigure, "message" => config("message.app_not_updated")];
+
+        }catch(Exception $ex){
+              Log::alert("ConfigureService - updateConfigure function" . $ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "data" => null, "message" => config("message.server_error")];
+        }
+    }
+
+
 
 }

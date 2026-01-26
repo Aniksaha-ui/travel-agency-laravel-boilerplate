@@ -13,5 +13,8 @@ return [
     "server_error" => "Internal server error",
     "app_data_retrieved" => "Information Retrieved Successfully",
     "app_added" => "Information Added Successfully",
+    "app_updated" => "Information Updated Successfully",
+    "app_not_updated" => "Information Updated Not Successfully",
+
 
 ];
