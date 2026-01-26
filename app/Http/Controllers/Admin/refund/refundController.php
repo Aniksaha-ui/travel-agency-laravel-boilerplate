@@ -18,6 +18,7 @@ class refundController extends Controller
     public function getRefunds(Request $request){
         $page = $request->query('page');
         $search = $request->query('search');
+        Log::info("jt");
         try{
             $response = $this->refundService->getAllRefunds($page,$search);
             return response()->json([
