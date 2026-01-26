@@ -27,7 +27,7 @@ class OnlineConfigureController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
 
-            $response = $this->configureService->onlineConfigureList($page, $search);
+            $updateConfigure = $this->configureService->onlineConfigureList($page, $search);
             return response()->json([
                 "isExecute" => $response['status'],
                 "data" => $response['data'],
@@ -141,7 +141,13 @@ class OnlineConfigureController extends Controller
         }
 
        $updateConfigure = $this->configureService->updateConfigure($request->all());
-
+        if ($updateConfigure) {
+                return response()->json([
+                    "isExecute" => $updateConfigure['status'],
+                    "data" => $updateConfigure['data'],
+                    "message" => $updateConfigure['message']
+                ], 200);
+            }
 
 
 

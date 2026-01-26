@@ -70,7 +70,7 @@ class ConfigureService
     public function updateConfigure($configureInfo){
         try{
             
-            $configureId = $configureInfo['id'];
+            $configureId = $configureInfo['configuration_id'];
             $configureData ['payment_for']= $configureInfo['payment_for'];
             $configureData['online_payment'] = $configureInfo['online_payment'];
             
