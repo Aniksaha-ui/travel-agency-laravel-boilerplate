@@ -36,6 +36,8 @@ class RefundService
             }
         } catch (Exception $ex) {
             Log::alert("refundService - getAllRefunds function" . $ex->getMessage());
+                return ["status" => false, "data" => [], "message" => "No refund found"];
+
         }
     }
 
