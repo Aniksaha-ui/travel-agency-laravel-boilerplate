@@ -19,7 +19,7 @@ class ConfigureService
             $perPage = 10;
                 $configureList=DB::table('payment_method_config')
                 ->orderBy('payment_method_config.id','desc')
-                ->paginate($perPage, ['payment_method_config.id', 'payment_method_config.payment_for'], 'page', $page);
+                ->paginate($perPage, ['payment_method_config.*'], 'page', $page);
          
             if($configureList->total() > 0){
                 return ["status" => ApiResponseStatus::SUCCESS, "data" => $configureList, "message" => config("message.app_data_retrieved")];
