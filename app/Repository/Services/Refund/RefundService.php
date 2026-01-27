@@ -30,18 +30,19 @@ class RefundService
                 ->select('refunds.*', 'trips.trip_name', 'bookings.seat_ids', 'bookings.created_at as booking_date')
                 ->paginate($perPage, ['refunds.*'], 'page', $page);
             if ($refunds->total() > 0) {
-                return array( "status" => true,"data" => $refunds,"message" => "Refund list retrieved successfully");
+                return ["status" => true, "data" => $refunds, "message" => "Refund list retrived successfully"];
             } else {
-                return array("status" => true, "data" => [], "message" => "No refund found");
+                return ["status" => true, "data" => [], "message" => "No refund found"];
             }
         } catch (Exception $ex) {
             Log::alert("refundService - getAllRefunds function" . $ex->getMessage());
-            return array("status" => false, "data" => [], "message" => "No refund found");
+                return ["status" => false, "data" => [], "message" => "No refund found"];
+
         }
     }
 
 
-   public function disburseRefund($data)
+ public function disburseRefund($data)
 {
     DB::beginTransaction();
 
@@ -49,60 +50,91 @@ class RefundService
         $refundInfo = DB::table('refunds')
             ->join('bookings', 'refunds.booking_id', '=', 'bookings.id')
             ->join('payments', 'payments.booking_id', '=', 'bookings.id')
-            ->select('refunds.*', 'payments.payment_method', 'payments.card', 'payments.bkash', 'payments.nagad')
+            ->select(
+                'refunds.*',
+                'payments.payment_method',
+                'payments.card',
+                'payments.bkash',
+                'payments.nagad'
+            )
             ->where('refunds.id', $data['refund_id'])
             ->first();
 
         if (!$refundInfo) {
-            return ["status" => false, "data" => [], "message" => "Refund not found"];
+            return array(
+                "status" => false,
+                "data" => array(),
+                "message" => "Refund not found"
+            );
         }
 
-        $accountHistoryUpdateData = [
+        // Determine user account number (PHP < 8 compatible)
+        if ($refundInfo->payment_method === 'card') {
+            $userAccountNo = $refundInfo->card;
+        } elseif ($refundInfo->payment_method === 'bkash') {
+            $userAccountNo = $refundInfo->bkash;
+        } elseif ($refundInfo->payment_method === 'nagad') {
+            $userAccountNo = $refundInfo->nagad;
+        } else {
+            $userAccountNo = $refundInfo->card;
+        }
+
+        $accountHistoryUpdateData = array(
             'user_id' => Auth::id(),
             'user_account_type' => $refundInfo->payment_method,
-            'user_account_no' => match ($refundInfo->payment_method) {
-                'card'  => $refundInfo->card,
-                'bkash' => $refundInfo->bkash,
-                'nagad' => $refundInfo->nagad,
-                default => $refundInfo->card,
-            },
+            'user_account_no' => $userAccountNo,
             'getaway' => $refundInfo->payment_method,
             'amount' => $refundInfo->amount,
             'com_account_no' => '01628781323',
-            'transaction_reference' => random_int(9998889, 15000000),
+            'transaction_reference' => rand(9998889, 15000000),
             'transaction_type' => 'd',
             'purpose' => 'Refund Disbursement',
-            'tran_date' => now(),
-        ];
+            'tran_date' => date('Y-m-d H:i:s'),
+        );
 
-        $accountHistory = DB::table('account_history')->insert($accountHistoryUpdateData);
+        $accountHistory = DB::table('account_history')
+            ->insert($accountHistoryUpdateData);
 
         if (!$accountHistory) {
             DB::rollBack();
-            return ["status" => false, "data" => [], "message" => "Refund disbursement failed"];
+            return array(
+                "status" => false,
+                "data" => array(),
+                "message" => "Refund disbursement failed"
+            );
         }
 
         $response = DB::table('refunds')
             ->where('id', $data['refund_id'])
-            ->update(['status' => 'disbursed']);
+            ->update(array('status' => 'disbursed'));
 
         if (!$response) {
             DB::rollBack();
-            return ["status" => false, "data" => [], "message" => "Refund status update failed"];
+            return array(
+                "status" => false,
+                "data" => array(),
+                "message" => "Refund status update failed"
+            );
         }
 
         DB::commit();
-        return ["status" => true, "data" => [], "message" => "Refund disbursed successfully"];
 
-    } catch (\Exception $ex) {
+        return array(
+            "status" => true,
+            "data" => array(),
+            "message" => "Refund disbursed successfully"
+        );
+
+    } catch (Exception $ex) {
         DB::rollBack();
         Log::alert("refundService - disburseRefund: " . $ex->getMessage());
 
-        return [
+        return array(
             "status" => false,
-            "data" => [],
+            "data" => array(),
             "message" => "Something went wrong while refund disbursement"
-        ];
+        );
     }
 }
+
 }
