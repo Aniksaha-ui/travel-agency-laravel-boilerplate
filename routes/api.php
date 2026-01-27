@@ -94,23 +94,6 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
 
 
 
-    /*************************************Report api start **********************************/
-    Route::get('/admin/vehiclewisetotalseat', 'Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
-    Route::get('/admin/vehiclewiseseat/{id}', 'Admin\Reports\ReportController@vehicleWiseAllSeatReport');
-    Route::get('/admin/packageWiseBooking', 'Admin\Reports\ReportController@packageWiseBooking');
-    Route::post('/admin/useageOfVehicle', 'Admin\Reports\ReportController@useageOfVehicle');
-    Route::get('/admin/tripwiseBookingUsers/{id}', 'Admin\Reports\ReportController@tripwiseBookingUsers');
-    Route::get('/admin/tripPerformance', 'Admin\Reports\ReportController@tripPerformance');
-    Route::get('/admin/packagePerformance', 'Admin\Reports\ReportController@packagePerformance');
-    Route::get('/admin/guideEfficency', 'Admin\Reports\ReportController@guideEfficencyReport');
-    Route::get('/admin/customerValue', 'Admin\Reports\ReportController@customerValueReport');
-    Route::get('/admin/transactionHistory', 'Admin\Reports\ReportController@transactionHistoryReport');
-    Route::get('/admin/monthRunningBalance', 'Admin\Reports\ReportController@monthRunningBalanceReport');
-    Route::get('/admin/monthlyDailyBalanceReport', 'Admin\Reports\ReportController@dailyBalanceReport');
-    Route::get('admin/financial_report', 'Admin\Reports\ReportController@financialReport');
-    Route::get('/admin/financial_report/{financialReportId}', 'Admin\Reports\ReportController@financialReportById');
-
-    /*************************************Report api start **********************************/
 
 
     /***************************************accounting api end ***********************************/
@@ -136,12 +119,12 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('guide/performance', 'Admin\guide\guideController@getGuidePerformance');
     Route::get('admin/guide/dropdown', 'Admin\guide\guideController@getGuidesdropdown');
 
-    /*************************************Guide api start ********************************** */
+   #Guide api start ********************************** */
 
     Route::get('admin/refund', 'Admin\refund\refundController@getRefunds');
     Route::post('admin/refund/disburse', 'Admin\refund\refundController@disburseRefund');
 
-    /******************************************Hotel Management api start ***********************************/
+    #Hotel management api
     Route::get('admin/hotel', 'Admin\hotel\hotelController@getHotels');
     Route::post('admin/hotel', 'Admin\hotel\hotelController@store');
     Route::post('admin/hotel/update/{hotel_id}', 'Admin\hotel\hotelController@update');
@@ -150,23 +133,45 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::post('/hotel/update/checkin', 'User\hotel\hotelController@hotelCheckinStatusUpdate');
     Route::get('admin/hotel/bookings', 'Admin\hotel\hotelController@hotelBooking');
 
-    /*** transactions and payment api */
-
+    #transactions and payment api
     Route::get('admin/transaction', 'Admin\transaction\transactionController@getTransactions');
 
-    /*****Tickets */
+    #tickets api
     Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
     Route::get('admin/monitoring', 'Admin\monitoring\monitoringController@monitoring');
 
-
+    #online payment configure
     Route::get('admin/online-configure', 'Admin\configure\OnlineConfigureController@onlineConfigureList');
     Route::post('admin/online-configure', 'Admin\configure\OnlineConfigureController@storeNewConfigure');
     Route::get('admin/online-configure/{id}', 'Admin\configure\OnlineConfigureController@findConfigureById');
     Route::post('admin/online-configure/update', 'Admin\configure\OnlineConfigureController@updateOnlineConfigure');
 
-
+    #account history
     Route::post('admin/account-history', 'Admin\account\AccountHistoryController@accountHistory');
+
+
+
+
+
+    #reports api
+
+    Route::get('/admin/vehiclewisetotalseat', 'Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
+    Route::get('/admin/vehiclewiseseat/{id}', 'Admin\Reports\ReportController@vehicleWiseAllSeatReport');
+    Route::get('/admin/packageWiseBooking', 'Admin\Reports\ReportController@packageWiseBooking');
+    Route::post('/admin/useageOfVehicle', 'Admin\Reports\ReportController@useageOfVehicle');
+    Route::get('/admin/tripwiseBookingUsers/{id}', 'Admin\Reports\ReportController@tripwiseBookingUsers');
+    Route::get('/admin/tripPerformance', 'Admin\Reports\ReportController@tripPerformance');
+    Route::get('/admin/packagePerformance', 'Admin\Reports\ReportController@packagePerformance');
+    Route::get('/admin/guideEfficency', 'Admin\Reports\ReportController@guideEfficencyReport');
+    Route::get('/admin/customerValue', 'Admin\Reports\ReportController@customerValueReport');
+    Route::get('/admin/transactionHistory', 'Admin\Reports\ReportController@transactionHistoryReport');
+    Route::get('/admin/monthRunningBalance', 'Admin\Reports\ReportController@monthRunningBalanceReport');
+    Route::get('/admin/monthlyDailyBalanceReport', 'Admin\Reports\ReportController@dailyBalanceReport');
+    Route::get('admin/financial_report', 'Admin\Reports\ReportController@financialReport');
+    Route::get('/admin/financial_report/{financialReportId}', 'Admin\Reports\ReportController@financialReportById');
+
+    #reports api
 
 
 
