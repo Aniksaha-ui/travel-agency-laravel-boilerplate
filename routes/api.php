@@ -164,6 +164,12 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::post('admin/online-configure', 'Admin\configure\OnlineConfigureController@storeNewConfigure');
     Route::get('admin/online-configure/{id}', 'Admin\configure\OnlineConfigureController@findConfigureById');
     Route::post('admin/online-configure/update', 'Admin\configure\OnlineConfigureController@updateOnlineConfigure');
+
+
+    Route::post('admin/account-history', 'Admin\account\AccountHistoryController@accountHistory');
+
+
+
 });
 
 /************************************* User api start *******************************/

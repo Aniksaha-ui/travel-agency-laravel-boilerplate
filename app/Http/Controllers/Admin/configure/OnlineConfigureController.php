@@ -29,9 +29,9 @@ class OnlineConfigureController extends Controller
 
             $updateConfigure = $this->configureService->onlineConfigureList($page, $search);
             return response()->json([
-                "isExecute" => $response['status'],
-                "data" => $response['data'],
-                "message" => $response['message']
+                "isExecute" => $updateConfigure['status'],
+                "data" => $updateConfigure['data'],
+                "message" => $updateConfigure['message']
             ], 200);
         } catch (Exception $ex) {
             Log::error("Router Controller - insert function" . $ex->getMessage());
