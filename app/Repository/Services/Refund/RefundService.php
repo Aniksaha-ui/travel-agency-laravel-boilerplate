@@ -30,14 +30,13 @@ class RefundService
                 ->select('refunds.*', 'trips.trip_name', 'bookings.seat_ids', 'bookings.created_at as booking_date')
                 ->paginate($perPage, ['refunds.*'], 'page', $page);
             if ($refunds->total() > 0) {
-                return ["status" => true, "data" => $refunds, "message" => "Refund list retrived successfully"];
+                return array( "status" => true,"data" => $refunds,"message" => "Refund list retrieved successfully");
             } else {
-                return ["status" => true, "data" => [], "message" => "No refund found"];
+                return array("status" => true, "data" => [], "message" => "No refund found");
             }
         } catch (Exception $ex) {
             Log::alert("refundService - getAllRefunds function" . $ex->getMessage());
-                return ["status" => false, "data" => [], "message" => "No refund found"];
-
+            return array("status" => false, "data" => [], "message" => "No refund found");
         }
     }
 
