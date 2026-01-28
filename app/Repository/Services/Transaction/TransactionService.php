@@ -21,7 +21,7 @@ class TransactionService
                             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
                             ->where("bookings.status","=",BookingStatus::PAID)
                             ->orderBy('transactions.id', 'desc')
-                            ->paginate($perPage, ['transactions.id as transaction_id','transactions.created_at','payments.id as payment_id','transactions.transaction_reference','payments.amount','payments.payment_method','bookings.booking_type as purpose','bookings.id as booking_id'], 'page', $page);
+                            ->paginate($perPage, ['transactions.id as transaction_id','payments.id as payment_id','transactions.transaction_reference','transactions.bank_tran_id','transactions.card_type','transactions.card_brand','transactions.risk_title','transactions.settlement_status','transactions.bank_approval_id','transactions.cus_email','transactions.customer_name','transactions.created_at','transactions.bank_transaction_id','transactions.settled_amount','transactions.customer_paid_amount','payments.amount','payments.payment_method','bookings.booking_type as purpose','bookings.id as booking_id'], 'page', $page);
              if ($transactions->count() > 0) {
                 return ["status" => true, "data" => $transactions, "message" => "Transaction information retrieved successfully"];
             } else {
