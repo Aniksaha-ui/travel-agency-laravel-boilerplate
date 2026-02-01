@@ -53,85 +53,6 @@ class TicketService
     }
 
 
-    public function update($hotelId,  $request)
-    {
-        DB::beginTransaction();
-
-        try {
-            // Update hotel details
-            DB::table('hotels')->where('id', $hotelId)->update([
-                'name' => $request['name'],
-                'location' => $request['location'],
-                'star_rating' => $request['star_rating'],
-                'description' => $request['description'],
-                'facilities' => $request['facilities'],
-                'updated_at' => now()
-            ]);
-
-            // Update hotel photos (delete old, insert new)
-            DB::table('hotel_photos')->where('hotel_id', $hotelId)->delete();
-
-            foreach ($request['photos'] ?? [] as $photo) {
-                DB::table('hotel_photos')->insert([
-                    'hotel_id' => $hotelId,
-                    'photo_url' => $photo,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Handle rooms and pricing updates
-            foreach ($request['rooms'] ?? [] as $room) {
-                $roomExists = DB::table('hotel_rooms')->where('id', $room['room_id'])->count();
-                if ($roomExists > 0) {
-                    DB::table('hotel_rooms')->where('id', $room['room_id'])->update([
-                        'room_size' => $room['room_size'],
-                        'max_occupancy' => $room['max_occupancy'],
-                        'amenities' => $room['amenities'],
-                        'total_rooms' => $room['total_rooms'],
-                        'updated_at' => now()
-                    ]);
-
-                    DB::table('room_prices')->where('hotel_room_id', $room['room_id'])->delete();
-
-                    foreach ($room['prices'] ?? [] as $price) {
-                        DB::table('room_prices')->insert([
-                            'hotel_room_id' => $room['room_id'],
-                            'season_start' => $price['season_start'],
-                            'season_end' => $price['season_end'],
-                            'price_per_night' => $price['price_per_night'],
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
-                    }
-                } else {
-                    DB::rollBack();
-                    return [
-                        'status' => false,
-                        'message' => 'Room not found',
-                        'code' => 404
-                    ];
-                }
-            }
-
-            DB::commit();
-
-            return [
-                'status' => true,
-                'message' => 'Hotel updated successfully.',
-                'code' => 200
-            ];
-        } catch (Exception $e) {
-            DB::rollBack();
-            return [
-                'status' => false,
-                'message' => 'Failed to update hotel: ' . $e->getMessage(),
-                'code' => 500
-            ];
-        }
-    }
-
-
 
     public function myTickets()
     {
@@ -152,6 +73,7 @@ class TicketService
                                             'tickets.updated_at',
                                             DB::raw('resolved_user.name as resolved_by'),
                                         ])
+                                        ->where('generate_by',$userId)
                                         ->get();
                     
                 return $ticketInformation;
