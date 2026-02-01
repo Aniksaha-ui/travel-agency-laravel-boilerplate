@@ -60,7 +60,7 @@ class TicketService
                 $userId = Auth::id();
                 $ticketInformation = DB::table('tickets')
                                         ->leftJoin('users as resolved_user', 'tickets.resolved_by', '=', 'resolved_user.id')
-                                        ->where('tickets.generate_by', 3)
+                                        ->where('tickets.generate_by', $userId)
                                         ->select([
                                             'tickets.id',
                                             'tickets.title',
