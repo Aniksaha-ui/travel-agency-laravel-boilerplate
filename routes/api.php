@@ -170,6 +170,8 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/monthlyDailyBalanceReport', 'Admin\Reports\ReportController@dailyBalanceReport');
     Route::get('admin/financial_report', 'Admin\Reports\ReportController@financialReport');
     Route::get('/admin/financial_report/{financialReportId}', 'Admin\Reports\ReportController@financialReportById');
+    Route::get('/admin/booking-summary', 'Admin\Reports\ReportController@bookingSummary');
+    Route::get('/admin/overall-sales-summary', 'Admin\Reports\ReportController@salesSummary');
 
     #reports api
 

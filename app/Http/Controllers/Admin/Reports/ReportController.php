@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Reports;
 
+use App\Constants\ApiResponseStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\Reports\ReportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -304,4 +306,53 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    public function bookingSummary(){
+        try{
+            $response = $this->reportService->bookingSummary();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - bookingSummary function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+
+       public function salesSummary(){
+        try{
+            $response = $this->reportService->salesSummary();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - salesSummary function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+
 }
