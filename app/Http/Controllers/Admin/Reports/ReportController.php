@@ -355,4 +355,52 @@ class ReportController extends Controller
 
 
 
+        public function routeWiseSalesSummary(){
+        try{
+            $response = $this->reportService->routeWiseSalesSummary();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - routeWiseSalesSummary function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+
+     public function currentMonthTripSales(){
+        try{
+            $response = $this->reportService->currentMonthTripSales();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - currentMonthTripSales function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+    
+
+
+
 }

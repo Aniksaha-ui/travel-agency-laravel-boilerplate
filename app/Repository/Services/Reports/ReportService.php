@@ -5,6 +5,7 @@ namespace App\Repository\Services\Reports;
 use App\Constants\ApiResponseStatus;
 use App\Constants\BookingStatus;
 use App\Constants\BookingType;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use DB;
@@ -590,6 +591,72 @@ class ReportService
                 ->unionAll($packageQuery)
                 ->unionAll($hotelQuery)
                 ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - salesSummary function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+
+
+      public function routeWiseSalesSummary()
+    {
+        try {
+           $report = DB::table('routes as r')
+                        ->join('trips as t', 't.route_id', '=', 'r.id')
+                        ->join('bookings as b', 'b.trip_id', '=', 't.id')
+                        ->join('payments as p', 'p.booking_id', '=', 'b.id')
+                        ->select(
+                            'r.route_name',
+                            DB::raw('COUNT(b.id) as total_bookings'),
+                            DB::raw('SUM(p.amount) as total_revenue')
+                        )
+                        ->groupBy('r.route_name')
+                        ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - salesSummary function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+
+
+     public function currentMonthTripSales()
+    {
+        try {
+          $report = DB::table('trips as t')
+                            ->join('bookings as b', 'b.trip_id', '=', 't.id')
+                            ->join('payments as p', 'p.booking_id', '=', 'b.id')
+                            ->whereMonth('b.created_at', Carbon::now()->month)
+                            ->whereYear('b.created_at', Carbon::now()->year)
+                            ->where('b.booking_type','=',BookingType::TRIP)
+                            ->where('b.status','=',BookingStatus::PAID)
+                            ->select(
+                                't.trip_name',
+                                DB::raw("DATE_FORMAT(b.created_at, '%M-%Y') as month"),
+                                DB::raw('SUM(p.amount) as total_transaction')
+                            )
+                            ->groupBy('t.id', 'month')
+                            ->orderBy('month', 'asc')
+                            ->get();
 
             if ($report->count() > 0) {
                 return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];

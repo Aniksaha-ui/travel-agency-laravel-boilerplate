@@ -35,7 +35,8 @@ class ticketsController extends Controller
       
         $ticketId = $id;
         $status = $request->input('status');
-        $response = $this->ticketService->updateTicketStatus($ticketId, $status);
+        $resolvedStatus = $request->input('resolved_status');
+        $response = $this->ticketService->updateTicketStatus($ticketId, $status,$resolvedStatus);
         return response()->json([
             "data" => $response,
             "message" => "success"

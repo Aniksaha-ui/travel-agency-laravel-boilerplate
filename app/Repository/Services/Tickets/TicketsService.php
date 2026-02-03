@@ -38,7 +38,7 @@ class TicketsService
         }
     }
 
-    public function updateTicketStatus($ticketId,$statusInfo){
+    public function updateTicketStatus($ticketId,$statusInfo,$resolvedStatus){
 
         try {
             $ticket = DB::table('tickets')->where('id', $ticketId)->first();
@@ -57,7 +57,7 @@ class TicketsService
 
             $updateData = [
                 'status' => $statusInfo,
-                'resloved_status' => $statusInfo,
+                'resloved_status' => ($statusInfo == 1) ? $resolvedStatus : $statusInfo,
                 'resolved_by' => Auth::id(),
                 'updated_at' => now(),
             ];
