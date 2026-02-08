@@ -1,0 +1,22 @@
+Laravel development server started: http://0.0.0.0:8000
+[Sun Feb  8 17:47:41 2026] PHP 7.4.33 Development Server (http://0.0.0.0:8000) started
+[Sun Feb  8 17:48:00 2026] 127.0.0.1:60218 Accepted
+[Sun Feb  8 17:48:00 2026] 127.0.0.1:60218 Closing
+[Sun Feb  8 17:49:28 2026] 127.0.0.1:43024 Accepted
+[Sun Feb  8 17:49:28 2026] 127.0.0.1:43024 Closing
+[Sun Feb  8 17:50:04 2026] 127.0.0.1:49482 Accepted
+[Sun Feb  8 17:50:04 2026] 127.0.0.1:49482 Closing
+[Sun Feb  8 17:54:17 2026] 127.0.0.1:56096 Accepted
+[Sun Feb  8 17:54:17 2026] 127.0.0.1:56096 Closing
+[Sun Feb  8 17:55:00 2026] 127.0.0.1:46922 Accepted
+[Sun Feb  8 17:55:00 2026] 127.0.0.1:46922 Closing
+[Sun Feb  8 17:55:36 2026] 127.0.0.1:51158 Accepted
+[Sun Feb  8 17:55:36 2026] 127.0.0.1:51158 Closing
+[Sun Feb  8 17:56:25 2026] 127.0.0.1:34670 Accepted
+[Sun Feb  8 17:56:25 2026] 127.0.0.1:34670 Closing
+[Sun Feb  8 17:56:31 2026] 127.0.0.1:44118 Accepted
+[Sun Feb  8 17:56:32 2026] 127.0.0.1:44118 Closing
+[Sun Feb  8 17:56:46 2026] 127.0.0.1:34584 Accepted
+[Sun Feb  8 17:56:46 2026] 127.0.0.1:34584 Closing
+[Sun Feb  8 17:56:53 2026] 127.0.0.1:32980 Accepted
+[Sun Feb  8 17:56:53 2026] 127.0.0.1:32980 Closing

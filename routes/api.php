@@ -23,6 +23,11 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 
+
+Route::middleware(['auth:sanctum', 'query.monitor'])->group(function () {
+    Route::get('/admin/menu', 'Admin\MenuController@index');
+});
+
 Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function () {
 
     /*************************************routes api start**************************************/
@@ -35,6 +40,8 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::delete('/admin/routes/{id}', 'Admin\RouteController@delete');
 
     /*************************************routes api end**************************************/
+
+
 
 
 
