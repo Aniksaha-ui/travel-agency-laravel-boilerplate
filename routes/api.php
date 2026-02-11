@@ -143,11 +143,21 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     #transactions and payment api
     Route::get('admin/transaction', 'Admin\transaction\transactionController@getTransactions');
 
-    #tickets api
+   
+    /*************************************Menu Items api start**************************************/
+    Route::get('admin/menu_items', 'Admin\Menu\MenuController@index');
+    Route::post('admin/menu_items', 'Admin\Menu\MenuController@store');
+    Route::get('admin/menu_items/{id}', 'Admin\Menu\MenuController@show');
+    Route::post('admin/menu_items/update/{id}', 'Admin\Menu\MenuController@update'); // Using POST for update to avoid potential method spoofing issues if any
+    Route::delete('admin/menu_items/{id}', 'Admin\Menu\MenuController@destroy');
+    /*************************************Menu Items api end**************************************/
+
+    /*****Tickets */
     Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
     Route::get('admin/monitoring', 'Admin\monitoring\monitoringController@monitoring');
-
+    #tickets api
+ 
     #online payment configure
     Route::get('admin/online-configure', 'Admin\configure\OnlineConfigureController@onlineConfigureList');
     Route::post('admin/online-configure', 'Admin\configure\OnlineConfigureController@storeNewConfigure');
