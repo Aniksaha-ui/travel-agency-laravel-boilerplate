@@ -390,7 +390,7 @@ class bookingController extends Controller
                 $transactionUpdate = DB::table('transactions')->where('id',$tran_id)->update($transactionInfo);
 
                 $bookingInfo =  json_decode($verifyData['value_b'],true);
-                $bookingId = $verifyData['tran_id'];
+                $bookingId = $verifyData['tran_id'] ?? null;
                 // $userId = $verifyData['value_c'];
 
                 $booking_type = DB::table('bookings')->where('id',$bookingId)->value('booking_type');
@@ -432,7 +432,7 @@ class bookingController extends Controller
                                                 : ($paymentInfo['payment_method'] == 'nagad'
                                                     ? $paymentInfo['nagad']
                                                     : $paymentInfo['bkash']),
-                'getaway'                   => $paymentInfo['payment_method'],
+                'getaway'                   => $paymentInfo['payment_method'] ?? 'visa',
                 'amount'                     => $paymentInfo['amount'],
                 'com_account_no'             => DB::table('company_accounts')->where('type', $paymentInfo['payment_method'])->value('account_number'),
                 'transaction_reference'      => $bookingId,

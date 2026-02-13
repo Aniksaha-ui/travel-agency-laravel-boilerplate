@@ -69,7 +69,7 @@ class ReportService
     public function accountHistory($userAccountType)
     {
         try {
-            $accountHistory = DB::table('account_history')->where('user_account_type', $userAccountType)->get();
+            $accountHistory = DB::table('account_history')->where('user_account_type', $userAccountType)->OrderBy('id','desc')->paginate(20);
             return $accountHistory;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
@@ -135,9 +135,10 @@ class ReportService
         try {
             $report = DB::table('bookings')
                 ->join('users', 'bookings.user_id', '=', 'users.id')
+                ->join('trips','bookings.trip_id','=','trips.id')
                 ->where('bookings.trip_id', $tripId)
                 ->where('bookings.status', '=', BookingStatus::PAID)
-                ->select('users.name', 'users.email', 'bookings.created_at as booking_date', 'bookings.status', "bookings.package_id")
+                ->select('users.name', 'users.email', 'bookings.created_at as booking_date', 'bookings.status', "bookings.seat_ids","trips.price")
                 ->get();
 
             if ($report->count() > 0) {
@@ -160,7 +161,8 @@ class ReportService
                             SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked
                             FROM bookings b
                             JOIN booking_seats bs ON bs.booking_id = b.id
-                            WHERE b.booking_type = "trip"  -- Filter for Trip bookings
+                            WHERE b.booking_type = "trip"
+                            AND b.status = "' . BookingStatus::PAID . '"
                             GROUP BY b.trip_id
                         ) as bs'), 'bs.trip_id', '=', 't.id')
 
@@ -168,7 +170,8 @@ class ReportService
                             SELECT b.trip_id, COUNT(DISTINCT bs.seat_id) AS total_seats_booked_package
                             FROM bookings b
                             JOIN booking_seats bs ON bs.booking_id = b.id
-                            WHERE b.booking_type = "package"  -- Filter for Package bookings
+                            WHERE b.booking_type = "package"
+                            AND b.status = "' . BookingStatus::PAID . '"
                             GROUP BY b.trip_id
                         ) as bp'), 'bp.trip_id', '=', 't.id')
 
@@ -183,7 +186,8 @@ class ReportService
                             SELECT b.trip_id, SUM(p.amount) AS total_paid_amount
                             FROM payments p
                             JOIN bookings b ON p.booking_id = b.id
-                            WHERE b.booking_type = "trip"  -- Filter for Trip payments
+                            WHERE b.booking_type = "trip"
+                            AND b.status = "' . BookingStatus::PAID . '"
                             GROUP BY b.trip_id
                         ) as pay'), 'pay.trip_id', '=', 't.id')
 
@@ -191,7 +195,8 @@ class ReportService
                             SELECT b.trip_id, SUM(p.amount) AS total_paid_amount_package
                             FROM payments p
                             JOIN bookings b ON p.booking_id = b.id
-                            WHERE b.booking_type = "package"  -- Filter for Package payments
+                            WHERE b.booking_type = "package"
+                            AND b.status = "' . BookingStatus::PAID . '"
                             GROUP BY b.trip_id
                         ) as pay_package'), 'pay_package.trip_id', '=', 't.id')
 
@@ -206,7 +211,6 @@ class ReportService
                         ->orWhere('t.departure_time', 'like', '%' . $search . '%')
                         ->orWhere('t.arrival_time', 'like', '%' . $search . '%');
                 })
-
                 ->select(
                     't.id as trip_id',
                     't.trip_name',
@@ -235,7 +239,7 @@ class ReportService
             }
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
-            return ["status" => false, "data" => [], "message" => "server error"];
+            return ["status" => false, "data" => [], "message" => "Internal server error"];
         }
     }
 
