@@ -459,16 +459,17 @@ class ReportService
         try {
             // Fetch the daily summary data
             $perPage = 10;
+            $month = Carbon::now()->month;
+            $year = Carbon::now()->year;
             $report = DB::table(DB::raw(
-                "
-                (SELECT
+                "(SELECT
                     DATE(ah.tran_date) AS date,
                     COUNT(*) AS tx_count,
                     SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
                     SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
                 FROM account_history ah
-                WHERE MONTH(ah.tran_date) = MONTH(CURDATE())
-                    AND YEAR(ah.tran_date) = YEAR(CURDATE())
+                WHERE MONTH(ah.tran_date) = $month
+                    AND YEAR(ah.tran_date) = $year
                 GROUP BY DATE(ah.tran_date)
                 ) AS daily_summary"
             ))
@@ -482,23 +483,22 @@ class ReportService
                 ->orderBy('date')
                 ->paginate($perPage, ['date', 'tx_count', 'total_credit', 'total_debit', 'balance'], 'page', $page);
 
-            if ($report) {
+            if ($report->total() > 0) {
                 return [
-                    "status" => true,
+                    "status" => ApiResponseStatus::SUCCESS,
                     "data" => $report,
                     "message" => "Report retrieved successfully"
                 ];
-            } else {
-                return [
-                    "status" => true,
-                    "data" => [],
-                    "message" => "No Report found"
-                ];
-            }
+            } 
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "No Report found"
+            ];
         } catch (Exception $ex) {
             Log::alert('Daily Balance Error: ' . $ex->getMessage());
             return [
-                "status" => false,
+                "status" => ApiResponseStatus::FAILED,
                 "data" => [],
                 "message" => "Server error occurred while generating the report"
             ];
