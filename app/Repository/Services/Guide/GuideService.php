@@ -190,7 +190,7 @@ class GuideService
                 ->join('users', 'guides.user_id', '=', 'users.id')
                 ->select('guides.id', 'users.name')
                 ->get();
-            if ($guides->count() > 0) {
+            if ($guides->total() > 0) {
                 return ["status" => true, "data" => $guides, "message" => "Guides list retrived successfully"];
             } else {
                 return ["status" => true, "data" => [], "message" => "No guides found"];
