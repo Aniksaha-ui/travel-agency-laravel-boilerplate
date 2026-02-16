@@ -1,0 +1,37 @@
+# Admin Management Reports API Requests
+
+# 1. Unpaid Bookings Report 
+# Lists recent bookings with pending payment.
+curl -X GET http://127.0.0.1:8000/api/admin/unpaid-booking-report \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 2. User Growth Report
+# Shows new user registrations per month for the last 12 months.
+curl -X GET http://127.0.0.1:8000/api/admin/user-growth-report \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 3. Ticket Status Report
+# Breakdown of support tickets by their status (Pending, Resolved, Declined).
+curl -X GET http://127.0.0.1:8000/api/admin/ticket-status-report \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 4. Refund Status Report
+# Summary of refund requests grouped by status.
+curl -X GET http://127.0.0.1:8000/api/admin/refund-status-report \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 5. Low Occupancy Trip Report
+# Upcoming trips with less than 50% occupancy.
+curl -X GET http://127.0.0.1:8000/api/admin/low-occupancy-trip-report \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 6. Average Booking Value Report
+# Average total cost per booking type (Trip, Package, Hotel).
+curl -X GET http://127.0.0.1:8000/api/admin/avg-booking-value-report \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"

@@ -667,7 +667,201 @@ class ReportService
             }
             return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
         } catch (Exception $ex) {
-            Log::alert('ReportService - salesSummary function error: ' . $ex->getMessage());
+            Log::alert('ReportService - currentMonthTripSales function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function unpaidBookingReport()
+    {
+        try {
+            // Since bookings table often lacks total_cost and payment_status, we rely on 'status' and joins.
+            // This is a best-effort implementation given the schema constraints.
+            
+            $report = DB::table('bookings')
+                ->join('users', 'bookings.user_id', '=', 'users.id')
+                ->leftJoin('trips', 'bookings.trip_id', '=', 'trips.id')
+                ->leftJoin('payments', 'bookings.id', '=', 'payments.booking_id')
+                ->select(
+                    'bookings.id as booking_id',
+                    'users.name as user_name',
+                    'users.email',
+                    'bookings.booking_type',
+                    // Calculate cost for trips if possible
+                    DB::raw('COALESCE(trips.price, 0) as estimated_cost'), 
+                    'bookings.created_at',
+                    'trips.trip_name'
+                )
+                // Assuming 'pending' status implies unpaid/processing
+                ->where('bookings.status', 'pending') 
+                ->whereNull('payments.id') // No payment record found
+                ->orderByDesc('bookings.created_at')
+                ->limit(50)
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - unpaidBookingReport function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function userGrowthReport()
+    {
+        try {
+            $report = DB::table('users')
+                ->select(
+                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                    DB::raw('COUNT(id) as new_users')
+                )
+                ->where('created_at', '>=', Carbon::now()->subMonths(12))
+                ->groupBy('month')
+                ->orderBy('month', 'asc')
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - userGrowthReport function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function ticketStatusReport()
+    {
+        try {
+            $report = DB::table('tickets')
+                ->select(
+                    'status',
+                    DB::raw('COUNT(id) as total_tickets')
+                )
+                ->groupBy('status')
+                ->get()
+                ->map(function ($item) {
+                    $statusMap = [
+                        '0' => 'Pending',
+                        '1' => 'Resolved',
+                        '2' => 'Declined'
+                    ];
+                    $item->status_label = $statusMap[$item->status] ?? 'Unknown';
+                    return $item;
+                });
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - ticketStatusReport function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function refundStatusReport()
+    {
+        try {
+            $report = DB::table('refunds')
+                ->select(
+                    'status',
+                    DB::raw('COUNT(id) as total_refunds'),
+                    DB::raw('SUM(amount) as total_amount')
+                )
+                ->groupBy('status')
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - refundStatusReport function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function lowOccupancyTripReport()
+    {
+        try {
+            $report = DB::table('trips')
+                ->join('vehicles', 'trips.vehicle_id', '=', 'vehicles.id')
+                ->leftJoin('bookings', function ($join) {
+                    $join->on('trips.id', '=', 'bookings.trip_id')
+                        ->where('bookings.status', '!=', 'cancelled');
+                })
+                ->select(
+                    'trips.trip_name',
+                    'trips.departure_time',
+                    'vehicles.total_seats',
+                    DB::raw('COUNT(bookings.id) as booked_seats'),
+                    DB::raw('ROUND((COUNT(bookings.id) / vehicles.total_seats) * 100, 2) as occupancy_rate')
+                )
+                ->where('trips.departure_time', '>', Carbon::now())
+                ->groupBy('trips.id', 'trips.trip_name', 'trips.departure_time', 'vehicles.total_seats')
+                ->having('occupancy_rate', '<', 50)
+                ->orderBy('trips.departure_time', 'asc')
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - lowOccupancyTripReport function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function avgBookingValueReport()
+    {
+        try {
+            // Use payments table to calculate actual realized booking value
+            $report = DB::table('payments')
+                ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+                ->select(
+                    'bookings.booking_type',
+                    DB::raw('AVG(payments.amount) as average_value')
+                )
+                  // Exclude cancelled bookings if status column exists and is used
+                ->where('bookings.status', '!=', 'cancelled')
+                ->groupBy('bookings.booking_type')
+                ->orderByDesc('average_value')
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - avgBookingValueReport function error: ' . $ex->getMessage());
             return [
                 "status" => ApiResponseStatus::FAILED,
                 "data" => [],

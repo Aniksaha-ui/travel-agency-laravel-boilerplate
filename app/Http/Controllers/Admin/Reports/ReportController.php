@@ -399,6 +399,138 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    public function unpaidBookingReport(){
+        try{
+            $response = $this->reportService->unpaidBookingReport();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - unpaidBookingReport function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function userGrowthReport(){
+        try{
+            $response = $this->reportService->userGrowthReport();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - userGrowthReport function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function ticketStatusReport(){
+        try{
+            $response = $this->reportService->ticketStatusReport();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - ticketStatusReport function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function refundStatusReport(){
+        try{
+            $response = $this->reportService->refundStatusReport();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - refundStatusReport function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function lowOccupancyTripReport(){
+        try{
+            $response = $this->reportService->lowOccupancyTripReport();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - lowOccupancyTripReport function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function avgBookingValueReport(){
+        try{
+            $response = $this->reportService->avgBookingValueReport();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - avgBookingValueReport function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
     
 
 
