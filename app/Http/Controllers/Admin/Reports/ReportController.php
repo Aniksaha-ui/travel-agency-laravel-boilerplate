@@ -531,6 +531,72 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    public function lowPerformingPackages(){
+        try{
+            $response = $this->reportService->lowPerformingPackages();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - lowPerformingPackages function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function highCancellationPackages(){
+        try{
+            $response = $this->reportService->highCancellationPackages();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - highCancellationPackages function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
+
+    public function packageProfitMargin(){
+        try{
+            $response = $this->reportService->packageProfitMargin();
+
+            if($response && $response['status']){
+                return response()->json([
+                    "data" => $response['data'],
+                    "isExecute" => $response['status'],
+                    "message" => $response['message']
+                ], 200);
+            }
+       
+        } catch(\Exception $ex){
+            Log::info("Error in ReportController - packageProfitMargin function: " .$ex->getMessage() );
+            return response()->json([
+                "data" => [],
+                "isExecute" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
     
 
 

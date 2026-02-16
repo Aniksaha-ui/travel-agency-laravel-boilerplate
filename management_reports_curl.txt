@@ -35,3 +35,21 @@ curl -X GET http://127.0.0.1:8000/api/admin/low-occupancy-trip-report \
 curl -X GET http://127.0.0.1:8000/api/admin/avg-booking-value-report \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Accept: application/json"
+
+# 7. Low Performing Packages Report
+# Packages with very few bookings in the last 90 days.
+curl -X GET http://127.0.0.1:8000/api/admin/low-performing-packages \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 8. High Cancellation Packages Report
+# Packages with the highest cancellation rates.
+curl -X GET http://127.0.0.1:8000/api/admin/high-cancellation-packages \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+
+# 9. Package Profit Margin Report
+# Packages ranked by their profit margin percentage.
+curl -X GET http://127.0.0.1:8000/api/admin/package-profit-margin \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"

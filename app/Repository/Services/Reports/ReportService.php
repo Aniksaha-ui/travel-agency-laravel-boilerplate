@@ -869,4 +869,104 @@ class ReportService
             ];
         }
     }
+
+    public function lowPerformingPackages()
+    {
+        try {
+            // Packages with low bookings in the last 90 days. Decision: Drop or Promote.
+            $startDate = Carbon::now()->subDays(90);
+            
+            $report = DB::table('packages as p')
+                ->leftJoin('package_bookings as pb', function($join) use ($startDate) {
+                    $join->on('p.id', '=', 'pb.package_id')
+                         ->where('pb.created_at', '>=', $startDate);
+                })
+                ->select(
+                    'p.id',
+                    'p.name as package_name',
+                    DB::raw('COUNT(pb.id) as recent_booking_count')
+                )
+                ->groupBy('p.id', 'p.name')
+                ->having('recent_booking_count', '<', 5) // Threshold for "low performing"
+                ->orderBy('recent_booking_count', 'asc')
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "No low performing packages found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - lowPerformingPackages function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function highCancellationPackages()
+    {
+        try {
+            // Packages with high cancellation rates. Decision: Investigate quality/pricing.
+            $report = DB::table('package_bookings as pb')
+                ->join('packages as p', 'pb.package_id', '=', 'p.id')
+                ->leftJoin('bookings as b', 'pb.booking_id', '=', 'b.id') // Assuming package_bookings links to bookings
+                ->select(
+                    'p.name as package_name',
+                    DB::raw('COUNT(pb.id) as total_bookings'),
+                    DB::raw('SUM(CASE WHEN b.status = "cancelled" THEN 1 ELSE 0 END) as cancelled_count'),
+                    DB::raw('(SUM(CASE WHEN b.status = "cancelled" THEN 1 ELSE 0 END) / COUNT(pb.id)) * 100 as cancellation_rate')
+                )
+                ->groupBy('p.id', 'p.name')
+                ->having('total_bookings', '>', 0) // Ignore never booked packages
+                ->orderByDesc('cancellation_rate')
+                ->limit(20)
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - highCancellationPackages function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
+    public function packageProfitMargin()
+    {
+        try {
+            // Profit margin analysis. Decision: Pricing adjustment.
+            $report = DB::table('packages as p')
+                ->leftJoin('package_bookings as pb', 'p.id', '=', 'pb.package_id')
+                ->leftJoin('trip_package_costings as tpc', 'p.id', '=', 'tpc.package_id')
+                ->select(
+                    'p.name as package_name',
+                    DB::raw('COALESCE(SUM(pb.total_cost), 0) as total_revenue'),
+                    DB::raw('COALESCE(SUM(DISTINCT tpc.cost_amount), 0) as total_fixed_cost'), // Simplified cost assumption
+                    DB::raw('COALESCE(SUM(pb.total_cost), 0) - COALESCE(SUM(DISTINCT tpc.cost_amount), 0) as gross_profit'),
+                     DB::raw('CASE WHEN SUM(pb.total_cost) > 0 THEN ((SUM(pb.total_cost) - COALESCE(SUM(DISTINCT tpc.cost_amount), 0)) / SUM(pb.total_cost)) * 100 ELSE 0 END as margin_percentage')
+                )
+                ->groupBy('p.id', 'p.name')
+                ->orderByDesc('margin_percentage')
+                ->get();
+
+            if ($report->count() > 0) {
+                return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+            }
+            return ['status' => ApiResponseStatus::FAILED, 'message' => "No report found", 'data' => []];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - packageProfitMargin function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
 }
