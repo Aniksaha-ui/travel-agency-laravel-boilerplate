@@ -193,7 +193,6 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/booking-summary', 'Admin\Reports\ReportController@bookingSummary');
     Route::get('/admin/overall-sales-summary', 'Admin\Reports\ReportController@salesSummary');
     Route::get('/admin/route-wise-sales-summary', 'Admin\Reports\ReportController@routeWiseSalesSummary');
-    Route::get('/admin/route-wise-sales-summary', 'Admin\Reports\ReportController@routeWiseSalesSummary');
     Route::get('/admin/current-month-trip-sales-report', 'Admin\Reports\ReportController@currentMonthTripSales');
 
     #reports api
@@ -211,7 +210,7 @@ Route::get('/packages/{id}', 'User\trip\PackageController@singlePackageInformati
 Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePackages');
 Route::post('/hotels', 'User\hotel\hotelController@index')->name('hotel.list');
 Route::get('/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
-
+Route::get('/guides', 'Admin\guide\guideController@getGuides');
 
 
 // Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
