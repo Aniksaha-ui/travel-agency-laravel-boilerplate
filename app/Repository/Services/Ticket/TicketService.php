@@ -67,7 +67,7 @@ class TicketService
                                             'tickets.description',
                                             'tickets.generate_by',
                                             'tickets.status',
-                                            'tickets.resolved_status',
+                                            'tickets.resloved_status',
                                             'tickets.remarks',
                                             'tickets.attachment',
                                             'tickets.created_at',
