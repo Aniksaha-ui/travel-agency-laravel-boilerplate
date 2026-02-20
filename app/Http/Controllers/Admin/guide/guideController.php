@@ -155,6 +155,8 @@ class guideController extends Controller
     public function getGuidesdropdown()
     {
         try {
+
+
             $response = $this->guideService->getGuidesdropdown();
             if ($response['status'] == true) {
                 return response()->json([
@@ -171,6 +173,11 @@ class guideController extends Controller
             }
         } catch (Exception $ex) {
             Log::error("guideController getGuidesdropdown" . $ex->getMessage());
+            return response()->json([
+                "data" => [],
+                "message" => "Internal server error: " . $ex->getMessage(),
+                "status" => false
+            ], 500);
         }
     }
 
