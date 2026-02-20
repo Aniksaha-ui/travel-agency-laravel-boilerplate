@@ -153,6 +153,14 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::delete('admin/menu_items/{id}', 'Admin\Menu\MenuController@destroy');
     /*************************************Menu Items api end**************************************/
 
+    /*************************************Blog api start**************************************/
+    Route::get('admin/blogs', 'Admin\Blog\BlogController@index');
+    Route::post('admin/blogs', 'Admin\Blog\BlogController@store');
+    Route::get('admin/blogs/{id}', 'Admin\Blog\BlogController@show');
+    Route::post('admin/blogs/update/{id}', 'Admin\Blog\BlogController@update');
+    Route::delete('admin/blogs/{id}', 'Admin\Blog\BlogController@destroy');
+    /*************************************Blog api end**************************************/
+
     /*****Tickets */
     Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
