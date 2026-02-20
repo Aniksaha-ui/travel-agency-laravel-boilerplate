@@ -458,7 +458,7 @@ class ReportService
     {
         try {
             // Fetch the daily summary data
-            $perPage = 10;
+            $perPage = 31;
             $month = Carbon::now()->month;
             $year = Carbon::now()->year;
             $report = DB::table(DB::raw(

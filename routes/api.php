@@ -220,6 +220,11 @@ Route::post('/hotels', 'User\hotel\hotelController@index')->name('hotel.list');
 Route::get('/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
 Route::get('/guides', 'Admin\guide\guideController@getGuides');
 
+/*************************************Blog api start**************************************/
+Route::get('/blogs', 'User\Blog\BlogController@index');
+Route::get('/blogs/details/{id}', 'User\Blog\BlogController@show');
+/*************************************Blog api end**************************************/
+
 
 // Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
 // Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
