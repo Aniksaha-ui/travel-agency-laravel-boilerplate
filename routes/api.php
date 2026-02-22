@@ -153,6 +153,14 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::delete('admin/menu_items/{id}', 'Admin\Menu\MenuController@destroy');
     /*************************************Menu Items api end**************************************/
 
+    /*************************************Blog api start**************************************/
+    Route::get('admin/blogs', 'Admin\Blog\BlogController@index');
+    Route::post('admin/blogs', 'Admin\Blog\BlogController@store');
+    Route::get('admin/blogs/{id}', 'Admin\Blog\BlogController@show');
+    Route::post('admin/blogs/update/{id}', 'Admin\Blog\BlogController@update');
+    Route::delete('admin/blogs/{id}', 'Admin\Blog\BlogController@destroy');
+    /*************************************Blog api end**************************************/
+
     /*****Tickets */
     Route::get('admin/tickets', 'Admin\tickets\ticketsController@getTickets');
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
@@ -222,6 +230,11 @@ Route::get('/tripwisepackages/{tripId}', 'User\trip\PackageController@tripwisePa
 Route::post('/hotels', 'User\hotel\hotelController@index')->name('hotel.list');
 Route::get('/hotel/{hotel_id}', 'Admin\hotel\hotelController@getHotelById');
 Route::get('/guides', 'Admin\guide\guideController@getGuides');
+
+/*************************************Blog api start**************************************/
+Route::get('/blogs', 'User\Blog\BlogController@index');
+Route::get('/blogs/details/{id}', 'User\Blog\BlogController@show');
+/*************************************Blog api end**************************************/
 
 
 // Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
