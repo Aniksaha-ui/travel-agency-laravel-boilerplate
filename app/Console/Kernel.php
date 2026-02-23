@@ -26,6 +26,7 @@ class Kernel extends ConsoleKernel
     {
             $schedule->command('report:financial_year')->everyMinute();
             $schedule->command('trip:inactiveTrips')->everyFourMinutes();
+            $schedule->command('room-prices:update-next-term')->daily();
 
         // $schedule->command('report:financial_year')->everyMinute();
     }

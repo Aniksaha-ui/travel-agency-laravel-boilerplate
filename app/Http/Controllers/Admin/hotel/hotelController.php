@@ -127,6 +127,7 @@ class hotelController extends Controller
                     ->join('room_types', 'hotel_rooms.room_type_id', '=', 'room_types.id')
                     ->where('hotel_room_id', $room->id)
                     ->select('room_prices.*', 'room_types.type_name')
+                    ->orderBy('room_prices.season_start', 'asc')
                     ->get();
 
                 $roomData = [
@@ -152,7 +153,6 @@ class hotelController extends Controller
                     'description' => $hotel->description,
                     'location' => $hotel->location,
                     'star_rating' => $hotel->star_rating,
-                    'description' => $hotel->description,
                     'facilities' => $hotel->facilities,
                     'photos' => $photos,
                     'rooms' => $roomsWithPricing
@@ -160,6 +160,7 @@ class hotelController extends Controller
             ]);
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
+            return response()->json(['isExecute' => false, 'message' => 'Internal Server Error'], 500);
         }
     }
 
