@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use App\User;
 use App\Repository\Services\Monitoring\TelegramService;
 use Illuminate\Support\Facades\Log;
 
@@ -59,5 +59,37 @@ class AuthController extends Controller
             'expires_in' => config('sanctum.expiration') ? config('sanctum.expiration') * 60 : null,
             'user' => $user
         ]);
+    }
+
+    public function register(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Create the user
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'users', 
+            'address' => $request->address ?? '',
+             'mobile' => $request->mobile ?? '',
+             'company_name' =>$request->company_name ?? '',
+             'company_address' =>$request->company_address ?? '',
+        ]);
+
+        // Generate a token for the user
+        $token = $user->createToken('Personal Access Token')->plainTextToken;
+
+        // Return the response with the token
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user
+        ], 201);
     }
 }
