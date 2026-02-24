@@ -21,8 +21,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
+
 
 
 Route::middleware(['auth:sanctum', 'query.monitor'])->group(function () {
@@ -206,10 +207,11 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
 
     
     Route::get('/admin/unpaid-booking-report', 'Admin\Reports\ReportController@unpaidBookingReport');
-    Route::get('/admin/user-growth-report', 'Admin\Reports\ReportController@userGrowthReport');
     Route::get('/admin/ticket-status-report', 'Admin\Reports\ReportController@ticketStatusReport');
-    Route::get('/admin/refund-status-report', 'Admin\Reports\ReportController@refundStatusReport');
     Route::get('/admin/low-occupancy-trip-report', 'Admin\Reports\ReportController@lowOccupancyTripReport');
+    
+    Route::get('/admin/user-growth-report', 'Admin\Reports\ReportController@userGrowthReport');
+    Route::get('/admin/refund-status-report', 'Admin\Reports\ReportController@refundStatusReport');
     Route::get('/admin/avg-booking-value-report', 'Admin\Reports\ReportController@avgBookingValueReport');
     Route::get('/admin/low-performing-packages', 'Admin\Reports\ReportController@lowPerformingPackages');
     Route::get('/admin/high-cancellation-packages', 'Admin\Reports\ReportController@highCancellationPackages');
@@ -277,5 +279,5 @@ Route::middleware(['auth:sanctum', 'guide'])->group(function () {
 
 //payment redirect
  Route::post('/payment/success', 'User\booking\bookingController@successPayment')->name('payment.success');
-Route::post('/users/order/fail', [OrderController::class, 'fail'])->name('payment.fail');
-Route::post('/users/order/cancel', [OrderController::class, 'cancel'])->name('payment.cancel');
+// Route::post('/users/order/fail', [OrderController::class, 'fail'])->name('payment.fail');
+// Route::post('/users/order/cancel', [OrderController::class, 'cancel'])->name('payment.cancel');
