@@ -969,4 +969,344 @@ class ReportService
             ];
         }
     }
+
+    public function hotelPerformanceReport()
+    {
+        try {
+            $report = DB::table('hotels as h')
+                ->leftJoin('hotel_bookings as hb', 'h.id', '=', 'hb.hotel_id')
+                ->select(
+                    'h.name as hotel_name',
+                    'h.location',
+                    'h.star_rating',
+                    DB::raw('COUNT(hb.id) as total_bookings'),
+                    DB::raw('COALESCE(SUM(hb.total_cost), 0) as total_revenue'),
+                    DB::raw('COALESCE(AVG(hb.total_cost), 0) as avg_booking_value')
+                )
+                ->groupBy('h.id', 'h.name', 'h.location', 'h.star_rating')
+                ->orderByDesc('total_revenue')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - hotelPerformanceReport error: ' . $ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "data" => [], "message" => "Server error"];
+        }
+    }
+
+    public function roomTypePopularityReport()
+    {
+        try {
+            $report = DB::table('room_types as rt')
+                ->join('hotel_rooms as hr', 'rt.id', '=', 'hr.room_type_id')
+                ->leftJoin('hotel_bookings as hb', 'hr.id', '=', 'hb.hotel_room_id')
+                ->select(
+                    'rt.type_name',
+                    DB::raw('COUNT(hb.id) as total_bookings'),
+                    DB::raw('COALESCE(SUM(hb.total_persons), 0) as total_guests'),
+                    DB::raw('COALESCE(SUM(hb.total_cost), 0) as total_revenue')
+                )
+                ->groupBy('rt.id', 'rt.type_name')
+                ->orderByDesc('total_bookings')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - roomTypePopularityReport error: ' . $ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "data" => [], "message" => "Server error"];
+        }
+    }
+
+    public function refundReasonAnalysis()
+    {
+        try {
+            $report = DB::table('refunds')
+                ->select(
+                    'reason',
+                    DB::raw('COUNT(id) as refund_count'),
+                    DB::raw('SUM(amount) as total_refunded_amount')
+                )
+                ->groupBy('reason')
+                ->orderByDesc('refund_count')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - refundReasonAnalysis error: ' . $ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "data" => [], "message" => "Server error"];
+        }
+    }
+
+    public function vehicleTypePerformanceReport()
+    {
+        try {
+            $report = DB::table('vehicles as v')
+                ->join('trips as t', 'v.id', '=', 't.vehicle_id')
+                ->leftJoin('bookings as b', 't.id', '=', 'b.trip_id')
+                ->leftJoin('payments as p', 'b.id', '=', 'p.booking_id')
+                ->select(
+                    'v.vehicle_type',
+                    DB::raw('COUNT(DISTINCT t.id) as total_trips'),
+                    DB::raw('COUNT(b.id) as total_bookings'),
+                    DB::raw('COALESCE(SUM(p.amount), 0) as total_revenue')
+                )
+                ->groupBy('v.vehicle_type')
+                ->orderByDesc('total_revenue')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - vehicleTypePerformanceReport error: ' . $ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "data" => [], "message" => "Server error"];
+        }
+    }
+
+    public function packagePassengerSummary()
+    {
+        try {
+            $report = DB::table('packages as p')
+                ->leftJoin('package_bookings as pb', 'p.id', '=', 'pb.package_id')
+                ->select(
+                    'p.name as package_name',
+                    DB::raw('COALESCE(SUM(pb.total_adult), 0) as total_adults'),
+                    DB::raw('COALESCE(SUM(pb.total_child), 0) as total_children'),
+                    DB::raw('COALESCE(SUM(pb.total_cost), 0) as total_revenue')
+                )
+                ->groupBy('p.id', 'p.name')
+                ->orderByDesc('total_revenue')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Report fetch successfully", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - packagePassengerSummary error: ' . $ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "data" => [], "message" => "Server error"];
+        }
+    }
+
+    public function cityWiseHotelRevenue()
+    {
+        try {
+            $report = DB::table('hotels as h')
+                ->join('hotel_bookings as hb', 'h.id', '=', 'hb.hotel_id')
+                ->select(
+                    'h.city',
+                    DB::raw('COUNT(hb.id) as total_bookings'),
+                    DB::raw('SUM(hb.total_cost) as total_revenue')
+                )
+                ->groupBy('h.city')
+                ->orderByDesc('total_revenue')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function monthlyBookingTrend()
+    {
+        try {
+            $report = DB::table('bookings')
+                ->select(
+                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                    DB::raw('COUNT(id) as booking_count')
+                )
+                ->where('created_at', '>=', Carbon::now()->subMonths(12))
+                ->groupBy('month')
+                ->orderBy('month', 'asc')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function paymentMethodAnalytics()
+    {
+        try {
+            $report = DB::table('payments')
+                ->select(
+                    'payment_method',
+                    DB::raw('COUNT(id) as usage_count'),
+                    DB::raw('SUM(amount) as total_collected')
+                )
+                ->groupBy('payment_method')
+                ->orderByDesc('usage_count')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function guidePerformanceVsCost()
+    {
+        try {
+            $report = DB::table('guides as g')
+                ->join('users as u', 'g.user_id', '=', u.id)
+                ->leftJoin('guide_packages as gp', 'g.id', '=', 'gp.guide_id')
+                ->leftJoin('package_bookings as pb', 'gp.package_id', '=', 'pb.package_id')
+                ->leftJoin('trip_package_costings as tpc', 'g.id', '=', 'tpc.guide_id')
+                ->select(
+                    'u.name as guide_name',
+                    DB::raw('COUNT(DISTINCT pb.id) as total_bookings_handled'),
+                    DB::raw('COALESCE(SUM(pb.total_cost), 0) as revenue_generated'),
+                    DB::raw('COALESCE(SUM(tpc.cost_amount), 0) as total_cost_to_company'),
+                    DB::raw('(COALESCE(SUM(pb.total_cost), 0) - COALESCE(SUM(tpc.cost_amount), 0)) as net_contribution')
+                )
+                ->groupBy('g.id', 'u.name')
+                ->orderByDesc('net_contribution')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function hotelGuestStatusReport()
+    {
+        try {
+            $report = DB::table('hotel_bookings')
+                ->select(
+                    'booking_status',
+                    DB::raw('COUNT(id) as count')
+                )
+                ->groupBy('booking_status')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function packageInclusionRevenue()
+    {
+        try {
+            $report = DB::table('packages as p')
+                ->leftJoin('package_bookings as pb', 'p.id', '=', 'pb.package_id')
+                ->select(
+                    DB::raw("CASE WHEN includes_meal = 1 THEN 'With Meal' ELSE 'No Meal' END as meal_status"),
+                    DB::raw("CASE WHEN includes_hotel = 1 THEN 'With Hotel' ELSE 'No Hotel' END as hotel_status"),
+                    DB::raw("CASE WHEN includes_bus = 1 THEN 'With Bus' ELSE 'No Bus' END as bus_status"),
+                    DB::raw('COUNT(pb.id) as booking_count'),
+                    DB::raw('COALESCE(SUM(pb.total_cost), 0) as total_revenue')
+                )
+                ->groupBy('includes_meal', 'includes_hotel', 'includes_bus')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function userLoyaltyAnalytics()
+    {
+        try {
+            $report = DB::table('bookings')
+                ->select(
+                    DB::raw('COUNT(user_id) as booking_frequency'),
+                    DB::raw('COUNT(DISTINCT user_id) as user_count')
+                )
+                ->groupBy('user_id')
+                ->get();
+            
+            // Further process to group by frequency
+            $summary = $report->groupBy('booking_frequency')->map(function ($item, $key) {
+                return [
+                    'booking_count' => $key,
+                    'number_of_users' => count($item)
+                ];
+            })->values();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $summary];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function routeEfficiencyAnalytics()
+    {
+        try {
+            $report = DB::table('routes as r')
+                ->join('trips as t', 'r.id', '=', 't.route_id')
+                ->join('vehicles as v', 't.vehicle_id', '=', 'v.id')
+                ->leftJoin('bookings as b', 't.id', '=', 'b.trip_id')
+                ->select(
+                    'r.route_name',
+                    DB::raw('COUNT(DISTINCT t.id) as trip_count'),
+                    DB::raw('SUM(v.total_seats) as total_capacity'),
+                    DB::raw('COUNT(b.id) as seats_filled'),
+                    DB::raw('SUM(t.price) as potential_revenue'),
+                    DB::raw('ROUND((COUNT(b.id) / SUM(v.total_seats)) * 100, 2) as fill_rate')
+                )
+                ->groupBy('r.id', 'r.route_name')
+                ->orderByDesc('fill_rate')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function bookingLeadTimeAnalysis()
+    {
+        try {
+            $report = DB::table('bookings as b')
+                ->join('trips as t', 'b.trip_id', '=', 't.id')
+                ->select(
+                    DB::raw('DATEDIFF(t.departure_time, b.created_at) as days_in_advance'),
+                    DB::raw('COUNT(b.id) as booking_count')
+                )
+                ->whereRaw('DATEDIFF(t.departure_time, b.created_at) >= 0')
+                ->groupBy('days_in_advance')
+                ->orderBy('days_in_advance', 'asc')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "Success", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
+
+    public function occupancyAlertReport()
+    {
+        try {
+            $report = DB::table('trips as t')
+                ->join('vehicles as v', 't.vehicle_id', '=', 'v.id')
+                ->leftJoin('bookings as b', 't.id', '=', 'b.trip_id')
+                ->select(
+                    't.trip_name',
+                    't.departure_time',
+                    'v.total_seats',
+                    DB::raw('COUNT(b.id) as booked_seats'),
+                    DB::raw('ROUND((COUNT(b.id) / v.total_seats) * 100, 2) as occupancy_percentage')
+                )
+                ->where('t.departure_time', '>', Carbon::now())
+                ->where('t.departure_time', '<=', Carbon::now()->addDays(7))
+                ->groupBy('t.id', 't.trip_name', 't.departure_time', 'v.total_seats')
+                ->having('occupancy_percentage', '<', 30)
+                ->orderBy('t.departure_time', 'asc')
+                ->get();
+
+            return ['status' => ApiResponseStatus::SUCCESS, 'message' => "High priority: Low occupancy trips departing soon", 'data' => $report];
+        } catch (Exception $ex) {
+            Log::alert($ex->getMessage());
+            return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
+        }
+    }
 }

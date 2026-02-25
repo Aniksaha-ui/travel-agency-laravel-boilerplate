@@ -597,8 +597,153 @@ class ReportController extends Controller
             ], 500);
         }
     }
-    
+    public function hotelPerformanceReport()
+    {
+        try {
+            $response = $this->reportService->hotelPerformanceReport();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
 
+    public function roomTypePopularityReport()
+    {
+        try {
+            $response = $this->reportService->roomTypePopularityReport();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
 
+    public function refundReasonAnalysis()
+    {
+        try {
+            $response = $this->reportService->refundReasonAnalysis();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
 
+    public function vehicleTypePerformanceReport()
+    {
+        try {
+            $response = $this->reportService->vehicleTypePerformanceReport();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function packagePassengerSummary()
+    {
+        try {
+            $response = $this->reportService->packagePassengerSummary();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function cityWiseHotelRevenue()
+    {
+        try {
+            $response = $this->reportService->cityWiseHotelRevenue();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function monthlyBookingTrend()
+    {
+        try {
+            $response = $this->reportService->monthlyBookingTrend();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function paymentMethodAnalytics()
+    {
+        try {
+            $response = $this->reportService->paymentMethodAnalytics();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function guidePerformanceVsCost()
+    {
+        try {
+            $response = $this->reportService->guidePerformanceVsCost();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function hotelGuestStatusReport()
+    {
+        try {
+            $response = $this->reportService->hotelGuestStatusReport();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function packageInclusionRevenue()
+    {
+        try {
+            $response = $this->reportService->packageInclusionRevenue();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function userLoyaltyAnalytics()
+    {
+        try {
+            $response = $this->reportService->userLoyaltyAnalytics();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function routeEfficiencyAnalytics()
+    {
+        try {
+            $response = $this->reportService->routeEfficiencyAnalytics();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function bookingLeadTimeAnalysis()
+    {
+        try {
+            $response = $this->reportService->bookingLeadTimeAnalysis();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
+
+    public function occupancyAlertReport()
+    {
+        try {
+            $response = $this->reportService->occupancyAlertReport();
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+        }
+    }
 }

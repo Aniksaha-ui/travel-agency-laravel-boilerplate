@@ -216,6 +216,22 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/low-performing-packages', 'Admin\Reports\ReportController@lowPerformingPackages');
     Route::get('/admin/high-cancellation-packages', 'Admin\Reports\ReportController@highCancellationPackages');
     Route::get('/admin/package-profit-margin', 'Admin\Reports\ReportController@packageProfitMargin');
+    
+    Route::get('/admin/hotel-performance-report', 'Admin\Reports\ReportController@hotelPerformanceReport');
+    Route::get('/admin/room-type-popularity-report', 'Admin\Reports\ReportController@roomTypePopularityReport');
+    Route::get('/admin/refund-reason-analysis', 'Admin\Reports\ReportController@refundReasonAnalysis');
+    Route::get('/admin/vehicle-type-performance-report', 'Admin\Reports\ReportController@vehicleTypePerformanceReport');
+    Route::get('/admin/package-passenger-summary', 'Admin\Reports\ReportController@packagePassengerSummary');
+    Route::get('/admin/city-wise-hotel-revenue', 'Admin\Reports\ReportController@cityWiseHotelRevenue');
+    Route::get('/admin/monthly-booking-trend', 'Admin\Reports\ReportController@monthlyBookingTrend');
+    Route::get('/admin/payment-method-analytics', 'Admin\Reports\ReportController@paymentMethodAnalytics');
+    Route::get('/admin/guide-performance-vs-cost', 'Admin\Reports\ReportController@guidePerformanceVsCost');
+    Route::get('/admin/hotel-guest-status-report', 'Admin\Reports\ReportController@hotelGuestStatusReport');
+    Route::get('/admin/package-inclusion-revenue', 'Admin\Reports\ReportController@packageInclusionRevenue');
+    Route::get('/admin/user-loyalty-analytics', 'Admin\Reports\ReportController@userLoyaltyAnalytics');
+    Route::get('/admin/route-efficiency-analytics', 'Admin\Reports\ReportController@routeEfficiencyAnalytics');
+    Route::get('/admin/booking-lead-time-analysis', 'Admin\Reports\ReportController@bookingLeadTimeAnalysis');
+    Route::get('/admin/occupancy-alert-report', 'Admin\Reports\ReportController@occupancyAlertReport');
 
     #reports api
 
