@@ -11,6 +11,23 @@ use DB;
 class BookingService implements CommonInterface
 {
 
+    protected $contact;
+
+    /**
+     * Get all contacts.
+     *
+     * @return bool
+     */
+    public function index($page, $search) {}
+
+    public function store($request) {}
+
+
+    public function findById($id) {}
+
+    public function delete($id) {}
+
+
     public function mybookings($userId)
     {
         try {
@@ -29,8 +46,9 @@ class BookingService implements CommonInterface
                     'hotels.name as hotel_name'
                 )
                 ->where("bookings.user_id", $userId)
-                ->orderBy('bookings.id','desc')
                 ->get();
+
+            Log::info("booking information" . json_encode($bookingInformation));
             return $bookingInformation;
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
