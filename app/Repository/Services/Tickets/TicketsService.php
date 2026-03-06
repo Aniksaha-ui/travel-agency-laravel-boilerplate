@@ -57,7 +57,7 @@ class TicketsService
 
             $updateData = [
                 'status' => $statusInfo,
-                'resloved_status' => ($statusInfo == 1) ? $resolvedStatus : $statusInfo,
+                'resloved_status' =>  $resolvedStatus,
                 'resolved_by' => Auth::id(),
                 'updated_at' => now(),
             ];

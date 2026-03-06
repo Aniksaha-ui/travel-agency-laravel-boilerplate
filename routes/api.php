@@ -217,6 +217,8 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/high-cancellation-packages', 'Admin\Reports\ReportController@highCancellationPackages');
     Route::get('/admin/package-profit-margin', 'Admin\Reports\ReportController@packageProfitMargin');
     
+
+    
     Route::get('/admin/hotel-performance-report', 'Admin\Reports\ReportController@hotelPerformanceReport');
     Route::get('/admin/room-type-popularity-report', 'Admin\Reports\ReportController@roomTypePopularityReport');
     Route::get('/admin/refund-reason-analysis', 'Admin\Reports\ReportController@refundReasonAnalysis');
