@@ -46,6 +46,7 @@ class BookingService implements CommonInterface
                     'hotels.name as hotel_name'
                 )
                 ->where("bookings.user_id", $userId)
+                ->orderBy('bookings.id','desc')
                 ->get();
 
             Log::info("booking information" . json_encode($bookingInformation));
