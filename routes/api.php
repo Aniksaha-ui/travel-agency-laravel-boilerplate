@@ -295,5 +295,5 @@ Route::middleware(['auth:sanctum', 'guide'])->group(function () {
 
 //payment redirect
  Route::post('/payment/success', 'User\booking\bookingController@successPayment')->name('payment.success');
-// Route::post('/users/order/fail', [OrderController::class, 'fail'])->name('payment.fail');
-// Route::post('/users/order/cancel', [OrderController::class, 'cancel'])->name('payment.cancel');
+Route::post('/users/order/fail', 'User\booking\bookingController@successPayment')->name('payment.fail');
+Route::post('/users/order/cancel', 'User\booking\bookingController@successPayment')->name('payment.cancel');

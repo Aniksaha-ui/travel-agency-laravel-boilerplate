@@ -457,30 +457,11 @@ class ReportService
     public function dailyBalanceReport($page, $search)
     {
         try {
-            // Fetch the daily summary data
-            $perPage = 31;
             $month = Carbon::now()->month;
             $year = Carbon::now()->year;
-            $report = DB::table(DB::raw(
-                "(SELECT
-                    DATE(ah.tran_date) AS date,
-                    COUNT(*) AS tx_count,
-                    SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
-                    SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
-                FROM account_history ah
-                WHERE MONTH(ah.tran_date) = $month
-                    AND YEAR(ah.tran_date) = $year
-                GROUP BY DATE(ah.tran_date)
-                ) AS daily_summary"
-            ))
-                ->select(
-                    'date',
-                    'tx_count',
-                    'total_credit',
-                    'total_debit',
-                    DB::raw('SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance')
-                )
-                ->orderBy('date')
+            $perPage = 31;
+
+            $report = $this->getDailyBalanceReportData($month, $year)
                 ->paginate($perPage, ['date', 'tx_count', 'total_credit', 'total_debit', 'balance'], 'page', $page);
 
             if ($report->total() > 0) {
@@ -1308,5 +1289,29 @@ class ReportService
             Log::alert($ex->getMessage());
             return ["status" => ApiResponseStatus::FAILED, "message" => "Error"];
         }
+    }
+
+    public function getDailyBalanceReportData($month, $year)
+    {
+        return DB::table(DB::raw(
+            "(SELECT
+                DATE(ah.tran_date) AS date,
+                COUNT(*) AS tx_count,
+                SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
+                SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
+            FROM account_history ah
+            WHERE MONTH(ah.tran_date) = $month
+                AND YEAR(ah.tran_date) = $year
+            GROUP BY DATE(ah.tran_date)
+            ) AS daily_summary"
+        ))
+            ->select(
+                'date',
+                'tx_count',
+                'total_credit',
+                'total_debit',
+                DB::raw('SUM(total_credit - total_debit) OVER (ORDER BY date ASC) AS balance')
+            )
+            ->orderBy('date');
     }
 }
