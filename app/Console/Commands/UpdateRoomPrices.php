@@ -41,7 +41,10 @@ class UpdateRoomPrices extends Command
     public function handle()
     {
         $hotelRoomId = $this->argument('hotel_room_id');
-        $this->info('Starting Room Prices Update...');
+        $this->info('Starting Room Prices Update (Replicating sessions from previous year)...');
+
+        $currentYear = now()->year;
+        $previousYear = $currentYear - 1;
 
         // Get rooms to process
         $roomsQuery = DB::table('hotel_rooms');
@@ -58,31 +61,25 @@ class UpdateRoomPrices extends Command
         $totalAdded = 0;
 
         foreach ($rooms as $room) {
-            // Find the latest pricing term for this room
-            $latestPrice = DB::table('room_prices')
-                ->where('hotel_room_id', $room->id)
-                ->orderBy('season_end', 'desc')
-                ->first();
+            $this->info("Processing Room ID: {$room->id}");
 
-            if (!$latestPrice) {
-                $this->warn("No existing pricing found for Room ID: {$room->id}. Skipping.");
+            // Fetch all seasonal prices for the previous year
+            $pricesToReplicate = DB::table('room_prices')
+                ->where('hotel_room_id', $room->id)
+                ->whereYear('season_start', $previousYear)
+                ->get();
+
+            if ($pricesToReplicate->isEmpty()) {
+                $this->warn("No pricing found for Room ID: {$room->id} in year {$previousYear}. Skipping.");
                 continue;
             }
 
-            $latestYear = Carbon::parse($latestPrice->season_start)->year;
-            $this->info("Processing Room ID: {$room->id} - Latest year found: {$latestYear}");
-
-            // Fetch all seasonal prices for that specific year
-            $pricesToReplicate = DB::table('room_prices')
-                ->where('hotel_room_id', $room->id)
-                ->whereYear('season_start', $latestYear)
-                ->get();
-
             foreach ($pricesToReplicate as $price) {
+                // Determine the next year for this session
                 $nextSeasonStart = Carbon::parse($price->season_start)->addYear();
                 $nextSeasonEnd = Carbon::parse($price->season_end)->addYear();
 
-                // Check if the price already exists for the next term to avoid duplicates
+                // Check if the price already exists for the current year to avoid duplicates
                 $exists = DB::table('room_prices')
                     ->where('hotel_room_id', $room->id)
                     ->where('season_start', $nextSeasonStart->toDateString())
@@ -99,12 +96,15 @@ class UpdateRoomPrices extends Command
                         'updated_at' => now()
                     ]);
                     $totalAdded++;
+                    $this->line(" - Replicated session: {$nextSeasonStart->toDateString()} to {$nextSeasonEnd->toDateString()} (Price: {$price->price_per_night})");
+                } else {
+                    $this->line(" - Session already exists: {$nextSeasonStart->toDateString()} to {$nextSeasonEnd->toDateString()}");
                 }
             }
         }
 
-        $this->info("Success! Added {$totalAdded} new room prices.");
-        Log::info("Room Prices Update Sync: Added {$totalAdded} new prices.");
+        $this->info("Success! Added {$totalAdded} new seasonal room prices for {$currentYear}.");
+        Log::info("Room Prices Update Sync: Added {$totalAdded} new prices for year {$currentYear}.");
 
         return 0;
     }
