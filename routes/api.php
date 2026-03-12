@@ -257,6 +257,12 @@ Route::get('/blogs', 'User\Blog\BlogController@index');
 Route::get('/blogs/details/{id}', 'User\Blog\BlogController@show');
 /*************************************Blog api end**************************************/
 
+/*************************************Influence api start**********************************/
+Route::get('/influence/trending', 'User\InfluenceController@trendingPackages');
+Route::get('/influence/recent-activity', 'User\InfluenceController@recentActivity');
+Route::get('/influence/statistics', 'User\InfluenceController@siteStatistics');
+/*************************************Influence api end**************************************/
+
 
 // Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
 // Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
