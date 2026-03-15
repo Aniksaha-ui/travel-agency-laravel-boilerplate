@@ -46,30 +46,104 @@ class GenerateDailyBalancePDF extends Command
      */
     public function handle()
     {
-        $month = $this->argument('month') ?? Carbon::now()->month;
-        $year = $this->argument('year') ?? Carbon::now()->year;
+        $monthArg = $this->argument('month');
+        $yearArg = $this->argument('year');
 
-        $monthName = Carbon::create($year, $month, 1)->format('F');
+        // If month is provided, generate for that specific month
+        if ($monthArg) {
+            $year = $yearArg ?? Carbon::now()->year;
+            return $this->generateForMonth($monthArg, $year);
+        }
+
+        // Catch-up mode: Check for missing reports in the specified year or current year
+        $year = $yearArg ?? Carbon::now()->year;
+        
+        // If checking current year, check up to the current month
+        // If checking a past year, check all 12 months
+        $isCurrentYear = ($year == Carbon::now()->year);
+        $limitMonth = $isCurrentYear ? Carbon::now()->month : 12;
+
+        if ($limitMonth < 1) {
+            $this->info("No months to check.");
+            return 0;
+        }
+
+        $generatedCount = 0;
+        $this->info("Checking for missing monthly reports for year {$year} (up to " . Carbon::create($year, $limitMonth, 1)->format('F') . ")...");
+
+        for ($m = 1; $m <= $limitMonth; $m++) {
+            $reportMonthDate = Carbon::create($year, $m, 1)->startOfMonth()->toDateString();
+            
+            $exists = MonthlyDailyBalanceReport::where('report_month', $reportMonthDate)->exists();
+
+            if (!$exists) {
+                $this->info("Month {$m} ({$year}) report is missing. Transitioning to generation...");
+                $result = $this->generateForMonth($m, $year);
+                if ($result === 0) {
+                    $generatedCount++;
+                }
+            }
+        }
+
+        $this->info("Catch-up finished for year {$year}. Total reports generated: {$generatedCount}");
+        return 0;
+    }
+
+    /**
+     * Generate report for a specific month and year.
+     * 
+     * @param int $month
+     * @param int $year
+     * @return int
+     */
+    private function generateForMonth($month, $year)
+    {
+        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+        $daysInMonth = $startDate->daysInMonth;
+        $monthName = $startDate->format('F');
+        
         $this->info("Generating Daily Balance Report for {$monthName} {$year}...");
 
         try {
-            $reportData = $this->reportService->getDailyBalanceReportData($month, $year)->get();
+            // Fetch raw data from the database
+            $rawReportData = $this->reportService->getDailyBalanceReportData($month, $year)->get();
+            $dataByDate = $rawReportData->keyBy('date');
 
-            if ($reportData->isEmpty()) {
-                $this->warn("No data found for the specified month and year.");
-                return 0;
+            $fullReportData = collect();
+            $runningBalance = 0;
+
+            // Loop through every day of the month
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $currentDate = Carbon::create($year, $month, $d)->toDateString();
+                
+                if ($dataByDate->has($currentDate)) {
+                    $dayData = (array) $dataByDate->get($currentDate);
+                    // Update running balance based on actual totals
+                    $runningBalance += ($dayData['total_credit'] - $dayData['total_debit']);
+                    $dayData['balance'] = $runningBalance;
+                    $fullReportData->push((object) $dayData);
+                } else {
+                    // Create a zeroed entry for missing dates
+                    $fullReportData->push((object) [
+                        'date' => $currentDate,
+                        'tx_count' => 0,
+                        'total_credit' => 0,
+                        'total_debit' => 0,
+                        'balance' => $runningBalance // Carry over previous balance
+                    ]);
+                }
             }
 
             // Calculate Summary Statistics
-            $totalCredit = $reportData->sum('total_credit');
-            $totalDebit = $reportData->sum('total_debit');
-            $finalBalance = $reportData->last()->balance ?? 0;
+            $totalCredit = $fullReportData->sum('total_credit');
+            $totalDebit = $fullReportData->sum('total_debit');
+            $finalBalance = $runningBalance;
 
             // Prepare Chart Data (QuickChart)
-            $labels = $reportData->pluck('date')->map(function($date) {
+            $labels = $fullReportData->pluck('date')->map(function($date) {
                 return Carbon::parse($date)->format('d');
             })->toArray();
-            $balanceData = $reportData->pluck('balance')->toArray();
+            $balanceData = $fullReportData->pluck('balance')->toArray();
 
             $chartConfig = [
                 'type' => 'line',
@@ -93,7 +167,7 @@ class GenerateDailyBalancePDF extends Command
             $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartConfig));
 
             $pdf = PDF::loadView('reports.daily_balance_pdf', [
-                'reportData' => $reportData,
+                'reportData' => $fullReportData,
                 'monthName' => $monthName,
                 'year' => $year,
                 'totalCredit' => $totalCredit,
@@ -110,18 +184,20 @@ class GenerateDailyBalancePDF extends Command
             MonthlyDailyBalanceReport::create([
                 'report_name' => "Daily Balance Report - {$monthName} {$year}",
                 'file_path' => $filePath,
-                'report_month' => Carbon::create($year, $month, 1)->toDateString(),
+                'report_month' => Carbon::create($year, $month, 1)->startOfMonth()->toDateString(),
             ]);
 
             $this->info("Report generated successfully: {$filePath}");
             Log::info("Daily Balance PDF generated for {$monthName} {$year}");
 
         } catch (\Exception $e) {
-            $this->error("Failed to generate report: " . $e->getMessage());
-            Log::error("Failed to generate Daily Balance PDF: " . $e->getMessage());
+            $this->error("Failed to generate report for {$monthName} {$year}: " . $e->getMessage());
+            Log::error("Failed to generate Daily Balance PDF for {$monthName} {$year}: " . $e->getMessage());
             return 1;
         }
 
         return 0;
     }
+
+
 }
