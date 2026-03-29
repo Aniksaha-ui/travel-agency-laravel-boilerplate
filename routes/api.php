@@ -234,6 +234,7 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/route-efficiency-analytics', 'Admin\Reports\ReportController@routeEfficiencyAnalytics');
     Route::get('/admin/booking-lead-time-analysis', 'Admin\Reports\ReportController@bookingLeadTimeAnalysis');
     Route::get('/admin/occupancy-alert-report', 'Admin\Reports\ReportController@occupancyAlertReport');
+    Route::get('/admin/monthly-daily-balance-reports', 'Admin\Reports\ReportController@monthlyDailyBalanceReportsList');
 
     #reports api
 

@@ -746,4 +746,20 @@ class ReportController extends Controller
             return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
         }
     }
+    public function monthlyDailyBalanceReportsList(Request $request)
+    {
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->getMonthlyDailyBalanceReports($page, $search);
+            return response()->json($response, 200);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - monthlyDailyBalanceReportsList function: " . $ex->getMessage());
+            return response()->json([
+                "data" => [],
+                "status" => ApiResponseStatus::FAILED,
+                "message" => "Internal Server Error"
+            ], 500);
+        }
+    }
 }

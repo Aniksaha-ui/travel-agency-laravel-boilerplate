@@ -1291,6 +1291,34 @@ class ReportService
         }
     }
 
+    public function getMonthlyDailyBalanceReports($page, $search)
+    {
+        try {
+            $perPage = 10;
+            $query = DB::table('monthly_daily_balance_reports');
+
+            if ($search) {
+                $query->where('report_name', 'like', '%' . $search . '%');
+            }
+
+            $report = $query->orderBy('report_month', 'desc')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            return [
+                "status" => ApiResponseStatus::SUCCESS,
+                "data" => $report,
+                "message" => "Reports retrieved successfully"
+            ];
+        } catch (Exception $ex) {
+            Log::alert('Get Monthly Daily Balance Reports Error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while fetching the reports"
+            ];
+        }
+    }
+
     public function getDailyBalanceReportData($month, $year)
     {
         return DB::table(DB::raw(
