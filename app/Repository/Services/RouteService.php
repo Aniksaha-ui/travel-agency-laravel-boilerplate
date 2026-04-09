@@ -23,6 +23,7 @@ class RouteService
                 ->where('route_name', 'like', '%' . $search . '%')
                 ->orWhere('origin', 'like', '%' . $search . '%')
                 ->orWhere('destination', 'like', '%' . $search . '%')
+                ->orderBy('id', 'desc')
                 ->paginate($perPage, ['*'], 'page', $page);
 
             if ($routes->total() > 0) {
