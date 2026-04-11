@@ -40,6 +40,7 @@ class TripService implements CommonInterface
                 ->where('is_active', 1)
                 ->orWhere('trip_name', 'like', '%' . $search . '%')
                 ->orWhere('price', 'like', '%' . $search . '%')
+                ->orderBy('id','desc')
                 ->paginate($perPage, ['trips.id', 'trip_name', 'departure_time', 'arrival_time', 'price', 'vehicle_name', 'route_name', 'is_active'], 'page', $page);
 
             return $availableSeats;
