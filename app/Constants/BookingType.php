@@ -8,13 +8,15 @@ class BookingType
     public const TRIP = "trip";
     public const PACKAGE = "package";
     public const HOTEL = "hotel";
+    public const VISA = "visa";
 
     public static function all(): array
     {
         return [
             self::TRIP,
             self::PACKAGE,
-            self::HOTEL
+            self::HOTEL,
+            self::VISA,
         ];
     }
 }

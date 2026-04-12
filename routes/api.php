@@ -119,6 +119,37 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
 
     /****************************************packages api start ********************************** */
 
+    /*************************************Visa processing api start**************************************/
+    Route::get('admin/visa/countries', 'Admin\Visa\VisaCountryController@index');
+    Route::get('admin/visa/countries/dropdown', 'Admin\Visa\VisaCountryController@dropdown');
+    Route::post('admin/visa/countries', 'Admin\Visa\VisaCountryController@store');
+    Route::get('admin/visa/countries/{id}', 'Admin\Visa\VisaCountryController@show');
+    Route::post('admin/visa/countries/update/{id}', 'Admin\Visa\VisaCountryController@update');
+    Route::delete('admin/visa/countries/{id}', 'Admin\Visa\VisaCountryController@destroy');
+
+    Route::get('admin/visa/types', 'Admin\Visa\VisaTypeController@index');
+    Route::get('admin/visa/types/dropdown', 'Admin\Visa\VisaTypeController@dropdown');
+    Route::post('admin/visa/types', 'Admin\Visa\VisaTypeController@store');
+    Route::get('admin/visa/types/{id}', 'Admin\Visa\VisaTypeController@show');
+    Route::post('admin/visa/types/update/{id}', 'Admin\Visa\VisaTypeController@update');
+    Route::delete('admin/visa/types/{id}', 'Admin\Visa\VisaTypeController@destroy');
+
+    Route::get('admin/visa/requirements', 'Admin\Visa\VisaDocumentRequirementController@index');
+    Route::post('admin/visa/requirements', 'Admin\Visa\VisaDocumentRequirementController@store');
+    Route::get('admin/visa/requirements/{id}', 'Admin\Visa\VisaDocumentRequirementController@show');
+    Route::post('admin/visa/requirements/update/{id}', 'Admin\Visa\VisaDocumentRequirementController@update');
+    Route::delete('admin/visa/requirements/{id}', 'Admin\Visa\VisaDocumentRequirementController@destroy');
+
+    Route::get('admin/visa/applications', 'Admin\Visa\VisaApplicationController@index');
+    Route::post('admin/visa/applications/update/{id}', 'Admin\Visa\VisaApplicationController@update');
+    Route::delete('admin/visa/applications/{id}', 'Admin\Visa\VisaApplicationController@destroy');
+    Route::get('admin/visa/applications/{id}', 'Admin\Visa\VisaApplicationController@show');
+    Route::post('admin/visa/assign', 'Admin\Visa\VisaApplicationController@assign');
+    Route::post('admin/visa/document-verify', 'Admin\Visa\VisaApplicationController@documentVerify');
+    Route::post('admin/visa/status-update', 'Admin\Visa\VisaApplicationController@statusUpdate');
+    Route::get('admin/visa/print/{id}', 'Admin\Visa\VisaApplicationController@printApplication');
+    /*************************************Visa processing api end**************************************/
+
     /*************************************Guide api start **********************************/
 
     Route::get('admin/guide', 'Admin\guide\guideController@getGuides');
@@ -244,6 +275,10 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
 
 /************************************* User api start *******************************/
 
+Route::get('/countries', 'User\Visa\VisaController@countries');
+Route::get('/visa-types', 'User\Visa\VisaController@visaTypes');
+Route::get('/visa/requirements', 'User\Visa\VisaController@requirements');
+
 Route::post('/trips', 'User\trip\TripController@index');
 Route::get('/trip/{id}', 'User\trip\TripController@singleTrip');
 Route::get('/packages', 'User\trip\PackageController@getPackages');
@@ -279,6 +314,19 @@ Route::middleware(['auth:sanctum', 'users','query.monitor'])->group(function () 
     Route::post('/hotel/booking', 'User\hotel\hotelController@hotelBookings');
     Route::post('/user/createTicket', 'User\ticket\ticketController@createTicket');
     Route::get('/user/ticketList', 'User\ticket\ticketController@ticketList');
+    Route::post('/visa/apply', 'User\Visa\VisaApplicationController@apply');
+    Route::post('/visa/update/{id}', 'User\Visa\VisaApplicationController@updateApplication');
+    Route::delete('/visa/{id}', 'User\Visa\VisaApplicationController@deleteApplication');
+    Route::post('/visa/applicant-info', 'User\Visa\VisaApplicationController@storeApplicantInfo');
+    Route::post('/visa/applicant-info/update/{applicationId}', 'User\Visa\VisaApplicationController@updateApplicantInfo');
+    Route::delete('/visa/applicant-info/{applicationId}', 'User\Visa\VisaApplicationController@deleteApplicantInfo');
+    Route::post('/visa/upload-document', 'User\Visa\VisaApplicationController@uploadDocument');
+    Route::post('/visa/document/update/{id}', 'User\Visa\VisaApplicationController@updateDocument');
+    Route::delete('/visa/document/{id}', 'User\Visa\VisaApplicationController@deleteDocument');
+    Route::post('/visa/submit', 'User\Visa\VisaApplicationController@submit');
+    Route::post('/visa/pay', 'User\Visa\VisaApplicationController@pay');
+    Route::get('/visa/my-applications', 'User\Visa\VisaApplicationController@myApplications');
+    Route::get('/visa/my-applications/{id}', 'User\Visa\VisaApplicationController@show');
 });
 
 
