@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visa Processing API cURL Guide</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --text: #18212f;
+            --muted: #5a6577;
+            --line: #d8deea;
+            --accent: #0f766e;
+            --accent-soft: #dff7f4;
+            --admin: #8b5cf6;
+            --user: #2563eb;
+            --public: #059669;
+            --code: #101828;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #eef6ff 0%, var(--bg) 100%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .wrap {
+            width: min(1180px, calc(100% - 32px));
+            margin: 32px auto 64px;
+        }
+
+        .hero,
+        .card,
+        .endpoint {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        }
+
+        .hero {
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+        }
+
+        .hero p {
+            margin: 8px 0;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            padding: 20px;
+        }
+
+        .card h2,
+        .section-title {
+            margin: 0 0 10px;
+            font-size: 20px;
+        }
+
+        .card ul {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+        }
+
+        .section-title {
+            margin: 32px 0 14px;
+        }
+
+        .endpoint {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .endpoint h3 {
+            margin: 0 0 8px;
+            font-size: 22px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .public {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .user {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .admin {
+            background: #efe6ff;
+            color: #6d28d9;
+        }
+
+        .method {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .endpoint p {
+            margin: 8px 0 14px;
+            color: var(--muted);
+        }
+
+        .block-title {
+            margin: 14px 0 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        pre {
+            margin: 0;
+            padding: 16px;
+            background: var(--code);
+            color: #e5eefc;
+            border-radius: 14px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 1px solid #263141;
+        }
+
+        code {
+            font-family: Consolas, Monaco, "Courier New", monospace;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+        }
+
+        th {
+            width: 180px;
+            color: var(--text);
+            background: #f9fbff;
+        }
+
+        td {
+            color: var(--muted);
+        }
+
+        .note {
+            border-left: 4px solid var(--accent);
+            background: #f0fdfa;
+            color: #155e59;
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin: 16px 0 0;
+        }
+
+        .small {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 26px;
+            }
+
+            .endpoint h3 {
+                font-size: 20px;
+            }
+
+            th {
+                width: 130px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <h1>Visa Processing API cURL Guide</h1>
+            <p>This file is the working guide for the current visa-processing routes in this Laravel project. Every example below is designed to be copy-paste friendly for terminal use or for giving directly to Codex.</p>
+            <p class="small">Base URL in examples: <code>http://127.0.0.1:8000/api</code>. Replace it if your app runs on a different host.</p>
+        </section>
+
+        <div class="grid">
+            <section class="card">
+                <h2>Recommended Order</h2>
+                <ul>
+                    <li>Login as admin and create country, visa type, and document requirements.</li>
+                    <li>Login as user and browse public country/type/requirement endpoints.</li>
+                    <li>Create visa application draft.</li>
+                    <li>Add applicant info.</li>
+                    <li>Upload documents.</li>
+                    <li>Submit application.</li>
+                    <li>Pay visa fee.</li>
+                    <li>Admin assigns, verifies documents, updates status, and prints PDF.</li>
+                </ul>
+            </section>
+
+            <section class="card">
+                <h2>Shell Variables</h2>
+                <pre><code>export BASE_URL="http://127.0.0.1:8000/api"
+export USER_TOKEN="paste_user_token_here"
+export ADMIN_TOKEN="paste_admin_token_here"
+export COUNTRY_ID=1
+export VISA_TYPE_ID=1
+export VISA_REQUIREMENT_ID=1
+export VISA_APPLICATION_ID=1
+export VISA_DOCUMENT_ID=1
+export OFFICER_ID=2
+export BOOKING_ID=1
+export PACKAGE_BOOKING_ID=1</code></pre>
+            </section>
+        </div>
+
+        <section class="card">
+            <h2>Login First</h2>
+            <p>Both user and admin visa endpoints require Sanctum bearer tokens. Use your existing <code>/api/login</code> route to get them.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/login" \
+  --header "Accept: application/json" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "email": "admin@example.com",
+    "password": "secret123"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "access_token": "1|exampleSanctumToken",
+  "token_type": "Bearer",
+  "expires_in": null,
+  "user": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "role": "admin"
+  }
+}</code></pre>
+            <div class="note">Use an admin token for all <code>/admin/visa/*</code> endpoints and a user token for all user visa actions.</div>
+        </section>
+
+        <h2 class="section-title">Public Visa APIs</h2>
+
+        <section class="endpoint">
+            <h3>GET /countries</h3>
+            <div class="meta">
+                <span class="pill public">Public</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Get all active visa countries. Optional query: <code>search</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/countries?search=mal" \
+  --header "Accept: application/json"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [
+    {
+      "id": 1,
+      "name": "Malaysia",
+      "iso_code": "MY",
+      "flag": null,
+      "is_popular": 1,
+      "status": 1
+    }
+  ],
+  "message": "Visa country list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /visa-types</h3>
+            <div class="meta">
+                <span class="pill public">Public</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Get active visa types. Optional queries: <code>country_id</code>, <code>search</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/visa-types?country_id=$COUNTRY_ID" \
+  --header "Accept: application/json"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [
+    {
+      "id": 1,
+      "country_id": 1,
+      "visa_name": "Tourist Visa",
+      "processing_days": 7,
+      "fee": "5000.00",
+      "description": "Single entry tourist visa",
+      "country_name": "Malaysia",
+      "country_iso_code": "MY",
+      "country_flag": null
+    }
+  ],
+  "message": "Visa type list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /visa/requirements</h3>
+            <div class="meta">
+                <span class="pill public">Public</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Get document requirements by visa type. Required query: <code>visa_type_id</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/visa/requirements?visa_type_id=$VISA_TYPE_ID" \
+  --header "Accept: application/json"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [
+    {
+      "id": 1,
+      "visa_type_id": 1,
+      "document_name": "Passport Copy",
+      "is_required": 1,
+      "created_at": "2026-04-13T10:00:00.000000Z",
+      "updated_at": "2026-04-13T10:00:00.000000Z"
+    }
+  ],
+  "message": "Visa document requirement list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <h2 class="section-title">User Visa APIs</h2>
+
+        <section class="endpoint">
+            <h3>POST /visa/apply</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <table>
+                <tr><th>Required</th><td><code>country_id</code>, <code>visa_type_id</code></td></tr>
+                <tr><th>Optional</th><td><code>booking_id</code>, <code>package_booking_id</code>, <code>remarks</code></td></tr>
+            </table>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/apply" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "country_id": 1,
+    "visa_type_id": 1,
+    "booking_id": 1,
+    "remarks": "Need urgent processing if possible"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "user_id": 3,
+    "country_id": 1,
+    "visa_type_id": 1,
+    "booking_id": 1,
+    "package_booking_id": null,
+    "status": "draft",
+    "remarks": "Need urgent processing if possible",
+    "country_name": "Malaysia",
+    "visa_name": "Tourist Visa",
+    "documents": [],
+    "payments": []
+  },
+  "message": "Visa application draft created successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/update/{id}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Update a draft or document-pending application.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/update/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "remarks": "Updated note from customer"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "status": "draft",
+    "remarks": "Updated note from customer"
+  },
+  "message": "Visa application updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /visa/{id}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <p>Delete a draft visa application.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/visa/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa application deleted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/applicant-info</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Add applicant details to the visa application.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/applicant-info" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_application_id": 5,
+    "full_name": "Rahim Uddin",
+    "passport_number": "A12345678",
+    "passport_expiry": "2030-01-01",
+    "date_of_birth": "1995-06-15",
+    "nationality": "Bangladeshi",
+    "phone": "01700000000",
+    "email": "rahim@example.com",
+    "address": "Dhaka, Bangladesh"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "applicant_info": {
+      "full_name": "Rahim Uddin",
+      "passport_number": "A12345678"
+    }
+  },
+  "message": "Visa applicant information added successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/applicant-info/update/{applicationId}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/applicant-info/update/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "phone": "01811111111",
+    "address": "Updated address"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "applicant_info": {
+      "phone": "01811111111",
+      "address": "Updated address"
+    }
+  },
+  "message": "Visa applicant information updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /visa/applicant-info/{applicationId}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/visa/applicant-info/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa applicant information deleted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/upload-document</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Upload a visa document using multipart form data.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/upload-document" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --form "visa_application_id=5" \
+  --form "document_type=Passport Copy" \
+  --form "remarks=Scanned color copy" \
+  --form "file=@/absolute/path/passport-copy.pdf"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 9,
+    "visa_application_id": 5,
+    "document_type": "Passport Copy",
+    "status": "pending",
+    "file_path": "visa/documents/2026-04-13/example.pdf"
+  },
+  "message": "Visa document uploaded successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/document/update/{id}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/document/update/$VISA_DOCUMENT_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --form "document_type=Passport Copy" \
+  --form "remarks=Uploaded a clearer file" \
+  --form "file=@/absolute/path/passport-copy-v2.pdf"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 9,
+    "document_type": "Passport Copy",
+    "status": "pending"
+  },
+  "message": "Visa document updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /visa/document/{id}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/visa/document/$VISA_DOCUMENT_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa document deleted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/submit</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Submit the visa application after applicant info and required documents are complete.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/submit" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_application_id": 5,
+    "remarks": "All required docs uploaded"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "status": "submitted",
+    "applied_at": "2026-04-13T11:30:00.000000Z"
+  },
+  "message": "Visa application submitted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /visa/pay</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Pay the visa fee. A valid booking reference may be required because the existing payments table depends on <code>booking_id</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/visa/pay" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_application_id": 5,
+    "amount": 5000,
+    "payment_method": "bkash",
+    "booking_id": 1,
+    "bkash": "01700000000"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "visa_payment_id": 3,
+    "payment_id": 27,
+    "transaction_reference": "AB12CD34EF",
+    "booking_id": 1,
+    "amount": 5000,
+    "payment_status": "paid"
+  },
+  "message": "Visa payment completed successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /visa/my-applications</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Optional queries: <code>page</code>, <code>search</code>, <code>status</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/visa/my-applications?page=1&amp;status=submitted" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 5,
+        "country_name": "Malaysia",
+        "visa_name": "Tourist Visa",
+        "status": "submitted",
+        "assigned_officer_name": null
+      }
+    ],
+    "last_page": 1,
+    "total": 1
+  },
+  "message": "Visa application list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /visa/my-applications/{id}</h3>
+            <div class="meta">
+                <span class="pill user">User Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/visa/my-applications/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $USER_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "country_name": "Malaysia",
+    "visa_name": "Tourist Visa",
+    "status": "submitted",
+    "applicant_info": {
+      "full_name": "Rahim Uddin"
+    },
+    "documents": [
+      {
+        "id": 9,
+        "document_type": "Passport Copy",
+        "status": "pending"
+      }
+    ],
+    "payments": [
+      {
+        "id": 3,
+        "payment_status": "paid"
+      }
+    ]
+  },
+  "message": "Visa application retrieved successfully"
+}</code></pre>
+        </section>
+
+        <h2 class="section-title">Admin Visa Master Data APIs</h2>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/countries</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Optional queries: <code>page</code>, <code>search</code>, <code>status</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/countries?page=1" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 1,
+        "name": "Malaysia",
+        "iso_code": "MY",
+        "is_popular": 1,
+        "status": 1
+      }
+    ]
+  },
+  "message": "Visa country list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/countries/dropdown</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/countries/dropdown?active_only=1" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [
+    {
+      "id": 1,
+      "name": "Malaysia",
+      "iso_code": "MY",
+      "flag": null
+    }
+  ],
+  "message": "Visa country list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/countries</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/countries" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "Malaysia",
+    "iso_code": "MY",
+    "flag": "https://example.com/flags/my.png",
+    "is_popular": true,
+    "status": true
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "name": "Malaysia",
+    "iso_code": "MY",
+    "flag": "https://example.com/flags/my.png",
+    "is_popular": 1,
+    "status": 1
+  },
+  "message": "Visa country created successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/countries/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/countries/$COUNTRY_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "name": "Malaysia",
+    "iso_code": "MY"
+  },
+  "message": "Information Retrieved Successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/countries/update/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/countries/update/$COUNTRY_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "Malaysia Updated",
+    "iso_code": "MY",
+    "flag": "https://example.com/flags/my-new.png",
+    "is_popular": true,
+    "status": true
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "name": "Malaysia Updated"
+  },
+  "message": "Visa country updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /admin/visa/countries/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/admin/visa/countries/$COUNTRY_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa country deleted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/types</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Optional queries: <code>page</code>, <code>search</code>, <code>country_id</code>, <code>status</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/types?country_id=$COUNTRY_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "data": [
+      {
+        "id": 1,
+        "visa_name": "Tourist Visa",
+        "country_name": "Malaysia",
+        "fee": "5000.00"
+      }
+    ]
+  },
+  "message": "Visa type list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/types/dropdown</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/types/dropdown?country_id=$COUNTRY_ID&amp;active_only=1" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [
+    {
+      "id": 1,
+      "country_id": 1,
+      "visa_name": "Tourist Visa",
+      "processing_days": 7,
+      "fee": "5000.00"
+    }
+  ],
+  "message": "Visa type list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/types</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/types" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "country_id": 1,
+    "visa_name": "Tourist Visa",
+    "processing_days": 7,
+    "fee": 5000,
+    "description": "Single entry tourist visa",
+    "status": true
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "country_id": 1,
+    "visa_name": "Tourist Visa"
+  },
+  "message": "Visa type created successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/types/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/types/$VISA_TYPE_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "country_id": 1,
+    "visa_name": "Tourist Visa"
+  },
+  "message": "Information Retrieved Successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/types/update/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/types/update/$VISA_TYPE_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "country_id": 1,
+    "visa_name": "Business Visa",
+    "processing_days": 10,
+    "fee": 8000,
+    "description": "Business entry visa",
+    "status": true
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "visa_name": "Business Visa"
+  },
+  "message": "Visa type updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /admin/visa/types/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/admin/visa/types/$VISA_TYPE_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa type deleted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/requirements</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/requirements?visa_type_id=$VISA_TYPE_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "data": [
+      {
+        "id": 1,
+        "visa_type_id": 1,
+        "document_name": "Passport Copy",
+        "is_required": 1
+      }
+    ]
+  },
+  "message": "Visa document requirement list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/requirements</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/requirements" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_type_id": 1,
+    "document_name": "Passport Copy",
+    "is_required": true
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "visa_type_id": 1,
+    "document_name": "Passport Copy",
+    "is_required": 1
+  },
+  "message": "Visa document requirement created successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/requirements/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/requirements/$VISA_REQUIREMENT_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "document_name": "Passport Copy"
+  },
+  "message": "Information Retrieved Successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/requirements/update/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/requirements/update/$VISA_REQUIREMENT_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_type_id": 1,
+    "document_name": "Updated Passport Copy",
+    "is_required": true
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 1,
+    "document_name": "Updated Passport Copy"
+  },
+  "message": "Visa document requirement updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /admin/visa/requirements/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/admin/visa/requirements/$VISA_REQUIREMENT_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa document requirement deleted successfully"
+}</code></pre>
+        </section>
+
+        <h2 class="section-title">Admin Visa Application APIs</h2>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/applications</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>Optional queries: <code>page</code>, <code>search</code>, <code>status</code>, <code>country_id</code>, <code>visa_type_id</code>, <code>assigned_to</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/applications?status=submitted" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "data": [
+      {
+        "id": 5,
+        "user_name": "Rahim Uddin",
+        "country_name": "Malaysia",
+        "visa_name": "Tourist Visa",
+        "status": "submitted"
+      }
+    ]
+  },
+  "message": "Visa application list retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/applications/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/applications/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "user_name": "Rahim Uddin",
+    "country_name": "Malaysia",
+    "visa_name": "Tourist Visa",
+    "status": "submitted",
+    "documents": [],
+    "status_logs": []
+  },
+  "message": "Visa application retrieved successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/applications/update/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/applications/update/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "assigned_to": 2,
+    "remarks": "Admin updated the record"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "assigned_to": 2,
+    "remarks": "Admin updated the record"
+  },
+  "message": "Visa application updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>DELETE /admin/visa/applications/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">DELETE</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request DELETE "$BASE_URL/admin/visa/applications/$VISA_APPLICATION_ID" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": [],
+  "message": "Visa application deleted successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/assign</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/assign" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_application_id": 5,
+    "officer_id": 2,
+    "remarks": "Assigned to visa officer"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "assigned_to": 2
+  },
+  "message": "Visa application assigned successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/document-verify</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Status must be one of <code>pending</code>, <code>approved</code>, <code>rejected</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/document-verify" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_document_id": 9,
+    "status": "approved",
+    "remarks": "Document looks valid"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 9,
+    "status": "approved"
+  },
+  "message": "Visa document verification updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>POST /admin/visa/status-update</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">POST</span>
+            </div>
+            <p>Status must be one of <code>draft</code>, <code>submitted</code>, <code>under_review</code>, <code>document_pending</code>, <code>processing</code>, <code>approved</code>, <code>rejected</code>.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request POST "$BASE_URL/admin/visa/status-update" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "visa_application_id": 5,
+    "status": "under_review",
+    "remarks": "Embassy review started"
+  }'</code></pre>
+            <div class="block-title">Sample Response</div>
+            <pre><code>{
+  "isExecute": "SUCCESS",
+  "data": {
+    "id": 5,
+    "status": "under_review"
+  },
+  "message": "Visa application status updated successfully"
+}</code></pre>
+        </section>
+
+        <section class="endpoint">
+            <h3>GET /admin/visa/print/{id}</h3>
+            <div class="meta">
+                <span class="pill admin">Admin Token Required</span>
+                <span class="pill method">GET</span>
+            </div>
+            <p>This route downloads a PDF, not JSON.</p>
+            <div class="block-title">cURL</div>
+            <pre><code>curl --request GET "$BASE_URL/admin/visa/print/$VISA_APPLICATION_ID" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --output "visa-application-$VISA_APPLICATION_ID.pdf"</code></pre>
+            <div class="block-title">Expected Result</div>
+            <pre><code>A PDF file named visa-application-5.pdf is downloaded successfully.</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>Reusable Validation Error Example</h2>
+            <pre><code>{
+  "isExecute": "FAILED",
+  "message": "The country id field is required.",
+  "errors": {
+    "country_id": [
+      "The country id field is required."
+    ]
+  }
+}</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>How To Use This With Codex</h2>
+            <pre><code>Use public/visa-processing-curl-guide.html as the source of truth.
+Run the requests in the "Recommended Order" section.
+Before each request:
+1. Replace BASE_URL and token placeholders.
+2. Save returned IDs for country, visa type, requirement, application, and document.
+3. Use those IDs in the next request.
+4. Stop on any FAILED response and inspect message/errors.
+5. For file upload requests, replace the sample file path with a real local file.</code></pre>
+        </section>
+    </div>
+</body>
+</html>

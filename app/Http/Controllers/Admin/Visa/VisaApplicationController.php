@@ -73,8 +73,9 @@ class VisaApplicationController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'country_id' => 'nullable|exists:countries,id',
-                'visa_type_id' => 'nullable|exists:visa_types,id',
+                'country_id' => 'nullable|exists:visa_countries,id',
+                'visa_type_id' => 'nullable|exists:visa_packages,id',
+                'visa_package_id' => 'nullable|exists:visa_packages,id',
                 'booking_id' => 'nullable|exists:bookings,id',
                 'package_booking_id' => 'nullable|exists:package_bookings,id',
                 'assigned_to' => 'nullable|exists:users,id',

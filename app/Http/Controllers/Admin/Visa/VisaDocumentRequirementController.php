@@ -47,7 +47,7 @@ class VisaDocumentRequirementController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'visa_type_id' => 'required|exists:visa_types,id',
+                'visa_type_id' => 'required|exists:visa_packages,id',
                 'document_name' => 'required|string|max:100',
                 'is_required' => 'nullable|boolean',
             ]);
@@ -101,7 +101,7 @@ class VisaDocumentRequirementController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'visa_type_id' => 'required|exists:visa_types,id',
+                'visa_type_id' => 'required|exists:visa_packages,id',
                 'document_name' => 'required|string|max:100',
                 'is_required' => 'nullable|boolean',
             ]);

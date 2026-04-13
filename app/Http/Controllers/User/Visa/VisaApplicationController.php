@@ -23,8 +23,9 @@ class VisaApplicationController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'country_id' => 'required|exists:countries,id',
-                'visa_type_id' => 'required|exists:visa_types,id',
+                'country_id' => 'required_without:visa_package_id|nullable|exists:visa_countries,id',
+                'visa_type_id' => 'required_without:visa_package_id|nullable|exists:visa_packages,id',
+                'visa_package_id' => 'required_without:visa_type_id|nullable|exists:visa_packages,id',
                 'package_booking_id' => 'nullable|exists:package_bookings,id',
                 'booking_id' => 'nullable|exists:bookings,id',
                 'remarks' => 'nullable|string',
@@ -59,8 +60,9 @@ class VisaApplicationController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'country_id' => 'nullable|exists:countries,id',
-                'visa_type_id' => 'nullable|exists:visa_types,id',
+                'country_id' => 'nullable|exists:visa_countries,id',
+                'visa_type_id' => 'nullable|exists:visa_packages,id',
+                'visa_package_id' => 'nullable|exists:visa_packages,id',
                 'package_booking_id' => 'nullable|exists:package_bookings,id',
                 'booking_id' => 'nullable|exists:bookings,id',
                 'remarks' => 'nullable|string',

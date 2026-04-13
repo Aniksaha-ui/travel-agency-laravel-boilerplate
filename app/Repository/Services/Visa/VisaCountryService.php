@@ -10,6 +10,42 @@ use Illuminate\Support\Str;
 
 class VisaCountryService
 {
+    public function publicList($search)
+    {
+        try {
+            $query = DB::table('visa_countries')
+                ->where('is_active', 1)
+                ->select('id', 'name', 'slug', 'iso_code', 'nationality_name');
+
+            if (!empty($search)) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('slug', 'like', '%' . $search . '%')
+                        ->orWhere('iso_code', 'like', '%' . $search . '%')
+                        ->orWhere('nationality_name', 'like', '%' . $search . '%');
+                });
+            }
+
+            $countries = $query->orderBy('display_order', 'asc')
+                ->orderBy('name', 'asc')
+                ->get();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $countries,
+                'message' => $countries->count() > 0 ? 'Visa countries retrieved successfully' : 'No visa countries found',
+            ];
+        } catch (Exception $exception) {
+            Log::error('VisaCountryService publicList error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to retrieve visa countries',
+            ];
+        }
+    }
+
     public function getAll($page, $search, $isActive)
     {
         try {

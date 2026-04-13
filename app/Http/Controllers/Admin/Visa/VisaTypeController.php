@@ -71,7 +71,7 @@ class VisaTypeController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'country_id' => 'required|exists:countries,id',
+                'country_id' => 'required|exists:visa_countries,id',
                 'visa_name' => 'required|string|max:100',
                 'processing_days' => 'nullable|integer|min:0',
                 'fee' => 'nullable|numeric|min:0',
@@ -128,7 +128,7 @@ class VisaTypeController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'country_id' => 'required|exists:countries,id',
+                'country_id' => 'required|exists:visa_countries,id',
                 'visa_name' => 'required|string|max:100',
                 'processing_days' => 'nullable|integer|min:0',
                 'fee' => 'nullable|numeric|min:0',

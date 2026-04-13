@@ -150,6 +150,397 @@ class VisaApplicationService
         }
     }
 
+    public function apply($userId, $data)
+    {
+        DB::beginTransaction();
+
+        try {
+            $user = DB::table('users')->where('id', $userId)->first();
+            if (!$user) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'User not found',
+                ];
+            }
+
+            $packageId = $data['visa_package_id'] ?? $data['visa_type_id'] ?? null;
+            if (!$packageId) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'A visa package is required',
+                ];
+            }
+
+            $packageQuery = DB::table('visa_packages as vp')
+                ->join('visa_countries as vc', 'vp.visa_country_id', '=', 'vc.id')
+                ->where('vp.id', $packageId)
+                ->select(
+                    'vp.*',
+                    'vc.id as country_id',
+                    'vc.name as country_name',
+                    'vc.is_active as country_is_active'
+                );
+
+            if (!empty($data['country_id'])) {
+                $packageQuery->where('vc.id', $data['country_id']);
+            }
+
+            $package = $packageQuery->first();
+            if (!$package || (int) $package->is_active !== 1 || (int) $package->country_is_active !== 1) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Selected visa package is not available',
+                ];
+            }
+
+            $bookingId = $this->resolveBookingIdFromPayload($data, $userId);
+            if (!empty($bookingId)) {
+                $bookingAlreadyUsed = DB::table('visa_applications')
+                    ->where('booking_id', $bookingId)
+                    ->exists();
+
+                if ($bookingAlreadyUsed) {
+                    DB::rollBack();
+
+                    return [
+                        'status' => ApiResponseStatus::FAILED,
+                        'data' => [],
+                        'message' => 'A visa application already exists for the selected booking',
+                    ];
+                }
+            }
+
+            $applicationNo = $this->generateApplicationNo();
+            $passportNo = trim((string) ($data['passport_no'] ?? $data['passport_number'] ?? ''));
+            if ($passportNo === '') {
+                $passportNo = substr('DRAFT-' . $applicationNo, 0, 50);
+            }
+
+            $applicationId = DB::table('visa_applications')->insertGetId([
+                'user_id' => $user->id,
+                'visa_package_id' => $package->id,
+                'booking_id' => $bookingId,
+                'application_no' => $applicationNo,
+                'full_name' => $data['full_name'] ?? ($user->name ?: 'Pending Applicant'),
+                'email' => $data['email'] ?? $user->email,
+                'phone' => $data['phone'] ?? null,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'gender' => $data['gender'] ?? null,
+                'nationality' => $data['nationality'] ?? null,
+                'present_address' => $data['present_address'] ?? ($data['address'] ?? null),
+                'travel_purpose' => $data['travel_purpose'] ?? ($data['remarks'] ?? null),
+                'travel_date' => $data['travel_date'] ?? null,
+                'passport_no' => $passportNo,
+                'passport_issue_date' => $data['passport_issue_date'] ?? null,
+                'passport_expiry_date' => $data['passport_expiry_date'] ?? ($data['passport_expiry'] ?? null),
+                'country_name_snapshot' => $package->country_name,
+                'visa_type_snapshot' => $package->visa_type,
+                'fee_snapshot' => $package->fee,
+                'currency_snapshot' => $package->currency,
+                'processing_days_snapshot' => $package->processing_days,
+                'status' => VisaApplicationStatus::DRAFT,
+                'payment_status' => VisaPaymentStatus::PENDING,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $this->addStatusLog($applicationId, null, VisaApplicationStatus::DRAFT, $user->id, 'Visa application draft created');
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyApplicationPayload($this->getApplicationPayload($applicationId)),
+                'message' => 'Visa application draft created successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService apply error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to create visa application',
+            ];
+        }
+    }
+
+    public function updateUserApplication($userId, $applicationId, $data)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            if (!in_array($application->status, VisaApplicationStatus::userEditable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Only draft or document-pending visa applications can be updated',
+                ];
+            }
+
+            $updateData = [
+                'updated_at' => now(),
+            ];
+
+            $packageId = $data['visa_package_id'] ?? $data['visa_type_id'] ?? null;
+            if ($packageId !== null) {
+                $packageQuery = DB::table('visa_packages as vp')
+                    ->join('visa_countries as vc', 'vp.visa_country_id', '=', 'vc.id')
+                    ->where('vp.id', $packageId)
+                    ->select(
+                        'vp.*',
+                        'vc.id as country_id',
+                        'vc.name as country_name',
+                        'vc.is_active as country_is_active'
+                    );
+
+                if (!empty($data['country_id'])) {
+                    $packageQuery->where('vc.id', $data['country_id']);
+                }
+
+                $package = $packageQuery->first();
+                if (!$package || (int) $package->is_active !== 1 || (int) $package->country_is_active !== 1) {
+                    DB::rollBack();
+
+                    return [
+                        'status' => ApiResponseStatus::FAILED,
+                        'data' => [],
+                        'message' => 'Selected visa package is not available',
+                    ];
+                }
+
+                $updateData['visa_package_id'] = $package->id;
+                $updateData['country_name_snapshot'] = $package->country_name;
+                $updateData['visa_type_snapshot'] = $package->visa_type;
+                $updateData['fee_snapshot'] = $package->fee;
+                $updateData['currency_snapshot'] = $package->currency;
+                $updateData['processing_days_snapshot'] = $package->processing_days;
+            }
+
+            if (array_key_exists('booking_id', $data) || array_key_exists('package_booking_id', $data)) {
+                $bookingId = $this->resolveBookingIdFromPayload($data, $userId);
+
+                if ($bookingId && DB::table('visa_applications')
+                    ->where('booking_id', $bookingId)
+                    ->where('id', '!=', $applicationId)
+                    ->exists()) {
+                    DB::rollBack();
+
+                    return [
+                        'status' => ApiResponseStatus::FAILED,
+                        'data' => [],
+                        'message' => 'A visa application already exists for the selected booking',
+                    ];
+                }
+
+                $updateData['booking_id'] = $bookingId;
+            }
+
+            if (array_key_exists('remarks', $data)) {
+                $updateData['travel_purpose'] = $data['remarks'];
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->update($updateData);
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyApplicationPayload($this->getApplicationPayload($applicationId)),
+                'message' => 'Visa application updated successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService updateUserApplication error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to update visa application',
+            ];
+        }
+    }
+
+    public function deleteUserApplication($userId, $applicationId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            if (!in_array($application->status, VisaApplicationStatus::userDeletable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Only draft visa applications can be deleted',
+                ];
+            }
+
+            $documents = DB::table('visa_application_documents')
+                ->where('visa_application_id', $applicationId)
+                ->get();
+
+            foreach ($documents as $document) {
+                if (!empty($document->file_path)) {
+                    FileManageHelper::deleteFile($document->file_path);
+                }
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->delete();
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => [],
+                'message' => 'Visa application deleted successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService deleteUserApplication error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to delete visa application',
+            ];
+        }
+    }
+
+    public function storeApplicantInfo($userId, $data)
+    {
+        return $this->saveApplicantInfo(
+            $userId,
+            $data['visa_application_id'] ?? null,
+            $data,
+            'Visa applicant information added successfully',
+            'VisaApplicationService storeApplicantInfo error'
+        );
+    }
+
+    public function updateApplicantInfo($userId, $applicationId, $data)
+    {
+        return $this->saveApplicantInfo(
+            $userId,
+            $applicationId,
+            $data,
+            'Visa applicant information updated successfully',
+            'VisaApplicationService updateApplicantInfo error'
+        );
+    }
+
+    public function deleteApplicantInfo($userId, $applicationId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            if (!in_array($application->status, VisaApplicationStatus::userEditable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Applicant information can only be removed from editable applications',
+                ];
+            }
+
+            $user = DB::table('users')->where('id', $userId)->first();
+
+            DB::table('visa_applications')->where('id', $applicationId)->update([
+                'full_name' => $user->name ?? 'Pending Applicant',
+                'email' => $user->email ?? null,
+                'phone' => null,
+                'date_of_birth' => null,
+                'gender' => null,
+                'nationality' => null,
+                'present_address' => null,
+                'passport_no' => substr('DRAFT-' . $application->application_no, 0, 50),
+                'passport_issue_date' => null,
+                'passport_expiry_date' => null,
+                'status' => VisaApplicationStatus::DRAFT,
+                'submitted_at' => null,
+                'updated_at' => now(),
+            ]);
+
+            if ($application->status !== VisaApplicationStatus::DRAFT) {
+                $this->addStatusLog($applicationId, $application->status, VisaApplicationStatus::DRAFT, $userId, 'Applicant information removed');
+            }
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => [],
+                'message' => 'Visa applicant information deleted successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService deleteApplicantInfo error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to delete visa applicant information',
+            ];
+        }
+    }
+
     public function createApplication($user, $data)
     {
         DB::beginTransaction();
@@ -408,6 +799,423 @@ class VisaApplicationService
                 'message' => 'Failed to upload visa documents',
             ];
         }
+    }
+
+    public function uploadDocument($userId, $data, $file)
+    {
+        try {
+            $applicationId = $data['visa_application_id'] ?? null;
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            if (!in_array($application->status, VisaApplicationStatus::userEditable(), true)) {
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Documents can only be uploaded for editable applications',
+                ];
+            }
+
+            $documentType = $data['document_type'] ?? 'Document';
+            $response = $this->uploadDocuments($applicationId, $userId, [
+                'document_keys' => [Str::slug($documentType, '_')],
+                'document_labels' => [$documentType],
+            ], [$file]);
+
+            if ($response['status'] !== ApiResponseStatus::SUCCESS) {
+                return $response;
+            }
+
+            $document = $response['data'][0] ?? null;
+            if ($document && array_key_exists('remarks', $data)) {
+                DB::table('visa_application_documents')
+                    ->where('id', $document->id)
+                    ->update([
+                        'remarks' => $data['remarks'],
+                        'updated_at' => now(),
+                    ]);
+
+                $document = DB::table('visa_application_documents')->where('id', $document->id)->first();
+            }
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyDocumentPayload($document),
+                'message' => 'Visa document uploaded successfully',
+            ];
+        } catch (Exception $exception) {
+            Log::error('VisaApplicationService uploadDocument error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to upload visa document',
+            ];
+        }
+    }
+
+    public function updateDocument($userId, $documentId, $data, $file = null)
+    {
+        DB::beginTransaction();
+
+        try {
+            $document = DB::table('visa_application_documents as vad')
+                ->join('visa_applications as va', 'vad.visa_application_id', '=', 'va.id')
+                ->where('vad.id', $documentId)
+                ->where('va.user_id', $userId)
+                ->select('vad.*', 'va.status as application_status')
+                ->first();
+
+            if (!$document) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa document not found',
+                ];
+            }
+
+            if (!in_array($document->application_status, VisaApplicationStatus::userEditable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Only documents from editable applications can be updated',
+                ];
+            }
+
+            $updateData = [
+                'updated_at' => now(),
+                'verification_status' => VisaDocumentVerificationStatus::PENDING,
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+            ];
+
+            if (array_key_exists('document_type', $data)) {
+                $updateData['document_key'] = Str::slug($data['document_type'], '_');
+                $updateData['document_label'] = $data['document_type'];
+            }
+
+            if (array_key_exists('remarks', $data)) {
+                $updateData['remarks'] = $data['remarks'];
+            }
+
+            if ($file) {
+                if (!empty($document->file_path)) {
+                    FileManageHelper::deleteFile($document->file_path);
+                }
+
+                $updateData['file_path'] = FileManageHelper::uploadFileUnderCurrentDate(
+                    'visas/applications/' . $document->visa_application_id . '/documents',
+                    $file
+                );
+                $updateData['original_name'] = $file->getClientOriginalName();
+                $updateData['mime_type'] = $file->getClientMimeType();
+                $updateData['file_size'] = $file->getSize();
+            }
+
+            DB::table('visa_application_documents')->where('id', $documentId)->update($updateData);
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyDocumentPayload(DB::table('visa_application_documents')->where('id', $documentId)->first()),
+                'message' => 'Visa document updated successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService updateDocument error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to update visa document',
+            ];
+        }
+    }
+
+    public function deleteDocument($userId, $documentId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $document = DB::table('visa_application_documents as vad')
+                ->join('visa_applications as va', 'vad.visa_application_id', '=', 'va.id')
+                ->where('vad.id', $documentId)
+                ->where('va.user_id', $userId)
+                ->select('vad.*', 'va.status as application_status')
+                ->first();
+
+            if (!$document) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa document not found',
+                ];
+            }
+
+            if (!in_array($document->application_status, VisaApplicationStatus::userEditable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Only documents from editable applications can be deleted',
+                ];
+            }
+
+            if (!empty($document->file_path)) {
+                FileManageHelper::deleteFile($document->file_path);
+            }
+
+            DB::table('visa_application_documents')->where('id', $documentId)->delete();
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => [],
+                'message' => 'Visa document deleted successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService deleteDocument error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to delete visa document',
+            ];
+        }
+    }
+
+    public function submitApplication($userId, $applicationId, $remarks = null)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            if (!in_array($application->status, VisaApplicationStatus::submittable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Only draft or document-pending applications can be submitted',
+                ];
+            }
+
+            if (empty($application->full_name) || empty($application->passport_no) || Str::startsWith($application->passport_no, 'DRAFT-')) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Please complete applicant information before submitting the visa application',
+                ];
+            }
+
+            $requiredDocumentKeys = DB::table('visa_package_required_documents')
+                ->where('visa_package_id', $application->visa_package_id)
+                ->where('is_required', 1)
+                ->pluck('document_key')
+                ->toArray();
+
+            $uploadedDocumentKeys = DB::table('visa_application_documents')
+                ->where('visa_application_id', $applicationId)
+                ->pluck('document_key')
+                ->unique()
+                ->values()
+                ->toArray();
+
+            $missingDocuments = array_values(array_diff($requiredDocumentKeys, $uploadedDocumentKeys));
+            if (!empty($missingDocuments)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [
+                        'missing_documents' => $missingDocuments,
+                    ],
+                    'message' => 'Please upload all required visa documents before submitting',
+                ];
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->update([
+                'status' => VisaApplicationStatus::SUBMITTED,
+                'submitted_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $this->addStatusLog(
+                $applicationId,
+                $application->status,
+                VisaApplicationStatus::SUBMITTED,
+                $userId,
+                $remarks ?: 'Visa application submitted'
+            );
+
+            $updatedApplication = $this->getApplicationPayload($applicationId);
+
+            $this->notificationService->create(
+                $userId,
+                'Visa application submitted',
+                'Your visa application ' . $application->application_no . ' has been submitted successfully.',
+                $applicationId
+            );
+
+            DB::commit();
+
+            $updatedApplication = $this->normalizeLegacyApplicationPayload($updatedApplication);
+            if ($updatedApplication) {
+                $updatedApplication->applied_at = $updatedApplication->submitted_at;
+            }
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $updatedApplication,
+                'message' => 'Visa application submitted successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService submitApplication error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to submit visa application',
+            ];
+        }
+    }
+
+    public function pay($userId, $applicationId, $paymentInfo)
+    {
+        try {
+            $user = DB::table('users')->where('id', $userId)->first();
+            if (!$user) {
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'User not found',
+                ];
+            }
+
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            $bookingId = $this->resolveBookingIdFromPayload($paymentInfo, $userId);
+            if ($bookingId && (int) $application->booking_id !== (int) $bookingId) {
+                if (DB::table('visa_applications')
+                    ->where('booking_id', $bookingId)
+                    ->where('id', '!=', $applicationId)
+                    ->exists()) {
+                    return [
+                        'status' => ApiResponseStatus::FAILED,
+                        'data' => [],
+                        'message' => 'A visa application already exists for the selected booking',
+                    ];
+                }
+
+                DB::table('visa_applications')->where('id', $applicationId)->update([
+                    'booking_id' => $bookingId,
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $response = $this->initiatePayment($applicationId, $user, $paymentInfo);
+            if ($response['status'] !== ApiResponseStatus::SUCCESS) {
+                return $response;
+            }
+
+            if (is_array($response['data'])) {
+                $response['data']['visa_payment_id'] = $response['data']['payment_id'] ?? null;
+                $response['data']['amount'] = $paymentInfo['amount'] ?? null;
+                $response['data']['payment_status'] = isset($response['data']['redirected_url'])
+                    ? VisaPaymentStatus::PENDING
+                    : VisaPaymentStatus::PAID;
+            }
+
+            return $response;
+        } catch (Exception $exception) {
+            Log::error('VisaApplicationService pay error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to process visa payment',
+            ];
+        }
+    }
+
+    public function myApplications($userId, $page, $search, $status)
+    {
+        $response = $this->getUserApplications($userId, $page, $status, $search);
+
+        if ($response['status'] === ApiResponseStatus::SUCCESS && method_exists($response['data'], 'getCollection')) {
+            $response['data']->setCollection(
+                $response['data']->getCollection()->map(function ($application) {
+                    return $this->normalizeLegacyApplicationSummary($application);
+                })
+            );
+        }
+
+        if ($response['status'] === ApiResponseStatus::SUCCESS) {
+            $response['message'] = $response['data']->total() > 0
+                ? 'Visa application list retrieved successfully'
+                : 'No visa applications found';
+        }
+
+        return $response;
+    }
+
+    public function getMyApplicationById($userId, $applicationId)
+    {
+        $response = $this->getUserApplicationById($userId, $applicationId);
+
+        if ($response['status'] === ApiResponseStatus::SUCCESS) {
+            $response['data'] = $this->normalizeLegacyApplicationPayload($response['data']);
+        }
+
+        return $response;
     }
 
     public function initiatePayment($applicationId, $user, $paymentInfo)
@@ -1221,6 +2029,111 @@ class VisaApplicationService
             );
     }
 
+    private function saveApplicantInfo($userId, $applicationId, $data, $successMessage, $logContext)
+    {
+        DB::beginTransaction();
+
+        try {
+            if (!$applicationId) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application is required',
+                ];
+            }
+
+            $application = DB::table('visa_applications')
+                ->where('id', $applicationId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            if (!in_array($application->status, VisaApplicationStatus::userEditable(), true)) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Applicant information can only be updated for editable applications',
+                ];
+            }
+
+            $updateData = [
+                'updated_at' => now(),
+            ];
+
+            if (array_key_exists('full_name', $data)) {
+                $updateData['full_name'] = $data['full_name'];
+            }
+
+            if (array_key_exists('passport_number', $data)) {
+                $updateData['passport_no'] = $data['passport_number'];
+            }
+
+            if (array_key_exists('passport_issue_date', $data)) {
+                $updateData['passport_issue_date'] = $data['passport_issue_date'];
+            }
+
+            if (array_key_exists('passport_expiry', $data)) {
+                $updateData['passport_expiry_date'] = $data['passport_expiry'];
+            }
+
+            if (array_key_exists('passport_expiry_date', $data)) {
+                $updateData['passport_expiry_date'] = $data['passport_expiry_date'];
+            }
+
+            if (array_key_exists('date_of_birth', $data)) {
+                $updateData['date_of_birth'] = $data['date_of_birth'];
+            }
+
+            if (array_key_exists('nationality', $data)) {
+                $updateData['nationality'] = $data['nationality'];
+            }
+
+            if (array_key_exists('phone', $data)) {
+                $updateData['phone'] = $data['phone'];
+            }
+
+            if (array_key_exists('email', $data)) {
+                $updateData['email'] = $data['email'];
+            }
+
+            if (array_key_exists('address', $data)) {
+                $updateData['present_address'] = $data['address'];
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->update($updateData);
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyApplicationPayload($this->getApplicationPayload($applicationId)),
+                'message' => $successMessage,
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error($logContext . ': ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to save visa applicant information',
+            ];
+        }
+    }
+
     private function getOwnedApplicationPayload($userId, $applicationId)
     {
         try {
@@ -1248,6 +2161,25 @@ class VisaApplicationService
                 'message' => 'Failed to retrieve visa application',
             ];
         }
+    }
+
+    private function resolveBookingIdFromPayload($data, $userId = null)
+    {
+        if (!empty($data['booking_id'])) {
+            return $data['booking_id'];
+        }
+
+        if (empty($data['package_booking_id'])) {
+            return null;
+        }
+
+        $query = DB::table('package_bookings')->where('id', $data['package_booking_id']);
+
+        if ($userId !== null) {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->value('booking_id');
     }
 
     private function getApplicationPayload($applicationId)
@@ -1320,6 +2252,80 @@ class VisaApplicationService
         }
 
         return $application;
+    }
+
+    private function normalizeLegacyApplicationSummary($application)
+    {
+        if (!$application) {
+            return $application;
+        }
+
+        $application->country_id = $application->country_id ?? ($application->visa_country_id ?? null);
+        $application->visa_type_id = $application->visa_type_id ?? ($application->visa_package_id ?? null);
+        $application->visa_name = $application->visa_name
+            ?? ($application->package_visa_type ?? ($application->visa_type ?? null));
+        $application->remarks = $application->remarks ?? ($application->travel_purpose ?? null);
+
+        if (!property_exists($application, 'assigned_officer_name')) {
+            $application->assigned_officer_name = null;
+        }
+
+        return $application;
+    }
+
+    private function normalizeLegacyApplicationPayload($application)
+    {
+        $application = $this->normalizeLegacyApplicationSummary($application);
+
+        if (!$application) {
+            return $application;
+        }
+
+        $application->applied_at = $application->applied_at ?? ($application->submitted_at ?? null);
+        $application->applicant_info = (object) [
+            'full_name' => $application->full_name ?? null,
+            'passport_number' => $application->passport_no ?? null,
+            'passport_expiry' => $application->passport_expiry_date ?? null,
+            'date_of_birth' => $application->date_of_birth ?? null,
+            'nationality' => $application->nationality ?? null,
+            'phone' => $application->phone ?? null,
+            'email' => $application->email ?? null,
+            'address' => $application->present_address ?? null,
+        ];
+
+        if (isset($application->documents) && is_iterable($application->documents)) {
+            $application->documents = collect($application->documents)
+                ->map(function ($document) {
+                    return $this->normalizeLegacyDocumentPayload($document);
+                })
+                ->values();
+        }
+
+        if (isset($application->payments) && is_iterable($application->payments)) {
+            $application->payments = collect($application->payments)
+                ->map(function ($payment) use ($application) {
+                    if (!property_exists($payment, 'payment_status')) {
+                        $payment->payment_status = $application->payment_status ?? null;
+                    }
+
+                    return $payment;
+                })
+                ->values();
+        }
+
+        return $application;
+    }
+
+    private function normalizeLegacyDocumentPayload($document)
+    {
+        if (!$document) {
+            return $document;
+        }
+
+        $document->document_type = $document->document_type ?? ($document->document_label ?? null);
+        $document->status = $document->status ?? ($document->verification_status ?? null);
+
+        return $document;
     }
 
     private function getPackagePayload($packageId, $activeOnly = false)
