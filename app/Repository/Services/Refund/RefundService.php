@@ -28,6 +28,7 @@ class RefundService
                 ->join('trips', 'bookings.trip_id', '=', 'trips.id')
                 ->where('trips.trip_name', 'like', '%' . $search . '%')
                 ->select('refunds.*', 'trips.trip_name', 'bookings.seat_ids', 'bookings.created_at as booking_date')
+                ->orderBy('id','desc')
                 ->paginate($perPage, ['refunds.*'], 'page', $page);
             if ($refunds->total() > 0) {
                 return ["status" => true, "data" => $refunds, "message" => "Refund list retrived successfully"];
