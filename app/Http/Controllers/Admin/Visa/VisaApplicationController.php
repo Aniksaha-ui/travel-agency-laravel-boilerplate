@@ -165,7 +165,7 @@ class VisaApplicationController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'visa_document_id' => 'required|exists:visa_documents,id',
+                'visa_document_id' => 'required|exists:visa_application_documents,id',
                 'status' => 'required|in:' . implode(',', VisaDocumentVerificationStatus::all()),
                 'remarks' => 'nullable|string',
             ]);

@@ -202,7 +202,19 @@ class VisaApplicationService
                 ];
             }
 
+            // If neither booking_id nor package_booking_id is provided, create a booking
             $bookingId = $this->resolveBookingIdFromPayload($data, $userId);
+            if (empty($bookingId) && empty($data['package_booking_id'])) {
+                // Create a new booking for this visa application
+                $bookingId = DB::table('bookings')->insertGetId([
+                    'user_id' => $userId,
+                    'status' => BookingStatus::PENDING,
+                    'booking_type' => BookingType::VISA,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             if (!empty($bookingId)) {
                 $bookingAlreadyUsed = DB::table('visa_applications')
                     ->where('booking_id', $bookingId)
@@ -1035,6 +1047,12 @@ class VisaApplicationService
             }
 
             if (empty($application->full_name) || empty($application->passport_no) || Str::startsWith($application->passport_no, 'DRAFT-')) {
+
+                Log::info('Visa application ' . $application->full_name . ' Passport: ' . $application->passport_no, [
+                    'application_id' => $applicationId,
+                    'full_name' => $application->full_name,
+                    'passport_no' => $application->passport_no,
+                ]);
                 DB::rollBack();
 
                 return [
@@ -1581,7 +1599,249 @@ class VisaApplicationService
         }
     }
 
-    public function getAdminApplications($page, $search, $status, $visaCountryId, $userId)
+    public function getApplications($page, $search, $status, $visaCountryId, $visaTypeId = null, $assignedTo = null)
+    {
+        return $this->getAdminApplications($page, $search, $status, $visaCountryId, null, $visaTypeId, $assignedTo);
+    }
+
+    public function getApplicationById($applicationId)
+    {
+        return $this->getAdminApplicationById($applicationId);
+    }
+
+    public function adminUpdateApplication($applicationId, $data)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = DB::table('visa_applications')->where('id', $applicationId)->first();
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            $updateData = [
+                'updated_at' => now(),
+            ];
+
+            $packageId = $data['visa_package_id'] ?? $data['visa_type_id'] ?? null;
+            if ($packageId !== null || array_key_exists('country_id', $data)) {
+                $packageQuery = DB::table('visa_packages as vp')
+                    ->join('visa_countries as vc', 'vp.visa_country_id', '=', 'vc.id')
+                    ->where('vp.id', $packageId ?? $application->visa_package_id)
+                    ->select(
+                        'vp.*',
+                        'vc.id as country_id',
+                        'vc.name as country_name',
+                        'vc.is_active as country_is_active'
+                    );
+
+                if (!empty($data['country_id'])) {
+                    $packageQuery->where('vc.id', $data['country_id']);
+                }
+
+                $package = $packageQuery->first();
+                if (!$package || (int) $package->is_active !== 1 || (int) $package->country_is_active !== 1) {
+                    DB::rollBack();
+
+                    return [
+                        'status' => ApiResponseStatus::FAILED,
+                        'data' => [],
+                        'message' => 'Selected visa package is not available',
+                    ];
+                }
+
+                $updateData['visa_package_id'] = $package->id;
+                $updateData['country_name_snapshot'] = $package->country_name;
+                $updateData['visa_type_snapshot'] = $package->visa_type;
+                $updateData['fee_snapshot'] = $package->fee;
+                $updateData['currency_snapshot'] = $package->currency;
+                $updateData['processing_days_snapshot'] = $package->processing_days;
+            }
+
+            if (array_key_exists('booking_id', $data) || array_key_exists('package_booking_id', $data)) {
+                $bookingId = $this->resolveBookingIdFromPayload($data);
+
+                if ($bookingId && DB::table('visa_applications')
+                    ->where('booking_id', $bookingId)
+                    ->where('id', '!=', $applicationId)
+                    ->exists()) {
+                    DB::rollBack();
+
+                    return [
+                        'status' => ApiResponseStatus::FAILED,
+                        'data' => [],
+                        'message' => 'A visa application already exists for the selected booking',
+                    ];
+                }
+
+                $updateData['booking_id'] = $bookingId;
+            }
+
+            if (array_key_exists('remarks', $data)) {
+                $updateData['admin_note'] = $data['remarks'];
+            }
+
+            if (array_key_exists('assigned_to', $data) && Schema::hasColumn('visa_applications', 'assigned_to')) {
+                $updateData['assigned_to'] = $data['assigned_to'];
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->update($updateData);
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyApplicationPayload($this->getApplicationPayload($applicationId)),
+                'message' => 'Visa application updated successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService adminUpdateApplication error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to update visa application',
+            ];
+        }
+    }
+
+    public function deleteAdminApplication($applicationId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = DB::table('visa_applications')->where('id', $applicationId)->first();
+            if (!$application) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application not found',
+                ];
+            }
+
+            $documents = DB::table('visa_application_documents')
+                ->where('visa_application_id', $applicationId)
+                ->get();
+
+            foreach ($documents as $document) {
+                if (!empty($document->file_path)) {
+                    FileManageHelper::deleteFile($document->file_path);
+                }
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->delete();
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => [],
+                'message' => 'Visa application deleted successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService deleteAdminApplication error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to delete visa application',
+            ];
+        }
+    }
+
+    public function assignApplication($adminId, $data)
+    {
+        DB::beginTransaction();
+
+        try {
+            $applicationId = $data['visa_application_id'] ?? null;
+            $officerId = $data['officer_id'] ?? null;
+
+            $application = DB::table('visa_applications')->where('id', $applicationId)->first();
+            $officer = DB::table('users')->where('id', $officerId)->first();
+
+            if (!$application || !$officer) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application or officer not found',
+                ];
+            }
+
+            $assignmentNote = 'Assigned to ' . $officer->name;
+            if (!empty($data['remarks'])) {
+                $assignmentNote .= ': ' . $data['remarks'];
+            }
+
+            $updateData = [
+                'updated_at' => now(),
+            ];
+
+            if (Schema::hasColumn('visa_applications', 'assigned_to')) {
+                $updateData['assigned_to'] = $officerId;
+            }
+
+            if (!empty($data['remarks']) || !Schema::hasColumn('visa_applications', 'assigned_to')) {
+                $updateData['admin_note'] = $assignmentNote;
+            }
+
+            DB::table('visa_applications')->where('id', $applicationId)->update($updateData);
+            $this->addStatusLog($applicationId, $application->status, $application->status, $adminId, $assignmentNote);
+
+            $this->notificationService->create(
+                $officerId,
+                'Visa application assigned',
+                'Visa application ' . $application->application_no . ' has been assigned to you.',
+                $applicationId
+            );
+
+            DB::commit();
+
+            return [
+                'status' => ApiResponseStatus::SUCCESS,
+                'data' => $this->normalizeLegacyApplicationPayload($this->getApplicationPayload($applicationId)),
+                'message' => 'Visa application assigned successfully',
+            ];
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error('VisaApplicationService assignApplication error: ' . $exception->getMessage());
+
+            return [
+                'status' => ApiResponseStatus::FAILED,
+                'data' => [],
+                'message' => 'Failed to assign visa application',
+            ];
+        }
+    }
+
+    public function verifyDocument($adminId, $data)
+    {
+        return $this->reviewDocument(
+            $data['visa_document_id'] ?? null,
+            $adminId,
+            $data['status'] ?? null,
+            $data['remarks'] ?? null
+        );
+    }
+
+    public function getPrintableApplication($applicationId)
+    {
+        return $this->getAdminApplicationById($applicationId);
+    }
+
+    public function getAdminApplications($page, $search, $status, $visaCountryId, $userId = null, $visaTypeId = null, $assignedTo = null)
     {
         try {
             $query = $this->applicationListingQuery();
@@ -1609,8 +1869,22 @@ class VisaApplicationService
                 $query->where('u.id', $userId);
             }
 
+            if (!empty($visaTypeId)) {
+                $query->where('vp.id', $visaTypeId);
+            }
+
+            if (!empty($assignedTo) && Schema::hasColumn('visa_applications', 'assigned_to')) {
+                $query->where('va.assigned_to', $assignedTo);
+            }
+
             $applications = $query->orderBy('va.id', 'desc')
                 ->paginate(10, ['*'], 'page', $page);
+
+            $applications->setCollection(
+                $applications->getCollection()->map(function ($application) {
+                    return $this->normalizeLegacyApplicationSummary($application);
+                })
+            );
 
             return [
                 'status' => ApiResponseStatus::SUCCESS,
@@ -1643,7 +1917,7 @@ class VisaApplicationService
 
             return [
                 'status' => ApiResponseStatus::SUCCESS,
-                'data' => $application,
+                'data' => $this->normalizeLegacyApplicationPayload($application),
                 'message' => 'Visa application retrieved successfully',
             ];
         } catch (Exception $exception) {
@@ -1710,11 +1984,29 @@ class VisaApplicationService
         }
     }
 
-    public function updateStatus($applicationId, $adminId, $newStatus, $note)
+    public function updateStatus($applicationId, $adminId = null, $newStatus = null, $note = null)
     {
+        if (is_array($adminId)) {
+            $payload = $adminId;
+            $adminId = $applicationId;
+            $applicationId = $payload['visa_application_id'] ?? null;
+            $newStatus = $payload['status'] ?? null;
+            $note = $payload['remarks'] ?? null;
+        }
+
         DB::beginTransaction();
 
         try {
+            if (!$applicationId || !$adminId || !$newStatus) {
+                DB::rollBack();
+
+                return [
+                    'status' => ApiResponseStatus::FAILED,
+                    'data' => [],
+                    'message' => 'Visa application, admin and status are required',
+                ];
+            }
+
             $application = DB::table('visa_applications')->where('id', $applicationId)->first();
             if (!$application) {
                 DB::rollBack();
@@ -1754,7 +2046,7 @@ class VisaApplicationService
 
             return [
                 'status' => ApiResponseStatus::SUCCESS,
-                'data' => $this->getApplicationPayload($applicationId),
+                'data' => $this->normalizeLegacyApplicationPayload($this->getApplicationPayload($applicationId)),
                 'message' => 'Visa application status updated successfully',
             ];
         } catch (Exception $exception) {
@@ -2000,33 +2292,47 @@ class VisaApplicationService
 
     private function applicationListingQuery()
     {
-        return DB::table('visa_applications as va')
+        $hasAssignedToColumn = Schema::hasColumn('visa_applications', 'assigned_to');
+
+        $query = DB::table('visa_applications as va')
             ->join('visa_packages as vp', 'va.visa_package_id', '=', 'vp.id')
             ->join('visa_countries as vc', 'vp.visa_country_id', '=', 'vc.id')
-            ->join('users as u', 'va.user_id', '=', 'u.id')
-            ->select(
-                'va.id',
-                'va.application_no',
-                'va.full_name',
-                'va.email',
-                'va.phone',
-                'va.passport_no',
-                'va.travel_date',
-                'va.status',
-                'va.payment_status',
-                'va.fee_snapshot',
-                'va.currency_snapshot',
-                'va.created_at',
-                'va.updated_at',
-                'vp.id as visa_package_id',
-                'vp.title as package_title',
-                'vp.visa_type',
-                'vc.id as visa_country_id',
-                'vc.name as country_name',
-                'u.id as user_id',
-                'u.name as user_name',
-                'u.email as user_email'
-            );
+            ->join('users as u', 'va.user_id', '=', 'u.id');
+
+        if ($hasAssignedToColumn) {
+            $query->leftJoin('users as assigned_user', 'va.assigned_to', '=', 'assigned_user.id');
+        }
+
+        $selects = [
+            'va.id',
+            'va.application_no',
+            'va.full_name',
+            'va.email',
+            'va.phone',
+            'va.passport_no',
+            'va.travel_date',
+            'va.status',
+            'va.payment_status',
+            'va.fee_snapshot',
+            'va.currency_snapshot',
+            'va.created_at',
+            'va.updated_at',
+            'vp.id as visa_package_id',
+            'vp.title as package_title',
+            'vp.visa_type',
+            'vc.id as visa_country_id',
+            'vc.name as country_name',
+            'u.id as user_id',
+            'u.name as user_name',
+            'u.email as user_email',
+        ];
+
+        if ($hasAssignedToColumn) {
+            $selects[] = 'va.assigned_to';
+            $selects[] = 'assigned_user.name as assigned_officer_name';
+        }
+
+        return $query->select($selects);
     }
 
     private function saveApplicantInfo($userId, $applicationId, $data, $successMessage, $logContext)
@@ -2184,27 +2490,40 @@ class VisaApplicationService
 
     private function getApplicationPayload($applicationId)
     {
-        $application = DB::table('visa_applications as va')
+        $hasAssignedToColumn = Schema::hasColumn('visa_applications', 'assigned_to');
+
+        $query = DB::table('visa_applications as va')
             ->join('visa_packages as vp', 'va.visa_package_id', '=', 'vp.id')
             ->join('visa_countries as vc', 'vp.visa_country_id', '=', 'vc.id')
             ->join('users as u', 'va.user_id', '=', 'u.id')
             ->leftJoin('users as result_user', 'va.result_uploaded_by', '=', 'result_user.id')
-            ->where('va.id', $applicationId)
-            ->select(
-                'va.*',
-                'u.id as user_id',
-                'vp.title as package_title',
-                'vp.visa_type as package_visa_type',
-                'vp.description as package_description',
-                'vp.eligibility as package_eligibility',
-                'vc.name as country_name',
-                'vc.slug as country_slug',
-                'vc.iso_code as country_iso_code',
-                'u.name as user_name',
-                'u.email as user_email',
-                'result_user.name as result_uploaded_by_name'
-            )
-            ->first();
+            ->where('va.id', $applicationId);
+
+        if ($hasAssignedToColumn) {
+            $query->leftJoin('users as assigned_user', 'va.assigned_to', '=', 'assigned_user.id');
+        }
+
+        $selects = [
+            'va.*',
+            'u.id as user_id',
+            'vp.title as package_title',
+            'vp.visa_type as package_visa_type',
+            'vp.description as package_description',
+            'vp.eligibility as package_eligibility',
+            'vc.name as country_name',
+            'vc.slug as country_slug',
+            'vc.iso_code as country_iso_code',
+            'u.name as user_name',
+            'u.email as user_email',
+            'result_user.name as result_uploaded_by_name',
+        ];
+
+        if ($hasAssignedToColumn) {
+            $selects[] = 'va.assigned_to';
+            $selects[] = 'assigned_user.name as assigned_officer_name';
+        }
+
+        $application = $query->select($selects)->first();
 
         if ($application) {
             $application->required_documents = DB::table('visa_package_required_documents')
