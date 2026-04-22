@@ -140,6 +140,20 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::post('admin/visa/requirements/update/{id}', 'Admin\Visa\VisaDocumentRequirementController@update');
     Route::delete('admin/visa/requirements/{id}', 'Admin\Visa\VisaDocumentRequirementController@destroy');
 
+    Route::get('admin/visa/packages', 'Admin\Visa\VisaPackageController@index');
+    Route::get('admin/visa/packages/dropdown', 'Admin\Visa\VisaPackageController@dropdown');
+    Route::post('admin/visa/packages', 'Admin\Visa\VisaPackageController@store');
+    Route::get('admin/visa/packages/{id}', 'Admin\Visa\VisaPackageController@show');
+    Route::post('admin/visa/packages/update/{id}', 'Admin\Visa\VisaPackageController@update');
+    Route::delete('admin/visa/packages/{id}', 'Admin\Visa\VisaPackageController@destroy');
+
+    Route::get('admin/visa/package-documents', 'Admin\Visa\VisaPackageDocumentController@index');
+    Route::get('admin/visa/package-documents/by-package/{visaPackageId}', 'Admin\Visa\VisaPackageDocumentController@listByPackage');
+    Route::post('admin/visa/package-documents', 'Admin\Visa\VisaPackageDocumentController@store');
+    Route::get('admin/visa/package-documents/{id}', 'Admin\Visa\VisaPackageDocumentController@show');
+    Route::post('admin/visa/package-documents/update/{id}', 'Admin\Visa\VisaPackageDocumentController@update');
+    Route::delete('admin/visa/package-documents/{id}', 'Admin\Visa\VisaPackageDocumentController@destroy');
+
     Route::get('admin/visa/applications', 'Admin\Visa\VisaApplicationController@index');
     Route::post('admin/visa/applications/update/{id}', 'Admin\Visa\VisaApplicationController@update');
     Route::delete('admin/visa/applications/{id}', 'Admin\Visa\VisaApplicationController@destroy');

@@ -25,7 +25,7 @@ class VisaDocumentRequirementController extends Controller
             $response = $this->visaDocumentRequirementService->getAll(
                 $request->query('page'),
                 $request->query('search'),
-                $request->query('visa_type_id')
+                $request->query('visa_package_id', $request->query('visa_type_id'))
             );
 
             return response()->json([
@@ -47,7 +47,8 @@ class VisaDocumentRequirementController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'visa_type_id' => 'required|exists:visa_packages,id',
+                'visa_package_id' => 'required_without:visa_type_id|nullable|exists:visa_packages,id',
+                'visa_type_id' => 'nullable|exists:visa_packages,id',
                 'document_name' => 'required|string|max:100',
                 'is_required' => 'nullable|boolean',
             ]);
@@ -101,7 +102,8 @@ class VisaDocumentRequirementController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'visa_type_id' => 'required|exists:visa_packages,id',
+                'visa_package_id' => 'required_without:visa_type_id|nullable|exists:visa_packages,id',
+                'visa_type_id' => 'nullable|exists:visa_packages,id',
                 'document_name' => 'required|string|max:100',
                 'is_required' => 'nullable|boolean',
             ]);

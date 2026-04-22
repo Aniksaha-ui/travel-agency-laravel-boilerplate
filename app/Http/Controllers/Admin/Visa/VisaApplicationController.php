@@ -30,7 +30,7 @@ class VisaApplicationController extends Controller
                 $request->query('search'),
                 $request->query('status'),
                 $request->query('country_id'),
-                $request->query('visa_type_id'),
+                $request->query('visa_package_id', $request->query('visa_type_id')),
                 $request->query('assigned_to')
             );
 

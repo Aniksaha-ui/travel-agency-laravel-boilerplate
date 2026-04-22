@@ -25,7 +25,7 @@ class VisaTypeController extends Controller
             $response = $this->visaTypeService->getAll(
                 $request->query('page'),
                 $request->query('search'),
-                $request->query('country_id'),
+                $request->query('country_id', $request->query('visa_country_id')),
                 $request->query('status')
             );
 
@@ -48,7 +48,7 @@ class VisaTypeController extends Controller
     {
         try {
             $response = $this->visaTypeService->dropdownList(
-                $request->query('country_id'),
+                $request->query('country_id', $request->query('visa_country_id')),
                 (int) $request->query('active_only', 1) === 1
             );
 

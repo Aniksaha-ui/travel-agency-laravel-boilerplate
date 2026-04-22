@@ -73,14 +73,16 @@ class VisaController extends Controller
     public function requirements(Request $request)
     {
         try {
-            if (!$request->query('visa_type_id')) {
+            $visaPackageId = $request->query('visa_package_id', $request->query('visa_type_id'));
+
+            if (!$visaPackageId) {
                 return response()->json([
                     'isExecute' => ApiResponseStatus::FAILED,
-                    'message' => 'visa_type_id is required',
+                    'message' => 'visa_package_id is required',
                 ], 422);
             }
 
-            $response = $this->visaDocumentRequirementService->getByVisaType($request->query('visa_type_id'));
+            $response = $this->visaDocumentRequirementService->getByVisaType($visaPackageId);
 
             return response()->json([
                 'isExecute' => $response['status'],
