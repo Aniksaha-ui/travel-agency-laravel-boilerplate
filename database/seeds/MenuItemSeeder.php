@@ -118,6 +118,38 @@ class MenuItemSeeder extends Seeder
                 'roles' => ['admin'],
             ],
             [
+                'title' => 'Visa Management',
+                'icon' => 'VisaManagementIcon',
+                'location' => 'bottom',
+                'roles' => ['admin'],
+                'children' => [
+                    [
+                        'title' => 'Visa Countries',
+                        'path' => '/admin/visa/countries',
+                        'icon' => 'VisaManagementIcon',
+                        'roles' => ['admin'],
+                    ],
+                    [
+                        'title' => 'Visa Packages',
+                        'path' => '/admin/visa/packages',
+                        'icon' => 'VisaManagementIcon',
+                        'roles' => ['admin'],
+                    ],
+                    [
+                        'title' => 'Visa Applications',
+                        'path' => '/admin/visa/applications',
+                        'icon' => 'VisaManagementIcon',
+                        'roles' => ['admin'],
+                    ],
+                    [
+                        'title' => 'Visa Reports',
+                        'path' => '/admin/visa/reports',
+                        'icon' => 'ReportManagementIcon',
+                        'roles' => ['admin'],
+                    ],
+                ],
+            ],
+            [
                 'title' => 'Hotel Management',
                 'icon' => 'HotelManagementIcon',
                 'location' => 'bottom',
