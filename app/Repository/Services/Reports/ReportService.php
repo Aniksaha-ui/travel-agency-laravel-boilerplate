@@ -295,11 +295,12 @@ class ReportService
                 return ["status" => true, "data" => [], "message" => "No Report found"];
             }
         } catch (Exception $ex) {
-            return response()->json([
-                "data" => [],
+            Log::alert($ex->getMessage());
+            return [
                 "status" => false,
+                "data" => [],
                 "message" => "Internal Server Error"
-            ], 500);
+            ];
         }
     }
 

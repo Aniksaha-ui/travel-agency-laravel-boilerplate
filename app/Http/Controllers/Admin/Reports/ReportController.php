@@ -12,20 +12,62 @@ class ReportController extends Controller
 {
 
     protected $reportService;
+
     public function __construct(ReportService $reportService)
     {
         $this->reportService = $reportService;
     }
+
+    private function jsonResponse(string $executionStatus, $data = [], string $message = 'success', int $statusCode = 200)
+    {
+        return response()->json([
+            "isExecture" => $executionStatus,
+            "data" => $data ?? [],
+            "message" => $message
+        ], $statusCode);
+    }
+
+    private function normalizeExecutionStatus($status): string
+    {
+        if (is_string($status)) {
+            return strtoupper($status) === ApiResponseStatus::SUCCESS ? 'success' : 'failed';
+        }
+
+        return $status ? 'success' : 'failed';
+    }
+
+    private function serviceResponse(array $response, int $statusCode = 200)
+    {
+        return $this->jsonResponse(
+            $this->normalizeExecutionStatus($response['status'] ?? false),
+            $response['data'] ?? [],
+            $response['message'] ?? 'success',
+            $statusCode
+        );
+    }
+
+    private function successResponse($data = [], string $message = 'success', int $statusCode = 200)
+    {
+        return $this->jsonResponse('success', $data, $message, $statusCode);
+    }
+
+    private function failedResponse(string $message = 'Internal Server Error', int $statusCode = 500)
+    {
+        return $this->jsonResponse('failed', [], $message, $statusCode);
+    }
+
     public function vehicleWiseSeatTotalReport(Request $request)
     {
-        $page = $request->query('page');
-        $search = $request->query('search');
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
 
-        $response = $this->reportService->vehicleWiseSeatTotalReport($page, $search);
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+            $response = $this->reportService->vehicleWiseSeatTotalReport($page, $search);
+            return $this->successResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - vehicleWiseSeatTotalReport function: " . $ex->getMessage());
+            return $this->failedResponse();
+        }
     }
 
     public function vehicleWiseAllSeatReport($id, Request $request)
@@ -34,29 +76,25 @@ class ReportController extends Controller
         $page = $request->query('page');
         $search = $request->query('search');
         $response = $this->reportService->vehicleWiseAllSeatReport($vehicleId, $page, $search);
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+        return $this->successResponse($response);
     }
 
     public function accountBalance()
     {
-        $response = $this->reportService->accountBalance();
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+        try {
+            $response = $this->reportService->accountBalance();
+            return $this->successResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - accountBalance function: " . $ex->getMessage());
+            return $this->failedResponse();
+        }
     }
 
 
     public function accountHistory($type)
     {
         $response = $this->reportService->accountHistory($type);
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+        return $this->successResponse($response);
     }
 
     public function packageWiseBooking(Request $request)
@@ -64,19 +102,9 @@ class ReportController extends Controller
 
         try {
             $response = $this->reportService->packageWiseBookingReport();
-            if ($response['status'] == true) {
-                return response()->json([
-                    "data" => $response['data'],
-                    "status" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -88,17 +116,9 @@ class ReportController extends Controller
             $start_date = $request->input('start_date');
             $end_date = $request->input('end_date');
             $response = $this->reportService->useageOfVehicle($page, $search, $start_date, $end_date);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -106,17 +126,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->tripwiseBookingUsers($tripId);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -127,17 +139,9 @@ class ReportController extends Controller
             $search = $request->query('search');
 
             $response = $this->reportService->tripPerformance($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -148,17 +152,9 @@ class ReportController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->reportService->packagePerformance($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -167,17 +163,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->guideEfficencyReport();
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -190,17 +178,9 @@ class ReportController extends Controller
 
 
             $response = $this->reportService->customerValueReport($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -212,17 +192,9 @@ class ReportController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->reportService->transactionHistoryReport($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -232,17 +204,9 @@ class ReportController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->reportService->monthRunningBalanceReport($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -253,17 +217,9 @@ class ReportController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->reportService->dailyBalanceReport($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -273,17 +229,9 @@ class ReportController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->reportService->financialReport($page, $search);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -293,317 +241,166 @@ class ReportController extends Controller
         try {
 
             $response = $this->reportService->financialReportById($financialReportId);
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json([
-                "data" => [],
-                "status" => false,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
-    public function bookingSummary(){
-        try{
+    public function bookingSummary()
+    {
+        try {
             $response = $this->reportService->bookingSummary();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - bookingSummary function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - bookingSummary function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
 
 
-       public function salesSummary(){
-        try{
+    public function salesSummary()
+    {
+        try {
             $response = $this->reportService->salesSummary();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - salesSummary function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - salesSummary function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
 
 
-        public function routeWiseSalesSummary(){
-        try{
+    public function routeWiseSalesSummary()
+    {
+        try {
             $response = $this->reportService->routeWiseSalesSummary();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - routeWiseSalesSummary function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - routeWiseSalesSummary function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
 
-     public function currentMonthTripSales(){
-        try{
+    public function currentMonthTripSales()
+    {
+        try {
             $response = $this->reportService->currentMonthTripSales();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - currentMonthTripSales function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - currentMonthTripSales function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function unpaidBookingReport(){
-        try{
+    public function unpaidBookingReport()
+    {
+        try {
             $response = $this->reportService->unpaidBookingReport();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - unpaidBookingReport function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - unpaidBookingReport function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function userGrowthReport(){
-        try{
+    public function userGrowthReport()
+    {
+        try {
             $response = $this->reportService->userGrowthReport();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - userGrowthReport function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - userGrowthReport function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function ticketStatusReport(){
-        try{
+    public function ticketStatusReport()
+    {
+        try {
             $response = $this->reportService->ticketStatusReport();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - ticketStatusReport function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - ticketStatusReport function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function refundStatusReport(){
-        try{
+    public function refundStatusReport()
+    {
+        try {
             $response = $this->reportService->refundStatusReport();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - refundStatusReport function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - refundStatusReport function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function lowOccupancyTripReport(){
-        try{
+    public function lowOccupancyTripReport()
+    {
+        try {
             $response = $this->reportService->lowOccupancyTripReport();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - lowOccupancyTripReport function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - lowOccupancyTripReport function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function avgBookingValueReport(){
-        try{
+    public function avgBookingValueReport()
+    {
+        try {
             $response = $this->reportService->avgBookingValueReport();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - avgBookingValueReport function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - avgBookingValueReport function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function lowPerformingPackages(){
-        try{
+    public function lowPerformingPackages()
+    {
+        try {
             $response = $this->reportService->lowPerformingPackages();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - lowPerformingPackages function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - lowPerformingPackages function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function highCancellationPackages(){
-        try{
+    public function highCancellationPackages()
+    {
+        try {
             $response = $this->reportService->highCancellationPackages();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - highCancellationPackages function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - highCancellationPackages function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function packageProfitMargin(){
-        try{
+    public function packageProfitMargin()
+    {
+        try {
             $response = $this->reportService->packageProfitMargin();
-
-            if($response && $response['status']){
-                return response()->json([
-                    "data" => $response['data'],
-                    "isExecute" => $response['status'],
-                    "message" => $response['message']
-                ], 200);
-            }
-       
-        } catch(\Exception $ex){
-            Log::info("Error in ReportController - packageProfitMargin function: " .$ex->getMessage() );
-            return response()->json([
-                "data" => [],
-                "isExecute" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - packageProfitMargin function: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
     public function hotelPerformanceReport()
     {
         try {
             $response = $this->reportService->hotelPerformanceReport();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -611,9 +408,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->roomTypePopularityReport();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -621,9 +418,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->refundReasonAnalysis();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -631,9 +428,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->vehicleTypePerformanceReport();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -641,9 +438,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->packagePassengerSummary();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -651,9 +448,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->cityWiseHotelRevenue();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -661,9 +458,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->monthlyBookingTrend();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -671,9 +468,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->paymentMethodAnalytics();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -681,9 +478,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->guidePerformanceVsCost();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -691,9 +488,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->hotelGuestStatusReport();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -701,9 +498,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->packageInclusionRevenue();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -711,9 +508,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->userLoyaltyAnalytics();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -721,9 +518,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->routeEfficiencyAnalytics();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -731,9 +528,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->bookingLeadTimeAnalysis();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -741,9 +538,9 @@ class ReportController extends Controller
     {
         try {
             $response = $this->reportService->occupancyAlertReport();
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
-            return response()->json(["status" => false, "message" => "Internal Server Error"], 500);
+            return $this->failedResponse();
         }
     }
     public function monthlyDailyBalanceReportsList(Request $request)
@@ -752,14 +549,10 @@ class ReportController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->reportService->getMonthlyDailyBalanceReports($page, $search);
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $ex) {
             Log::info("Error in ReportController - monthlyDailyBalanceReportsList function: " . $ex->getMessage());
-            return response()->json([
-                "data" => [],
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 500);
+            return $this->failedResponse();
         }
     }
 }

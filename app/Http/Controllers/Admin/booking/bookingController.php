@@ -19,35 +19,40 @@ class bookingController extends Controller
     }
     public function index(Request $request)
     {
-        $page = $request->query('page');
-        $search = $request->query('search');
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
 
-        $response = $this->bookingService->index($page, $search);
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+            $response = $this->bookingService->index($page, $search);
+            return $this->successResponse($response);
+        } catch (Exception $ex) {
+            Log::alert("BookingController - index function" . $ex->getMessage());
+            return $this->failedResponse();
+        }
     }
 
     public function tripwiseBooking(Request $request)
     {
-
-        $response = $this->bookingService->tripwiseBooking($request->all());
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+        try {
+            $response = $this->bookingService->tripwiseBooking($request->all());
+            return $this->successResponse($response);
+        } catch (Exception $ex) {
+            Log::alert("BookingController - tripwiseBooking function" . $ex->getMessage());
+            return $this->failedResponse();
+        }
     }
 
     public function dailybookingReport(Request $request)
     {
-        Log::info($request->input('date'));
-        $date = $request->input('date') ?? now()->toDateString();
-        $response = $this->bookingService->dailybookingReport($date);
-        return response()->json([
-            "data" => $response,
-            "message" => "success"
-        ], 200);
+        try {
+            Log::info($request->input('date'));
+            $date = $request->input('date') ?? now()->toDateString();
+            $response = $this->bookingService->dailybookingReport($date);
+            return $this->successResponse($response);
+        } catch (Exception $ex) {
+            Log::alert("BookingController - dailybookingReport function" . $ex->getMessage());
+            return $this->failedResponse();
+        }
     }
 
     public function invoice(Request $request)
@@ -55,22 +60,10 @@ class bookingController extends Controller
         try {
             $bookingId = $request->bookingId;
             $response = $this->bookingService->invoice($bookingId);
-            if ($response['status'] == true) {
-                return response()->json([
-                    "data" => $response['data'],
-                    "message" => $response['message'],
-                    "status" => $response['status']
-                ]);
-            } else {
-                return response()->json([
-                    "data" => [],
-                    "message" => $response['message'],
-                    "status" => $response['status']
-                ]);
-            }
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::alert("BookingController - invoice function" . $ex->getMessage());
-            return ["status" => false, "message" => "Internal Server Error."];
+            return $this->failedResponse("Internal Server Error.");
         }
     }
 }

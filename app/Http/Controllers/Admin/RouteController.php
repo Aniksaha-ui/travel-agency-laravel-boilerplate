@@ -27,16 +27,9 @@ class RouteController extends Controller
             $search = $request->query('search');
 
             $response = $this->routeService->index($page, $search);
-            return response()->json([
-                "isExecute" => $response['status'],
-                "data" => $response['data'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error"
-            ], 200);
+            return $this->failedResponse("Internal Server Error", 500);
         }
     }
 
@@ -58,25 +51,15 @@ class RouteController extends Controller
 
         if ($validator->fails()) {
             Log::error("Validation error".$validator->errors()->first());
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message'   => $validator->errors()->first(),
-            ], 422);
+            return $this->failedResponse($validator->errors()->first(), 422);
         }
             $response = $this->routeService->store($request->all());
             if ($response) {
-                return response()->json([
-                    'isExecute' => $response['status'],
-                    'data' => $response['data'],
-                    'message' => $response['message'],
-                ], 200);
+                return $this->serviceResponse($response);
             }
         } catch (Exception $ex) {
             Log::error("Router Controller - insert function" . $ex->getMessage());
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config("message.server_error")
-            ], 500);
+            return $this->failedResponse(config("message.server_error"), 500);
         }
     }
 
@@ -85,18 +68,11 @@ class RouteController extends Controller
         try {
             $response = $this->routeService->findById($id);
             if ($response) {
-                return response()->json([
-                    "isExecute" => $response['status'],
-                    "data" => $response['data'],
-                    "message" => $response['message']
-                ], 200);
+                return $this->serviceResponse($response);
             }
         } catch (Exception $ex) {
             Log::error("Router Controller - findRouteById function" . $ex->getMessage());
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config("message.server_error")
-            ], 500);
+            return $this->failedResponse(config("message.server_error"), 500);
         }
     }
 
@@ -106,18 +82,11 @@ class RouteController extends Controller
         try {
             $response = $this->routeService->delete($id);
             if ($response) {
-                return response()->json([
-                    "isExecute" => $response['status'],
-                    "data" => $response['data'],
-                    "message" => $response['message']
-                ], 200);
+                return $this->serviceResponse($response);
             }
         } catch (Exception $ex) {
             Log::error("Router Controller - findRouteById function" . $ex->getMessage());
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config("message.server_error")
-            ], 500);
+            return $this->failedResponse(config("message.server_error"), 500);
         }
     }
 
@@ -126,18 +95,11 @@ class RouteController extends Controller
     {
         try{
             $response = $this->routeService->dropdownList();
-            return response()->json([
-                "isExecute" => $response['status'],
-                "data" => $response['data'],
-                "message" => $response['message']
-            ], 200);
+            return $this->serviceResponse($response);
 
         }catch(Exception $ex){
             Log::error("Route Controller - dropdown function" . $ex->getMessage());
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config("message.server_error")
-            ], 500);
+            return $this->failedResponse(config("message.server_error"), 500);
         }
 
      

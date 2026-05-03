@@ -123,24 +123,24 @@ class TripService implements CommonInterface
                 } else {
                     $responseData = ["isExecute" => false, "data" => [], "message" => $response['message']];
                     DB::rollBack();
-                    return response()->json($responseData, 200);
+                    return $responseData;
                 }
             } else {
                 DB::rollBack();
-                return response()->json([
+                return [
                     'isExecute' => false,
                     'data' => [],
                     'message' => "Trip not inserted",
-                ], 200);
+                ];
             }
         } catch (Exception $ex) {
             DB::rollBack();
             Log::alert("Insert error: " . $ex->getMessage());
-            return response()->json([
+            return [
                 'isExecute' => false,
                 'data' => [],
                 'message' => "Trip not inserted",
-            ], 200);
+            ];
         }
     }
 

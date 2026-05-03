@@ -7,6 +7,7 @@ use App\Repository\Services\Packages\PackageService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use DB;
 use Str;
 
@@ -21,15 +22,10 @@ class PackageController extends Controller
     {
         try {
             $packageData = $this->packageService->index();
-            return response()->json([
-                'data' => $packageData,
-                'message' => 'success'
-            ], 200);
+            return $this->successResponse($packageData);
         } catch (Exception $exception) {
             Log::error('Error fetching packages: ' . $exception->getMessage());
-            return response()->json([
-                'message' => 'Failed to retrieve packages'
-            ], 500);
+            return $this->failedResponse('Failed to retrieve packages');
         }
     }
 
@@ -38,27 +34,29 @@ class PackageController extends Controller
         Log::info($packageId);
         try {
             $packageData = $this->packageService->singlePackage($packageId);
-            return response()->json([
-                'data' => $packageData,
-                'message' => 'success'
-            ], 200);
+            if ($packageData) {
+                return $this->successResponse($packageData);
+            }
+
+            return $this->failedResponse('Package not found', 404);
         } catch (Exception $exception) {
             Log::error('Error fetching single package: ' . $exception->getMessage());
-            return response()->json([
-                'message' => 'Failed to retrieve single package'
-            ], 500);
+            return $this->failedResponse('Failed to retrieve single package');
         }
     }
 
 
     public function packageBooking(Request $request)
     {
-
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'package_id' => 'required|exists:packages,id',
             'adults' => 'required|integer|min:1',
             'children' => 'required|integer|min:0'
         ]);
+
+        if ($validator->fails()) {
+            return $this->failedResponse('Validation failed', 422, $validator->errors());
+        }
 
         DB::beginTransaction();
         try {
@@ -115,7 +113,7 @@ class PackageController extends Controller
 
                 if ($availableSeats->count() < $totalSeatsNeeded) {
                     DB::rollBack();
-                    return response()->json(['message' => 'Not enough seats available'], 400);
+                    return $this->failedResponse('Not enough seats available', 400);
                 }
                 $seatInformation = [];
                 foreach ($availableSeats as $seatId) {
@@ -203,13 +201,13 @@ class PackageController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'message' => 'Package and seats booked successfully',
+            return $this->successResponse([
                 'package_booking_id' => $bookingId
-            ], 201);
+            ], 'Package and seats booked successfully', 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Booking failed', 'error' => $e->getMessage()], 500);
+            Log::error('Package booking failed: ' . $e->getMessage());
+            return $this->failedResponse('Booking failed');
         }
     }
 
@@ -218,15 +216,10 @@ class PackageController extends Controller
         Log::info("Trip" . $tripId);
         try {
             $packages = $this->packageService->tripwisePackages($tripId);
-            return response()->json([
-                'data' => $packages,
-                'message' => 'success'
-            ], 200);
+            return $this->successResponse($packages);
         } catch (Exception $exception) {
             Log::error('Error fetching packages: ' . $exception->getMessage());
-            return response()->json([
-                'message' => 'Failed to retrieve packages'
-            ], 500);
+            return $this->failedResponse('Failed to retrieve packages');
         }
     }
 }

@@ -25,12 +25,10 @@ class tripController extends Controller
         try {
             
             $trips = $this->tripService->findAllActiveTrips($request->all());
-            return response()->json([
-                "data" => $trips,
-                "message" => "success"
-            ], 200);
+            return $this->successResponse($trips);
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -39,12 +37,14 @@ class tripController extends Controller
 
         try {
             $trip = $this->tripService->findTripById($id);
-            return response()->json([
-                "data" => $trip,
-                "message" => "success"
-            ], 200);
+            if ($trip) {
+                return $this->successResponse($trip);
+            }
+
+            return $this->failedResponse("Trip not found", 404);
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
+            return $this->failedResponse();
         }
     }
 }

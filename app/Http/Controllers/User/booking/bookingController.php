@@ -51,11 +51,7 @@ class bookingController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => 'FAILED',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->failedResponse('Validation failed', 422, $validator->errors());
         }
 
         try {
@@ -70,10 +66,7 @@ class bookingController extends Controller
             $tripActive = DB::table('trips')->where('id',$tripId)->where('is_active',TripStatus::ACTIVE)->first();
 
             if(!$tripActive){
-                return response()->json([
-                'status' => 'FAILED',
-                'message' => 'Trip is not available now!',
-                ], 422);
+                return $this->failedResponse('Trip is not available now!', 422);
             }
 
             // Check if any of the requested seats are already booked
@@ -85,10 +78,7 @@ class bookingController extends Controller
                 ->exists();
 
             if ($existingSeats) {
-                return response()->json([
-                    'status' => 'FAILED',
-                    'message' => 'One or more selected seats are already booked.',
-                ], 422);
+                return $this->failedResponse('One or more selected seats are already booked.', 422);
             }
 
             // Insert into bookings table
@@ -163,18 +153,14 @@ class bookingController extends Controller
                     $msg = "Last time trip booking information" . "Payment Id: ". $lastPaymentId . ".Transaction Reference: " .$transactionRef ;
                     Log::info($msg);
                     DB::commit();   
-                    return response()->json([
-                        'status' => ApiResponseStatus::SUCCESS,
-                        'message' => 'Booking successfully created!',
-                        'data' => [
+                    return $this->successResponse([
                             "redirected_url" => $initPayment['url'],
                             'booking_id' => $lastBookingId,
                             'trip_id' => $tripId,
                             'seats' => $seatInfo,
                             'payment_id' => $lastPaymentId,
                             'transaction_reference' => $transactionRef
-                        ]
-                    ], 201);
+                        ], 'Booking successfully created!', 201);
                 } 
            }
 
@@ -223,36 +209,25 @@ class bookingController extends Controller
             Log::info($msg);
             DB::commit();
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Booking successfully created!',
-                'data' => [
+            return $this->successResponse([
                     'booking_id' => $lastBookingId,
                     'trip_id' => $tripId,
                     'seats' => $seatInfo,
                     'payment_id' => $lastPaymentId,
                     'transaction_reference' => $transactionRef
-                ]
-            ], 201);
+                ], 'Booking successfully created!', 201);
 
 
             DB::rollBack();
-            return response()->json([
-                    'status' => ApiResponseStatus::FAILED,
-                    'message' => 'Booking successfully created!',
-                    'data' => []
-                ], 422);
+            return $this->failedResponse('Booking successfully created!', 422);
 
 
 
        
         } catch (\Exception $e) {
             DB::rollBack(); // Rollback transaction on error
-            return response()->json([
-                'status' => 'FAILED',
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage()
-            ], 500);
+            Log::error('Trip booking failed: ' . $e->getMessage());
+            return $this->failedResponse('Something went wrong!');
         }
     }
 
@@ -261,12 +236,10 @@ class bookingController extends Controller
         try {
             $userId = $request->user()->id;
             $bookings = $this->bookingService->mybookings($userId);
-            return response()->json([
-                "data" => $bookings,
-                "message" => "success"
-            ], 200);
+            return $this->successResponse($bookings);
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -277,12 +250,10 @@ class bookingController extends Controller
             $userId = $request->user()->id;
 
             $invoiceInfo = $this->bookingService->invoiceInfo($tripId, $userId);
-            return response()->json([
-                "data" => $invoiceInfo,
-                "message" => "success"
-            ], 200);
+            return $this->successResponse($invoiceInfo);
         } catch (Exception $ex) {
             Log::alert($ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -299,7 +270,7 @@ class bookingController extends Controller
                 ->first();
 
             if (!$bookingInformation) {
-                return response()->json(['message' => 'Booking not found.'], 404);
+                return $this->failedResponse('Booking not found.', 404);
             }
 
             $seatIds = explode(',', $bookingInformation->seat_ids);
@@ -334,15 +305,15 @@ class bookingController extends Controller
 
                 DB::commit();
 
-                return response()->json(['message' => 'Booking cancelled successfully.'], 200);
+                return $this->successResponse([], 'Booking cancelled successfully.');
             } catch (Exception $ex) {
                 DB::rollBack();
                 Log::error('Error during cancellation: ' . $ex->getMessage());
-                return response()->json(['message' => 'Failed to cancel booking.'], 500);
+                return $this->failedResponse('Failed to cancel booking.');
             }
         } catch (Exception $ex) {
             Log::error('Error fetching booking details: ' . $ex->getMessage());
-            return response()->json(['message' => 'Error processing cancellation request.'], 500);
+            return $this->failedResponse('Error processing cancellation request.');
         }
     }
 

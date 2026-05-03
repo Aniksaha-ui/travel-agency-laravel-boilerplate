@@ -17,16 +17,16 @@ class PackageController extends Controller
 
     public function index(Request $request)
     {
-        $page = $request->input('page');
-        $search = $request->input('search');
+        try {
+            $page = $request->input('page');
+            $search = $request->input('search');
 
-        $response = $this->packageService->getAllPackages($page, $search);
+            $response = $this->packageService->getAllPackages($page, $search);
 
-        return response()->json([
-
-            'message' => 'List of packages',
-            'data' => $response ?? []
-        ]);
+            return $this->successResponse($response ?? [], 'List of packages');
+        } catch (Exception $ex) {
+            return $this->failedResponse();
+        }
     }
 
     public function create(Request $request)
@@ -36,17 +36,12 @@ class PackageController extends Controller
 
             $response = $this->packageService->store($request->all());
             if ($response == true) {
-                return response()->json([
-                    'isExecute' => true,
-                    'data' => $response,
-                    'message' => 'New Package Created',
-                ], 200);
+                return $this->successResponse($response, 'New Package Created');
             }
         } catch (Exception $ex) {
-            return response()->json([
-                'isExecute' => false,
-                'message' => 'Package Cannot be Created'
-            ], 200);
+            return $this->failedResponse('Package Cannot be Created', 200);
         }
+
+        return $this->failedResponse('Package Cannot be Created', 200);
     }
 }

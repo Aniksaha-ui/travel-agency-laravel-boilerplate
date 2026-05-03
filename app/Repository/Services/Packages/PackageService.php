@@ -54,10 +54,7 @@ class PackageService
             $package = DB::table('packages')->where('id', $packageId)->first();
 
             if (!$package) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Package not found',
-                ], 404);
+                return null;
             }
 
             $package->inclusions = DB::table('package_inclusions')
