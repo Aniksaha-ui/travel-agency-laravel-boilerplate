@@ -28,15 +28,10 @@ class BlogController extends Controller
             $search = $request->query('search');
 
             $response = $this->blogService->getAll($page, $search);
-
-            return response()->json($response, 200);
-
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "isExecute" => "FAILED",
-                "message" => "An error occurred while fetching blogs"
-            ], 500);
+            return $this->failedResponse("An error occurred while fetching blogs");
         }
     }
 
@@ -47,16 +42,10 @@ class BlogController extends Controller
     {
         try {
             $response = $this->blogService->getById($id);
-
-            $status = $response['isExecute'] === "SUCCESS" ? 200 : 404;
-            return response()->json($response, $status);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "isExecute" => "FAILED",
-                "message" => "An error occurred while fetching blog"
-            ], 500);
+            return $this->failedResponse("An error occurred while fetching blog");
         }
     }
 
@@ -79,23 +68,16 @@ class BlogController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    "isExecute" => "FAILED",
-                    "message" => "Validation Error",
+                return $this->failedResponse("Validation Error", 422, [
                     "errors" => $validator->errors()
-                ], 422);
+                ]);
             }
 
             $response = $this->blogService->create($request->all());
-
-            return response()->json($response, 201);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 201));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "isExecute" => "FAILED",
-                "message" => "An error occurred while creating blog"
-            ], 500);
+            return $this->failedResponse("An error occurred while creating blog");
         }
     }
 
@@ -118,24 +100,16 @@ class BlogController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    "isExecute" => "FAILED",
-                    "message" => "Validation Error",
+                return $this->failedResponse("Validation Error", 422, [
                     "errors" => $validator->errors()
-                ], 422);
+                ]);
             }
 
             $response = $this->blogService->update($id, $request->all());
-
-            $status = $response['isExecute'] === "SUCCESS" ? 200 : 404;
-            return response()->json($response, $status);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "isExecute" => "FAILED",
-                "message" => "An error occurred while updating blog"
-            ], 500);
+            return $this->failedResponse("An error occurred while updating blog");
         }
     }
 
@@ -146,16 +120,10 @@ class BlogController extends Controller
     {
         try {
             $response = $this->blogService->delete($id);
-
-            $status = $response['isExecute'] === "SUCCESS" ? 200 : 404;
-            return response()->json($response, $status);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "isExecute" => "FAILED",
-                "message" => "An error occurred while deleting blog"
-            ], 500);
+            return $this->failedResponse("An error occurred while deleting blog");
         }
     }
 }

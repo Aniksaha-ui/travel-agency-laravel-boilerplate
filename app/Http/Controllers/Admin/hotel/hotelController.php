@@ -21,26 +21,12 @@ class hotelController extends Controller
 
     public function store(Request $request)
     {
-
-
         try {
             $response = $this->hotelService->store($request->all());
-            if ($response['status'] == true) {
-                return response()->json([
-                    'isExecute' => true,
-                    'data' => [],
-                    'message' => 'New Hotel Created',
-                ], 200);
-            } else {
-                return response()->json([
-                    'isExecute' => false,
-                    'data' => [],
-                    'message' => $response['message'],
-                ], 200);
-            }
+            return $this->serviceResponse($response, $response['code'] ?? 200);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+            Log::error("hotelController store: " . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -49,22 +35,10 @@ class hotelController extends Controller
     {
         try {
             $response = $this->hotelService->update($hotelId, $request->all());
-            if ($response['status'] == true) {
-                return response()->json([
-                    'isExecute' => true,
-                    'data' => [],
-                    'message' => 'Hotel Information Updated',
-                ], 200);
-            } else {
-                return response()->json([
-                    'isExecute' => false,
-                    'data' => [],
-                    'message' => $response['message'],
-                ], 200);
-            }
+            return $this->serviceResponse($response, $response['code'] ?? 200);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+            Log::error("hotelController update: " . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -76,22 +50,10 @@ class hotelController extends Controller
             $search = $request->query('search');
             $perPage = 10;
             $response = $this->hotelService->getHotels($perPage, $page, $search);
-            if ($response['status'] == true) {
-                return response()->json([
-                    'isExecute' => true,
-                    'data' => $response['data'],
-                    'message' => $response['message'],
-                ], 200);
-            } else {
-                return response()->json([
-                    'isExecute' => false,
-                    'data' => [],
-                    'message' => $response['message'],
-                ], 200);
-            }
+            return $this->serviceResponse($response);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+            Log::error("hotelController getHotels: " . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -103,9 +65,8 @@ class hotelController extends Controller
                 ->where('id', $hotelId)
                 ->first();
 
-
             if (!$hotel) {
-                return response()->json(['isExecute' => false, 'message' => 'Hotel not found'], 404);
+                return $this->failedResponse('Hotel not found', 404);
             }
 
             // Fetch hotel photos
@@ -143,7 +104,7 @@ class hotelController extends Controller
             }
 
             // Return the hotel details along with rooms and pricing
-            return response()->json([
+            return $this->successResponse([
                 'hotel' => [
                     'id' => $hotel->id,
                     'name' => $hotel->name,
@@ -159,8 +120,8 @@ class hotelController extends Controller
                 ]
             ]);
         } catch (Exception $ex) {
-            Log::error($ex->getMessage());
-            return response()->json(['isExecute' => false, 'message' => 'Internal Server Error'], 500);
+            Log::error("hotelController getHotelById: " . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -171,14 +132,10 @@ class hotelController extends Controller
             $page = $request->query('page');
             $search = $request->query('search');
             $response = $this->hotelService->hotelCheckinList($page, $search);
-            return response()->json([
-                'isExecute' => true,
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Failed to create hotel', 'message' => $e->getMessage()], 500);
+            Log::error("hotelController hotelCheckinList: " . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -189,13 +146,10 @@ class hotelController extends Controller
             $search = $request->query('search');
 
             $response = $this->hotelService->hotelBooking($page, $search);
-            return response()->json([
-                'isExecute' => true,
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::info("hotelController hotelBooking function" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 }

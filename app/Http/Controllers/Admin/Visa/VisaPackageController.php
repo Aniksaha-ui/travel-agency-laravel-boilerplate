@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Visa;
 
-use App\Constants\ApiResponseStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\Visa\VisaPackageService;
 use Exception;
@@ -29,15 +28,10 @@ class VisaPackageController extends Controller
                 $request->query('visa_type'),
                 $request->query('is_active')
             );
-
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (Exception $exception) {
             Log::error("VisaPackageController index error: " . $exception->getMessage());
-
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error",
-            ], 500);
+            return $this->failedResponse("Internal Server Error");
         }
     }
 
@@ -49,15 +43,10 @@ class VisaPackageController extends Controller
                 $request->query('visa_country_id'),
                 (int) $activeOnly === 1
             );
-
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (Exception $exception) {
             Log::error("VisaPackageController dropdown error: " . $exception->getMessage());
-
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error",
-            ], 500);
+            return $this->failedResponse("Internal Server Error");
         }
     }
 
@@ -79,23 +68,16 @@ class VisaPackageController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    "status" => ApiResponseStatus::FAILED,
-                    "message" => "Validation Error",
+                return $this->failedResponse("Validation Error", 422, [
                     "errors" => $validator->errors(),
-                ], 422);
+                ]);
             }
 
             $response = $this->visaPackageService->create($request->all());
-
-            return response()->json($response, $response['status'] === ApiResponseStatus::SUCCESS ? 201 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 201));
         } catch (Exception $exception) {
             Log::error("VisaPackageController store error: " . $exception->getMessage());
-
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error",
-            ], 500);
+            return $this->failedResponse("Internal Server Error");
         }
     }
 
@@ -103,15 +85,10 @@ class VisaPackageController extends Controller
     {
         try {
             $response = $this->visaPackageService->getById($id);
-
-            return response()->json($response, $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 404);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $exception) {
             Log::error("VisaPackageController show error: " . $exception->getMessage());
-
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error",
-            ], 500);
+            return $this->failedResponse("Internal Server Error");
         }
     }
 
@@ -133,23 +110,16 @@ class VisaPackageController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    "status" => ApiResponseStatus::FAILED,
-                    "message" => "Validation Error",
+                return $this->failedResponse("Validation Error", 422, [
                     "errors" => $validator->errors(),
-                ], 422);
+                ]);
             }
 
             $response = $this->visaPackageService->update($id, $request->all());
-
-            return response()->json($response, $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error("VisaPackageController update error: " . $exception->getMessage());
-
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error",
-            ], 500);
+            return $this->failedResponse("Internal Server Error");
         }
     }
 
@@ -157,15 +127,10 @@ class VisaPackageController extends Controller
     {
         try {
             $response = $this->visaPackageService->delete($id);
-
-            return response()->json($response, $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error("VisaPackageController destroy error: " . $exception->getMessage());
-
-            return response()->json([
-                "status" => ApiResponseStatus::FAILED,
-                "message" => "Internal Server Error",
-            ], 500);
+            return $this->failedResponse("Internal Server Error");
         }
     }
 }

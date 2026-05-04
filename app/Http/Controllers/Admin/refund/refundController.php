@@ -15,44 +15,30 @@ class refundController extends Controller
     {
         $this->refundService = $seatService;
     }
-    public function getRefunds(Request $request){
+
+    public function getRefunds(Request $request)
+    {
         $page = $request->query('page');
         $search = $request->query('search');
         Log::info("jt");
-        try{
-            $response = $this->refundService->getAllRefunds($page,$search);
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
-         
-        } catch(Exception $er){
-            return response()->json([
-                "data" => [],
-                "message" => "Internal Server Error",
-                "status" => false
-            ]);
+        try {
+            $response = $this->refundService->getAllRefunds($page, $search);
+            return $this->serviceResponse($response);
+        } catch (Exception $er) {
+            Log::error("refundController getRefunds: " . $er->getMessage());
+            return $this->failedResponse();
         }
     }
 
-    public function disburseRefund(Request $request){
+    public function disburseRefund(Request $request)
+    {
         Log::info("refundController disburseRefund" . json_encode($request->all()));
-        try{
-            $response = $this->refundService->disburseRefund($request->all());     
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
-        }catch(Exception $ex){
-            return response()->json([
-                "data" => [],
-                "message" => "Internal Server Error",
-                "status" => false
-            ]);
+        try {
+            $response = $this->refundService->disburseRefund($request->all());
+            return $this->serviceResponse($response);
+        } catch (Exception $ex) {
+            Log::error("refundController disburseRefund: " . $ex->getMessage());
+            return $this->failedResponse();
         }
-    
     }
-
 }

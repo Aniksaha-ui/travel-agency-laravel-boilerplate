@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Visa;
 
-use App\Constants\ApiResponseStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\Visa\VisaApplicationService;
 use Exception;
@@ -25,15 +24,10 @@ class VisaReportController extends Controller
                 $request->query('date_from'),
                 $request->query('date_to')
             );
-
-            return response()->json($response, 200);
+            return $this->serviceResponse($response);
         } catch (Exception $exception) {
             Log::error('VisaReportController summary error: ' . $exception->getMessage());
-
-            return response()->json([
-                'status' => ApiResponseStatus::FAILED,
-                'message' => 'Internal Server Error',
-            ], 500);
+            return $this->failedResponse('Internal Server Error');
         }
     }
 }

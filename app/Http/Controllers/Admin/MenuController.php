@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Constants\ApiResponseStatus;
 use App\Http\Controllers\Controller;
 use App\MenuItem;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
@@ -42,21 +40,13 @@ class MenuController extends Controller
                 }])
                 ->get();
 
-            return response()->json([
-                'isExecute' => ApiResponseStatus::SUCCESS,
-                'data' => [
-                    'MAIN_MENU_ITEMS' => $mainMenu,
-                    'BOTTOM_MENU_ITEMS' => $bottomMenu
-                ],
-                'message' => 'Menu items fetched successfully'
-            ], 200);
-
+            return $this->successResponse([
+                'MAIN_MENU_ITEMS' => $mainMenu,
+                'BOTTOM_MENU_ITEMS' => $bottomMenu,
+            ], 'Menu items fetched successfully');
         } catch (Exception $ex) {
             Log::error("MenuController Index Error: " . $ex->getMessage());
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => 'Something went wrong.'
-            ], 500);
+            return $this->failedResponse('Something went wrong.');
         }
     }
 }

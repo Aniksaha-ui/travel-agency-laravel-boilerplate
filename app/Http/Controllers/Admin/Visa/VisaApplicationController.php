@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Visa;
 
-use App\Constants\ApiResponseStatus;
 use App\Constants\VisaApplicationStatus;
 use App\Constants\VisaDocumentVerificationStatus;
 use App\Http\Controllers\Controller;
@@ -33,19 +32,10 @@ class VisaApplicationController extends Controller
                 $request->query('visa_package_id', $request->query('visa_type_id')),
                 $request->query('assigned_to')
             );
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (Exception $exception) {
             Log::error('VisaApplicationController index error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -53,19 +43,10 @@ class VisaApplicationController extends Controller
     {
         try {
             $response = $this->visaApplicationService->getApplicationById($id);
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 404);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $exception) {
             Log::error('VisaApplicationController show error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -83,27 +64,16 @@ class VisaApplicationController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    'isExecute' => ApiResponseStatus::FAILED,
-                    'message' => $validator->errors()->first(),
+                return $this->failedResponse($validator->errors()->first(), 422, [
                     'errors' => $validator->errors(),
-                ], 422);
+                ]);
             }
 
             $response = $this->visaApplicationService->adminUpdateApplication($id, $request->all());
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error('VisaApplicationController update error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -111,19 +81,10 @@ class VisaApplicationController extends Controller
     {
         try {
             $response = $this->visaApplicationService->deleteAdminApplication($id);
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error('VisaApplicationController destroy error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -137,27 +98,16 @@ class VisaApplicationController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    'isExecute' => ApiResponseStatus::FAILED,
-                    'message' => $validator->errors()->first(),
+                return $this->failedResponse($validator->errors()->first(), 422, [
                     'errors' => $validator->errors(),
-                ], 422);
+                ]);
             }
 
             $response = $this->visaApplicationService->assignApplication($request->user()->id, $request->all());
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error('VisaApplicationController assign error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -171,27 +121,16 @@ class VisaApplicationController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    'isExecute' => ApiResponseStatus::FAILED,
-                    'message' => $validator->errors()->first(),
+                return $this->failedResponse($validator->errors()->first(), 422, [
                     'errors' => $validator->errors(),
-                ], 422);
+                ]);
             }
 
             $response = $this->visaApplicationService->verifyDocument($request->user()->id, $request->all());
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error('VisaApplicationController documentVerify error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -205,27 +144,16 @@ class VisaApplicationController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    'isExecute' => ApiResponseStatus::FAILED,
-                    'message' => $validator->errors()->first(),
+                return $this->failedResponse($validator->errors()->first(), 422, [
                     'errors' => $validator->errors(),
-                ], 422);
+                ]);
             }
 
             $response = $this->visaApplicationService->updateStatus($request->user()->id, $request->all());
-
-            return response()->json([
-                'isExecute' => $response['status'],
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], $response['status'] === ApiResponseStatus::SUCCESS ? 200 : 422);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
         } catch (Exception $exception) {
             Log::error('VisaApplicationController statusUpdate error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 
@@ -233,12 +161,8 @@ class VisaApplicationController extends Controller
     {
         try {
             $response = $this->visaApplicationService->getPrintableApplication($id);
-            if ($response['status'] !== ApiResponseStatus::SUCCESS) {
-                return response()->json([
-                    'isExecute' => $response['status'],
-                    'data' => $response['data'],
-                    'message' => $response['message'],
-                ], 404);
+            if ($this->normalizeExecutionStatus($response['status'] ?? false) !== 'success') {
+                return $this->serviceResponse($response, 404);
             }
 
             $pdf = PDF::loadView('visa.application_pdf', [
@@ -248,11 +172,7 @@ class VisaApplicationController extends Controller
             return $pdf->download('visa-application-' . $id . '.pdf');
         } catch (Exception $exception) {
             Log::error('VisaApplicationController printApplication error: ' . $exception->getMessage());
-
-            return response()->json([
-                'isExecute' => ApiResponseStatus::FAILED,
-                'message' => config('message.server_error'),
-            ], 500);
+            return $this->failedResponse(config('message.server_error'));
         }
     }
 }

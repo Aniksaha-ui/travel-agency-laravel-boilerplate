@@ -25,13 +25,10 @@ class guideController extends Controller
 
             $response = $this->guideService->index($page, $search);
             Log::info("guideController response" . json_encode($response));
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -39,16 +36,12 @@ class guideController extends Controller
     {
         try {
             Log::info("guideController request" . json_encode($request->all()));
-            // dd($request->name);
             $response = $this->guideService->store($request->all());
             Log::info("guideController response" . json_encode($response));
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -57,13 +50,10 @@ class guideController extends Controller
         try {
             Log::info("guideController getGuideById" . $id);
             $response = $this->guideService->findById($id);
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController getGuideById" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -73,13 +63,10 @@ class guideController extends Controller
             Log::info("guideController update" . json_encode($request->all()));
             $response = $this->guideService->update($request->all());
             Log::info("guideController update response" . json_encode($response));
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -95,23 +82,18 @@ class guideController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
+            return $this->failedResponse('Validation failed', 422, [
                 'errors' => $validator->errors(),
-            ], 422);
+            ]);
         }
         try {
             Log::info("guideController guidePerformance" . json_encode($request->all()));
             $response = $this->guideService->guidePerformance($request->all());
             Log::info("guideController guidePerformance response" . json_encode($response));
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController guidePerformance" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -123,13 +105,10 @@ class guideController extends Controller
 
             $response = $this->guideService->getGuidePerformance($page, $search);
             Log::info("guideController response" . json_encode($response));
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController getGuidePerformance" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -138,46 +117,23 @@ class guideController extends Controller
     {
         try {
             $request = $request->all();
-
-
             $response = $this->guideService->costingByPackage($request);
             Log::info("guideController costingByPackage response" . json_encode($response));
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController costingByPackage" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
     public function getGuidesdropdown()
     {
         try {
-
-
             $response = $this->guideService->getGuidesdropdown();
-            if ($response['status'] == true) {
-                return response()->json([
-                    "data" => $response['data'],
-                    "message" => $response['message'],
-                    "status" => $response['status']
-                ]);
-            } else {
-                return response()->json([
-                    "data" => [],
-                    "message" => $response['message'],
-                    "status" => $response['status']
-                ]);
-            }
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController getGuidesdropdown" . $ex->getMessage());
-            return response()->json([
-                "data" => [],
-                "message" => "Internal server error: " . $ex->getMessage(),
-                "status" => false
-            ], 500);
+            return $this->failedResponse();
         }
     }
 
@@ -191,21 +147,10 @@ class guideController extends Controller
 
             $response = $this->guideService->getGuidePackageAssign($page, $search);
             Log::info(json_encode($response));
-            if ($response['status'] == true) {
-                return response()->json([
-                    "data" => $response['data'],
-                    "message" => $response['message'],
-                    "status" => $response['status']
-                ]);
-            } else {
-                return response()->json([
-                    "data" => [],
-                    "message" => $response['message'],
-                    "status" => $response['status']
-                ]);
-            }
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error("guideController getGuidePackageAssign" . $ex->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -214,24 +159,16 @@ class guideController extends Controller
     public function costingByPackageList(Request $request)
     {
         try {
-
             $page = $request->query('page');
             $search = $request->query('search');
             $packageId = $request->input('package_id');
-      
             Log::info(json_encode($packageId));
 
             $response = $this->guideService->CostingByPackageList($page, $search, $packageId);
-            
-            
-            return response()->json([
-                'isExecute' => true,
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Internal Server Error', 'message' => $e->getMessage()], 500);
+            Log::error("guideController costingByPackageList" . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -240,19 +177,13 @@ class guideController extends Controller
     public function myAssignPackages(Request $request)
     {
         try {
-
             $page = $request->query('page');
             $search = $request->query('search');
-            $packageId = $request->input('package_id');
             $response = $this->guideService->myAssignPackages($page, $search);
-            return response()->json([
-                'isExecute' => true,
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'No packages found', 'message' => $e->getMessage()], 500);
+            Log::error("guideController myAssignPackages" . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -260,22 +191,15 @@ class guideController extends Controller
     public function myFeedBackByPackage(Request $request)
     {
         try {
-
             $page = $request->query('page');
             $search = $request->query('search');
             $packageId = $request->input('package_id');
 
-
-
             $response = $this->guideService->myFeedBackByPackage($page, $search, $packageId);
-            return response()->json([
-                'isExecute' => true,
-                'data' => $response['data'],
-                'message' => $response['message'],
-            ], 200);
+            return $this->serviceResponse($response);
         } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'No feedbacks found', 'message' => $e->getMessage()], 500);
+            Log::error("guideController myFeedBackByPackage" . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -283,13 +207,10 @@ class guideController extends Controller
     {
         try {
             $response = $this->guideService->updatePackageCosting($request->all());
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error("guideController updatePackageCosting" . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 
@@ -297,15 +218,11 @@ class guideController extends Controller
     public function findCostingById($id)
     {
         try {
-
             $response = $this->guideService->findCostingById($id);
-            return response()->json([
-                "data" => $response['data'],
-                "message" => $response['message'],
-                "status" => $response['status']
-            ]);
+            return $this->serviceResponse($response);
         } catch (Exception $e) {
-            return response()->json(['error' => 'No feedbacks found', 'message' => $e->getMessage()], 500);
+            Log::error("guideController findCostingById" . $e->getMessage());
+            return $this->failedResponse();
         }
     }
 }

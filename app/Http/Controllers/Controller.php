@@ -40,6 +40,13 @@ class Controller extends BaseController
         );
     }
 
+    protected function serviceStatusCode(array $response, int $successCode = 200, int $failedCode = 422): int
+    {
+        return $this->normalizeExecutionStatus($response['status'] ?? $response['isExecute'] ?? false) === 'success'
+            ? $successCode
+            : $failedCode;
+    }
+
     protected function successResponse($data = [], string $message = 'success', int $statusCode = 200)
     {
         return $this->apiResponse('success', $data, $message, $statusCode);

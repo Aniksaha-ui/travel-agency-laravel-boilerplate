@@ -25,19 +25,10 @@ class MenuController extends Controller
             $search = $request->query('search');
 
             $response = $this->menuService->getAll($page, $search);
-
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
-
+            return $this->serviceResponse($response);
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "status" => false,
-                "message" => "An error occurred while fetching menu items"
-            ], 500);
+            return $this->failedResponse("An error occurred while fetching menu items");
         }
     }
 
@@ -58,27 +49,16 @@ class MenuController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    "status" => false,
-                    "message" => "Validation Error",
+                return $this->failedResponse("Validation Error", 422, [
                     "errors" => $validator->errors()
-                ], 422);
+                ]);
             }
 
             $response = $this->menuService->create($request->all());
-
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 201); // 201 Created
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 201));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "status" => false,
-                "message" => "An error occurred while creating menu item"
-            ], 500);
+            return $this->failedResponse("An error occurred while creating menu item");
         }
     }
 
@@ -86,26 +66,10 @@ class MenuController extends Controller
     {
         try {
             $response = $this->menuService->getById($id);
-
-            if (!$response['status']) {
-                return response()->json([
-                    "status" => false,
-                    "message" => $response['message']
-                ], 404);
-            }
-
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "status" => false,
-                "message" => "An error occurred while fetching menu item"
-            ], 500);
+            return $this->failedResponse("An error occurred while fetching menu item");
         }
     }
 
@@ -123,34 +87,16 @@ class MenuController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    "status" => false,
-                    "message" => "Validation Error",
+                return $this->failedResponse("Validation Error", 422, [
                     "errors" => $validator->errors()
-                ], 422);
+                ]);
             }
 
             $response = $this->menuService->update($id, $request->all());
-
-            if (!$response['status']) {
-                return response()->json([
-                    "status" => false,
-                    "message" => $response['message']
-                ], 404);
-            }
-
-            return response()->json([
-                "data" => $response['data'],
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "status" => false,
-                "message" => "An error occurred while updating menu item"
-            ], 500);
+            return $this->failedResponse("An error occurred while updating menu item");
         }
     }
 
@@ -158,25 +104,10 @@ class MenuController extends Controller
     {
         try {
             $response = $this->menuService->delete($id);
-
-            if (!$response['status']) {
-                return response()->json([
-                    "status" => false,
-                    "message" => $response['message']
-                ], 404);
-            }
-
-            return response()->json([
-                "status" => $response['status'],
-                "message" => $response['message']
-            ], 200);
-
+            return $this->serviceResponse($response, $this->serviceStatusCode($response, 200, 404));
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
-            return response()->json([
-                "status" => false,
-                "message" => "An error occurred while deleting menu item"
-            ], 500);
+            return $this->failedResponse("An error occurred while deleting menu item");
         }
     }
 }
