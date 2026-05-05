@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Reports;
 
-use App\Constants\ApiResponseStatus;
 use App\Http\Controllers\Controller;
 use App\Repository\Services\Reports\ReportService;
 use Illuminate\Http\Request;
@@ -16,44 +15,6 @@ class ReportController extends Controller
     public function __construct(ReportService $reportService)
     {
         $this->reportService = $reportService;
-    }
-
-    private function jsonResponse(string $executionStatus, $data = [], string $message = 'success', int $statusCode = 200)
-    {
-        return response()->json([
-            "isExecture" => $executionStatus,
-            "data" => $data ?? [],
-            "message" => $message
-        ], $statusCode);
-    }
-
-    private function normalizeExecutionStatus($status): string
-    {
-        if (is_string($status)) {
-            return strtoupper($status) === ApiResponseStatus::SUCCESS ? 'success' : 'failed';
-        }
-
-        return $status ? 'success' : 'failed';
-    }
-
-    private function serviceResponse(array $response, int $statusCode = 200)
-    {
-        return $this->jsonResponse(
-            $this->normalizeExecutionStatus($response['status'] ?? false),
-            $response['data'] ?? [],
-            $response['message'] ?? 'success',
-            $statusCode
-        );
-    }
-
-    private function successResponse($data = [], string $message = 'success', int $statusCode = 200)
-    {
-        return $this->jsonResponse('success', $data, $message, $statusCode);
-    }
-
-    private function failedResponse(string $message = 'Internal Server Error', int $statusCode = 500)
-    {
-        return $this->jsonResponse('failed', [], $message, $statusCode);
     }
 
     public function vehicleWiseSeatTotalReport(Request $request)
