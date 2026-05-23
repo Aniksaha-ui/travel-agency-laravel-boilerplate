@@ -150,6 +150,11 @@ class TripService implements CommonInterface
     {
         try {
 
+            $trip = DB::table('trips')->where('id', $id)->first();
+            if (!$trip) {
+               throw new Exception("Trip not found");
+            }
+
             if (request()->hasFile('image')) {
                 $documentLink = FileManageHelper::uploadFile('travel', $request['image']);
             } else {
@@ -170,16 +175,15 @@ class TripService implements CommonInterface
             $routeInsert = DB::table('trips')->where('id', $id)->update($updatedData);
             Log::info("updated trips". $routeInsert);
             
-            if($routeInsert){
+           
                 $updatedSchedule = [
                     'travel_start_date' => $request['departure_time'],
                     'travel_end_date'   => $request['arrival_time']
                     ];
                  Log::info("Tracking updated init: " .json_encode($updatedSchedule));
-                $updateTime = DB::table('vehicle_trip_trackings')->where('trip_id',$id)->update($$updatedSchedule);
-            }    
+                $updateTime = DB::table('vehicle_trip_trackings')->where('trip_id',$id)->update($updatedSchedule);
            
-            if ($routeInsert) {
+            if ($routeInsert || $updateTime) {
                 return true;
             }
             return false;

@@ -21,7 +21,7 @@ class TripController extends Controller
         try {
             $page = $request->query('page');
             $search = $request->query('search');
-
+            
             $response = $this->tripService->index($page, $search);
             return $this->successResponse($response);
         } catch (Exception $ex) {
@@ -56,7 +56,7 @@ class TripController extends Controller
             if ($response) {
                 return $this->successResponse($response, "Trip Updated");
             }
-            return $this->failedResponse("Data Can not be Updated", 200);
+            return $this->failedResponse("Noting to update", 422);
         } catch (Exception $ex) {
             Log::error($ex->getMessage());
             return $this->failedResponse();
