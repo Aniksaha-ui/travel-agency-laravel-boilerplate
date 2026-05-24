@@ -76,7 +76,7 @@ class PackageService
                 ->join('guide_packages', 'guide_packages.package_id', '=', 'packages.id')
                 ->join('users', 'users.id', '=', 'guide_packages.guide_id')
                 ->where('trips.id', $package->trip_id)
-                ->select('trips.id as trip_id', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'departure_at','arrival_at','route_name', 'users.name as guide_name')
+                ->select('trips.id as trip_id', 'trips.trip_name', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'departure_at','arrival_at','route_name', 'users.name as guide_name')
                 ->first();
 
             Log::info("Package Service - response singlePackage function" . json_encode($package));
