@@ -117,6 +117,8 @@ class ReportService
                 return $query->where('vehicles.vehicle_name', 'like', '%' . $search . '%')
                     ->orWhere('trips.trip_name', 'like', '%' . $search . '%');
             });
+
+            $query = $query->orderBy('vehicle_trip_trackings.id', 'desc');
             $report = $query->paginate($perPage, ['vehicle_trip_trackings.*', 'trips.trip_name', 'vehicles.vehicle_name', 'trips.arrival_at', 'trips.departure_at'], 'page', $page);
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
