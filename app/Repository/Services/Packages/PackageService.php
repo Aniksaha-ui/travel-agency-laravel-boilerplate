@@ -19,7 +19,11 @@ class PackageService
     {
         try {
 
-            $packages = DB::table('packages')->join('trips','packages.trip_id','trips.id')->where('status',1)->get();
+            $packages = DB::table('packages')
+            ->join('trips','packages.trip_id','trips.id')
+            ->where('trips.status',1)
+            ->select('packages.*','trips.trip_name as name')
+            ->get();
             $packagesInformation = [];
             foreach ($packages as $package) {
                 $package->inclusions = DB::table('package_inclusions')
