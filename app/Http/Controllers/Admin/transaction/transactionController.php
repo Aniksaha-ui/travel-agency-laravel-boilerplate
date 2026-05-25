@@ -19,8 +19,10 @@ class transactionController extends Controller
         try{    
             $page = $request->query('page');
             $search = $request->query('search');
+            $fromDate = $request->query('from_date');
+            $toDate = $request->query('to_date');
 
-            $response = $this->transactionService->transactions($page,$search);
+            $response = $this->transactionService->transactions($page, $search, $fromDate, $toDate);
            return response()->json([
                 "data" => $response['data'],
                 "status" => $response['status'],
