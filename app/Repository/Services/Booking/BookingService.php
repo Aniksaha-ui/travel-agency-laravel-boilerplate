@@ -15,7 +15,7 @@ class BookingService
     public function index($page, $search)
     {
         try {
-            $perPage = 10;
+            $perPage = 50;
             $bookings = DB::table('bookings')
                 ->leftJoin('users', 'bookings.user_id', '=', 'users.id')
                 ->leftJoin('trips', 'bookings.trip_id', '=', 'trips.id')

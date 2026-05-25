@@ -177,7 +177,10 @@ class ReportController extends Controller
         try {
             $page = $request->query('page');
             $search = $request->query('search');
-            $response = $this->reportService->dailyBalanceReport($page, $search);
+            $month = $request->query('month');
+            $fromDate = $request->query('from_date');
+            $toDate = $request->query('to_date');
+            $response = $this->reportService->dailyBalanceReport($page, $search, $month, $fromDate, $toDate);
             return $this->serviceResponse($response);
         } catch (\Exception $ex) {
             return $this->failedResponse();
