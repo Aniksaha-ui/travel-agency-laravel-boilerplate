@@ -7,7 +7,7 @@ class TicketStatus
 {
 
     const PENDING = 0;
-    const RESOLVED = 1;
+    const PROCESSING = 1;
     const DECLINE = 2;
   
 
@@ -15,13 +15,13 @@ class TicketStatus
     {
         return [
             self::PENDING => 'Pending',
-            self::RESOLVED => 'Resolved',
-            self::DECLINE => 'Declined',
+            self::PROCESSING => 'Processing',
+            self::DECLINE => 'Closed',
         ];
     }
 
     public static function value(){
-        return ['pending','resolved','rejected'];
+        return ['pending','processing','closed'];
     }
 
 
