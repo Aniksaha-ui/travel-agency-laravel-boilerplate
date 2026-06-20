@@ -188,7 +188,7 @@ class GuideService
         try {
             $guides = DB::table('guides')
                 ->join('users', 'guides.user_id', '=', 'users.id')
-                ->select('guides.id', 'users.name')
+                ->select('guides.user_id', 'users.name')
                 ->get();
             if ($guides->count() > 0) {
                 return ["status" => true, "data" => $guides, "message" => "Guides list retrived successfully"];

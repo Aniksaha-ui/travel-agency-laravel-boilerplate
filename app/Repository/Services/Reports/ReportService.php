@@ -117,6 +117,8 @@ class ReportService
                 return $query->where('vehicles.vehicle_name', 'like', '%' . $search . '%')
                     ->orWhere('trips.trip_name', 'like', '%' . $search . '%');
             });
+
+            $query = $query->orderBy('vehicle_trip_trackings.id', 'desc');
             $report = $query->paginate($perPage, ['vehicle_trip_trackings.*', 'trips.trip_name', 'vehicles.vehicle_name', 'trips.arrival_at', 'trips.departure_at'], 'page', $page);
             if ($report->count() > 0) {
                 return ["status" => true, "data" => $report, "message" => "Report retrieved successfully"];
@@ -455,14 +457,32 @@ class ReportService
         }
     }
 
-    public function dailyBalanceReport($page, $search)
+    public function dailyBalanceReport($page, $search, $month = null, $fromDate = null, $toDate = null)
     {
         try {
-            $month = Carbon::now()->month;
-            $year = Carbon::now()->year;
-            $perPage = 31;
+            $monthReference = $month
+                ? Carbon::createFromFormat('Y-m', $month)->startOfMonth()
+                : ($fromDate ? Carbon::parse($fromDate)->startOfMonth() : Carbon::now()->startOfMonth());
 
-            $report = $this->getDailyBalanceReportData($month, $year)
+            $rangeStart = $fromDate
+                ? Carbon::parse($fromDate)->toDateString()
+                : $monthReference->copy()->startOfMonth()->toDateString();
+
+            $rangeEnd = $toDate
+                ? Carbon::parse($toDate)->toDateString()
+                : $monthReference->copy()->endOfMonth()->toDateString();
+
+            if (Carbon::parse($rangeEnd)->lt(Carbon::parse($rangeStart))) {
+                return [
+                    "status" => ApiResponseStatus::FAILED,
+                    "data" => [],
+                    "message" => "To date must be greater than or equal to from date"
+                ];
+            }
+
+            $perPage = max(Carbon::parse($rangeStart)->diffInDays(Carbon::parse($rangeEnd)) + 1, 1);
+
+            $report = $this->getDailyBalanceReportData($rangeStart, $rangeEnd)
                 ->paginate($perPage, ['date', 'tx_count', 'total_credit', 'total_debit', 'balance'], 'page', $page);
 
             if ($report->total() > 0) {
@@ -1320,20 +1340,21 @@ class ReportService
         }
     }
 
-    public function getDailyBalanceReportData($month, $year)
+    public function getDailyBalanceReportData($startDate, $endDate)
     {
-        return DB::table(DB::raw(
-            "(SELECT
+        $dailySummary = DB::table('account_history as ah')
+            ->selectRaw("
                 DATE(ah.tran_date) AS date,
                 COUNT(*) AS tx_count,
                 SUM(CASE WHEN ah.transaction_type = 'c' THEN ah.amount ELSE 0 END) AS total_credit,
                 SUM(CASE WHEN ah.transaction_type = 'd' THEN ah.amount ELSE 0 END) AS total_debit
-            FROM account_history ah
-            WHERE MONTH(ah.tran_date) = $month
-                AND YEAR(ah.tran_date) = $year
-            GROUP BY DATE(ah.tran_date)
-            ) AS daily_summary"
-        ))
+            ")
+            ->whereDate('ah.tran_date', '>=', $startDate)
+            ->whereDate('ah.tran_date', '<=', $endDate)
+            ->groupBy(DB::raw('DATE(ah.tran_date)'));
+
+        return DB::query()
+            ->fromSub($dailySummary, 'daily_summary')
             ->select(
                 'date',
                 'tx_count',

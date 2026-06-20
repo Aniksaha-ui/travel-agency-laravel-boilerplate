@@ -275,9 +275,6 @@ class TripService implements CommonInterface
         try {
             $trips = DB::table('trips')
                 ->select('trips.id', 'trips.trip_name', 'trips.departure_time', 'trips.arrival_time', 'trips.price', 'trips.description', 'trips.image', 'trips.status')
-                ->whereNotIn('trips.id', function ($query) {
-                    $query->select('vehicle_trip_trackings.trip_id')->from('vehicle_trip_trackings');
-                })
                 ->where('status',TripStatus::ACTIVE)
                 ->get();
 

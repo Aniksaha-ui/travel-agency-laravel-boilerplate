@@ -19,7 +19,11 @@ class PackageService
     {
         try {
 
-            $packages = DB::table('packages')->join('trips','packages.trip_id','trips.id')->where('status',1)->get();
+            $packages = DB::table('packages')
+            ->join('trips','packages.trip_id','trips.id')
+            ->where('trips.status',1)
+            ->select('packages.*','trips.trip_name as name')
+            ->get();
             $packagesInformation = [];
             foreach ($packages as $package) {
                 $package->inclusions = DB::table('package_inclusions')
@@ -72,8 +76,11 @@ class PackageService
 
             $package->trip = DB::table('trips')
                 ->join('routes', 'trips.route_id', '=', 'routes.id')
+                ->join('packages', 'packages.trip_id', '=', 'trips.id')
+                ->join('guide_packages', 'guide_packages.package_id', '=', 'packages.id')
+                ->join('users', 'users.id', '=', 'guide_packages.guide_id')
                 ->where('trips.id', $package->trip_id)
-                ->select('trips.id as trip_id', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'departure_at','arrival_at','route_name')
+                ->select('trips.id as trip_id', 'trips.trip_name', 'route_id', 'vehicle_id', 'departure_time', 'arrival_time', 'departure_at','arrival_at','route_name', 'users.name as guide_name')
                 ->first();
 
             Log::info("Package Service - response singlePackage function" . json_encode($package));
@@ -121,10 +128,10 @@ class PackageService
     {
         try {
             DB::beginTransaction();
-            if (!isset($data['image'])) {
-                $documentLink = FileManageHelper::uploadFile('packages', $data['image']);
+            if (request()->hasFile('image') && request()->file('image')->isValid()) {
+                $documentLink = FileManageHelper::uploadFile('packages', request()->file('image'));
             } else {
-                $data['image'] = 'images/trips/default.png';
+                $documentLink = 'images/trips/default.png';
             }
 
 
@@ -135,7 +142,7 @@ class PackageService
                 "includes_hotel" => $data['includes_hotel'],
                 "includes_bus" => $data['includes_bus'],
                 "description" => $data['description'],
-                "image" => $data['image'],
+                "image" => $documentLink,
                 "created_at" => Carbon::now(),
                 "updated_at" => Carbon::now()
             ]);
