@@ -16,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->register(\Barryvdh\DomPDF\ServiceProvider::class);
         $this->app->bind(RouteInterface::class, RouteService::class);
     }
 

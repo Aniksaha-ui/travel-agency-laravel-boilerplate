@@ -9,9 +9,12 @@ use Illuminate\Console\Command;
 use Barryvdh\DomPDF\Facade as PDF;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class GenerateDailyBalancePDF extends Command
 {
+    private const REPORT_RECIPIENT = 'sahaanik1045@gmail.com';
+
     /**
      * The name and signature of the console command.
      *
@@ -181,6 +184,8 @@ class GenerateDailyBalancePDF extends Command
 
             Storage::disk('public')->put($filePath, $pdf->output());
 
+            $this->sendReportEmail($filePath, $fileName, $monthName, $year, $totalCredit, $totalDebit, $finalBalance);
+
             MonthlyDailyBalanceReport::create([
                 'report_name' => "Daily Balance Report - {$monthName} {$year}",
                 'file_path' => $filePath,
@@ -197,6 +202,42 @@ class GenerateDailyBalancePDF extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Send the generated report PDF to the configured recipient.
+     *
+     * @param string $filePath
+     * @param string $fileName
+     * @param string $monthName
+     * @param int $year
+     * @param float|int $totalCredit
+     * @param float|int $totalDebit
+     * @param float|int $finalBalance
+     * @return void
+     */
+    private function sendReportEmail($filePath, $fileName, $monthName, $year, $totalCredit, $totalDebit, $finalBalance)
+    {
+        $absolutePath = storage_path("app/public/{$filePath}");
+        $subject = "Daily Balance Report - {$monthName} {$year}";
+
+        Mail::send('emails.daily_balance_report', [
+            'monthName' => $monthName,
+            'year' => $year,
+            'totalCredit' => $totalCredit,
+            'totalDebit' => $totalDebit,
+            'finalBalance' => $finalBalance,
+        ], function ($message) use ($absolutePath, $fileName, $subject) {
+            $message->to(self::REPORT_RECIPIENT)
+                ->subject($subject)
+                ->attach($absolutePath, [
+                    'as' => $fileName,
+                    'mime' => 'application/pdf',
+                ]);
+        });
+
+        $this->info("Report emailed successfully to " . self::REPORT_RECIPIENT);
+        Log::info("Daily Balance PDF emailed to " . self::REPORT_RECIPIENT);
     }
 
 
