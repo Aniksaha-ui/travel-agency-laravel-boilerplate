@@ -282,6 +282,19 @@ class ReportController extends Controller
         }
     }
 
+    public function topActiveCustomers(Request $request)
+    {
+        try {
+            $limit = $request->query('limit', 10);
+            $search = $request->query('search');
+            $response = $this->reportService->topActiveCustomers($limit, $search);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - topActiveCustomers function: " . $ex->getMessage());
+            return $this->failedResponse();
+        }
+    }
+
     public function ticketStatusReport()
     {
         try {

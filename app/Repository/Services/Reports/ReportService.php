@@ -746,6 +746,81 @@ class ReportService
         }
     }
 
+    public function topActiveCustomers($limit = 10, $search = null)
+    {
+        try {
+            $limit = max(1, min((int) $limit, 100));
+
+            $bookingCounts = DB::table('bookings')
+                ->select('user_id', DB::raw('COUNT(id) as bookings_count'))
+                ->groupBy('user_id');
+
+            $hotelBookingCounts = DB::table('hotel_bookings')
+                ->select('user_id', DB::raw('COUNT(id) as hotel_bookings_count'))
+                ->groupBy('user_id');
+
+            $packageBookingCounts = DB::table('package_bookings')
+                ->select('user_id', DB::raw('COUNT(id) as package_bookings_count'))
+                ->groupBy('user_id');
+
+            $visaApplicationCounts = DB::table('visa_applications')
+                ->select('user_id', DB::raw('COUNT(id) as visa_applications_count'))
+                ->groupBy('user_id');
+
+            $report = DB::table('users as u')
+                ->leftJoinSub($bookingCounts, 'b', function ($join) {
+                    $join->on('u.id', '=', 'b.user_id');
+                })
+                ->leftJoinSub($hotelBookingCounts, 'hb', function ($join) {
+                    $join->on('u.id', '=', 'hb.user_id');
+                })
+                ->leftJoinSub($packageBookingCounts, 'pb', function ($join) {
+                    $join->on('u.id', '=', 'pb.user_id');
+                })
+                ->leftJoinSub($visaApplicationCounts, 'v', function ($join) {
+                    $join->on('u.id', '=', 'v.user_id');
+                })
+                ->when($search, function ($query, $search) {
+                    return $query->where(function ($searchQuery) use ($search) {
+                        $searchQuery->where('u.name', 'like', '%' . $search . '%')
+                            ->orWhere('u.email', 'like', '%' . $search . '%');
+                    });
+                })
+                ->select(
+                    'u.id',
+                    'u.name',
+                    'u.email',
+                    DB::raw('COALESCE(b.bookings_count, 0) as bookings_count'),
+                    DB::raw('COALESCE(hb.hotel_bookings_count, 0) as hotel_bookings_count'),
+                    DB::raw('COALESCE(pb.package_bookings_count, 0) as package_bookings_count'),
+                    DB::raw('COALESCE(v.visa_applications_count, 0) as visa_applications_count'),
+                    DB::raw('(
+                        COALESCE(b.bookings_count, 0) +
+                        COALESCE(hb.hotel_bookings_count, 0) +
+                        COALESCE(pb.package_bookings_count, 0) +
+                        COALESCE(v.visa_applications_count, 0)
+                    ) as activity_score')
+                )
+                ->orderByDesc('activity_score')
+                ->orderBy('u.id')
+                ->limit($limit)
+                ->get();
+
+            return [
+                "status" => ApiResponseStatus::SUCCESS,
+                "data" => $report,
+                "message" => "Report retrieved successfully"
+            ];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - topActiveCustomers function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
     public function ticketStatusReport()
     {
         try {
