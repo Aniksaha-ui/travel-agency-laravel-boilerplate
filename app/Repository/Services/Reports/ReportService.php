@@ -821,6 +821,50 @@ class ReportService
         }
     }
 
+    public function bookingFrequencyPerUser($page = 1, $search = null)
+    {
+        try {
+            $perPage = 10;
+            $report = DB::table('users as u')
+                ->leftJoin('bookings as b', 'u.id', '=', 'b.user_id')
+                ->when($search, function ($query, $search) {
+                    return $query->where(function ($searchQuery) use ($search) {
+                        $searchQuery->where('u.name', 'like', '%' . $search . '%')
+                            ->orWhere('u.email', 'like', '%' . $search . '%');
+                    });
+                })
+                ->select(
+                    'u.id',
+                    'u.name',
+                    'u.email',
+                    DB::raw('COUNT(b.id) as booking_count'),
+                    DB::raw('MIN(b.created_at) as first_booking'),
+                    DB::raw('MAX(b.created_at) as last_booking'),
+                    DB::raw('CASE
+                        WHEN MIN(b.created_at) IS NULL OR MAX(b.created_at) IS NULL THEN 0
+                        ELSE DATEDIFF(MAX(b.created_at), MIN(b.created_at))
+                    END as active_days')
+                )
+                ->groupBy('u.id', 'u.name', 'u.email')
+                ->orderByDesc('booking_count')
+                ->orderBy('u.id')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            return [
+                "status" => ApiResponseStatus::SUCCESS,
+                "data" => $report,
+                "message" => "Report retrieved successfully"
+            ];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - bookingFrequencyPerUser function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the report"
+            ];
+        }
+    }
+
     public function ticketStatusReport()
     {
         try {

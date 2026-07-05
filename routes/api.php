@@ -257,6 +257,7 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     
     Route::get('/admin/user-growth-report', 'Admin\Reports\ReportController@userGrowthReport');
     Route::get('/admin/top-active-customers', 'Admin\Reports\ReportController@topActiveCustomers');
+    Route::get('/admin/booking-frequency-per-user', 'Admin\Reports\ReportController@bookingFrequencyPerUser');
     Route::get('/admin/refund-status-report', 'Admin\Reports\ReportController@refundStatusReport');
     Route::get('/admin/avg-booking-value-report', 'Admin\Reports\ReportController@avgBookingValueReport');
     Route::get('/admin/low-performing-packages', 'Admin\Reports\ReportController@lowPerformingPackages');

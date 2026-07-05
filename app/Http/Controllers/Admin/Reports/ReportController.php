@@ -295,6 +295,19 @@ class ReportController extends Controller
         }
     }
 
+    public function bookingFrequencyPerUser(Request $request)
+    {
+        try {
+            $page = $request->query('page');
+            $search = $request->query('search');
+            $response = $this->reportService->bookingFrequencyPerUser($page, $search);
+            return $this->serviceResponse($response);
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - bookingFrequencyPerUser function: " . $ex->getMessage());
+            return $this->failedResponse();
+        }
+    }
+
     public function ticketStatusReport()
     {
         try {
