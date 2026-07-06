@@ -29,4 +29,20 @@ class UserController extends Controller
             return $this->failedResponse();
         }
     }
+
+    public function profile($id)
+    {
+        try {
+            $response = $this->userService->profile($id);
+
+            if (!($response['status'] ?? false)) {
+                return $this->failedResponse($response['message'] ?? 'Customer profile not found', 404);
+            }
+
+            return $this->successResponse($response['data'], $response['message'] ?? 'Customer profile loaded successfully');
+        } catch (\Exception $ex) {
+            Log::error("UserController profile: " . $ex->getMessage());
+            return $this->failedResponse();
+        }
+    }
 }

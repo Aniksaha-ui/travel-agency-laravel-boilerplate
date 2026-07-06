@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     /*************************************users api start**************************************/
 
     Route::get('/admin/users', 'Admin\Users\UserController@index');
+    Route::get('/admin/users/{id}/profile', 'Admin\Users\UserController@profile');
     Route::post('/admin/users', 'Admin\Users\UserController@insert');
     Route::get('/admin/users/{id}', 'Admin\Users\UserController@findUserById');
     Route::delete('/admin/users/{id}', 'Admin\Users\UserController@delete');
