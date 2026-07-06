@@ -233,6 +233,7 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/vehiclewisetotalseat', 'Admin\Reports\ReportController@vehicleWiseSeatTotalReport');
     Route::get('/admin/vehiclewiseseat/{id}', 'Admin\Reports\ReportController@vehicleWiseAllSeatReport');
     Route::get('/admin/packageWiseBooking', 'Admin\Reports\ReportController@packageWiseBooking');
+    Route::get('/admin/customer-compare', 'Admin\Reports\ReportController@customerCompare');
     Route::post('/admin/useageOfVehicle', 'Admin\Reports\ReportController@useageOfVehicle');
     Route::get('/admin/tripwiseBookingUsers/{id}', 'Admin\Reports\ReportController@tripwiseBookingUsers');
     Route::get('/admin/tripPerformance', 'Admin\Reports\ReportController@tripPerformance');

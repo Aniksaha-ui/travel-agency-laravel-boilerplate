@@ -899,6 +899,311 @@ class ReportService
         }
     }
 
+    public function customerCompare($customerIds = [])
+    {
+        try {
+            $customerIds = collect($customerIds)
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->filter(function ($id) {
+                    return $id > 0;
+                })
+                ->unique()
+                ->values();
+
+            if ($customerIds->count() < 2) {
+                return [
+                    "status" => ApiResponseStatus::FAILED,
+                    "data" => [],
+                    "message" => "Select at least two customers to compare"
+                ];
+            }
+
+            $selectedUsers = DB::table('users')
+                ->whereIn('id', $customerIds)
+                ->where('role', 'users')
+                ->select('id', 'name', 'email', 'role', 'created_at')
+                ->get()
+                ->keyBy('id');
+
+            if ($selectedUsers->count() < 2) {
+                return [
+                    "status" => ApiResponseStatus::FAILED,
+                    "data" => [],
+                    "message" => "At least two valid customer accounts are required for comparison"
+                ];
+            }
+
+            $allCustomerMetrics = $this->buildCustomerComparisonMetrics();
+            $selectedMetrics = $allCustomerMetrics
+                ->filter(function ($metric) use ($selectedUsers) {
+                    return $selectedUsers->has($metric->user_id);
+                })
+                ->values();
+
+            $selectedMetricsWithRank = $this->attachCustomerComparisonRanks($selectedMetrics, $allCustomerMetrics);
+            $monthlyTrendMap = $this->buildCustomerComparisonMonthlyTrends($selectedMetricsWithRank->pluck('user_id')->all());
+
+            $customers = $selectedMetricsWithRank->map(function ($metric) use ($selectedUsers, $monthlyTrendMap) {
+                $user = $selectedUsers->get($metric->user_id);
+
+                return [
+                    'id' => $metric->user_id,
+                    'name' => $user->name ?? 'Customer',
+                    'email' => $user->email ?? '',
+                    'role' => $user->role ?? 'users',
+                    'created_at' => $user->created_at ?? null,
+                    'metrics' => [
+                        'total_bookings' => (int) $metric->total_bookings,
+                        'paid_bookings' => (int) $metric->paid_bookings,
+                        'pending_bookings' => (int) $metric->pending_bookings,
+                        'cancelled_bookings' => (int) $metric->cancelled_bookings,
+                        'trip_bookings' => (int) $metric->trip_bookings,
+                        'package_bookings' => (int) $metric->package_bookings,
+                        'hotel_bookings' => (int) $metric->hotel_bookings,
+                        'visa_applications' => (int) $metric->visa_applications,
+                        'total_tickets' => (int) $metric->total_tickets,
+                        'open_tickets' => (int) $metric->open_tickets,
+                        'total_refunds' => (int) $metric->total_refunds,
+                        'refund_pending' => (int) $metric->refund_pending,
+                        'total_paid' => round((float) $metric->total_paid, 2),
+                        'total_refunded' => round((float) $metric->total_refunded, 2),
+                        'net_spent' => round((float) $metric->net_spent, 2),
+                        'avg_booking_value' => round((float) $metric->avg_booking_value, 2),
+                        'activity_score' => (int) $metric->activity_score,
+                        'last_booking_at' => $metric->last_booking_at,
+                    ],
+                    'rankings' => [
+                        'selected' => [
+                            'value_rank' => (int) $metric->selected_value_rank,
+                            'booking_rank' => (int) $metric->selected_booking_rank,
+                            'activity_rank' => (int) $metric->selected_activity_rank,
+                        ],
+                        'global' => [
+                            'value_rank' => (int) $metric->global_value_rank,
+                            'booking_rank' => (int) $metric->global_booking_rank,
+                            'activity_rank' => (int) $metric->global_activity_rank,
+                        ],
+                    ],
+                    'monthly_trends' => $monthlyTrendMap[$metric->user_id] ?? [],
+                ];
+            })->values();
+
+            $topValueCustomer = $customers->sortByDesc('metrics.net_spent')->first();
+            $topBookingCustomer = $customers->sortByDesc('metrics.total_bookings')->first();
+            $topActivityCustomer = $customers->sortByDesc('metrics.activity_score')->first();
+
+            $summary = [
+                'compared_customers' => $customers->count(),
+                'total_net_spent' => round((float) $customers->sum('metrics.net_spent'), 2),
+                'total_bookings' => (int) $customers->sum('metrics.total_bookings'),
+                'avg_net_spent' => round((float) $customers->avg('metrics.net_spent'), 2),
+                'top_value_customer' => $topValueCustomer ? [
+                    'id' => $topValueCustomer['id'],
+                    'name' => $topValueCustomer['name'],
+                    'value' => $topValueCustomer['metrics']['net_spent'],
+                ] : null,
+                'top_booking_customer' => $topBookingCustomer ? [
+                    'id' => $topBookingCustomer['id'],
+                    'name' => $topBookingCustomer['name'],
+                    'value' => $topBookingCustomer['metrics']['total_bookings'],
+                ] : null,
+                'top_activity_customer' => $topActivityCustomer ? [
+                    'id' => $topActivityCustomer['id'],
+                    'name' => $topActivityCustomer['name'],
+                    'value' => $topActivityCustomer['metrics']['activity_score'],
+                ] : null,
+            ];
+
+            return [
+                "status" => ApiResponseStatus::SUCCESS,
+                "data" => [
+                    'summary' => $summary,
+                    'customers' => $customers,
+                ],
+                "message" => "Customer comparison loaded successfully"
+            ];
+        } catch (Exception $ex) {
+            Log::alert('ReportService - customerCompare function error: ' . $ex->getMessage());
+            return [
+                "status" => ApiResponseStatus::FAILED,
+                "data" => [],
+                "message" => "Server error occurred while generating the comparison"
+            ];
+        }
+    }
+
+    private function buildCustomerComparisonMetrics()
+    {
+        $bookingCounts = DB::table('bookings')
+            ->select(
+                'user_id',
+                DB::raw('COUNT(id) as total_bookings'),
+                DB::raw("SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid_bookings"),
+                DB::raw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_bookings"),
+                DB::raw("SUM(CASE WHEN status IN ('cancelled', 'cancle booking') THEN 1 ELSE 0 END) as cancelled_bookings"),
+                DB::raw("SUM(CASE WHEN booking_type = 'trip' THEN 1 ELSE 0 END) as trip_bookings"),
+                DB::raw('MAX(created_at) as last_booking_at')
+            )
+            ->groupBy('user_id');
+
+        $packageBookingCounts = DB::table('package_bookings')
+            ->select('user_id', DB::raw('COUNT(id) as package_bookings'))
+            ->groupBy('user_id');
+
+        $hotelBookingCounts = DB::table('hotel_bookings')
+            ->select('user_id', DB::raw('COUNT(id) as hotel_bookings'))
+            ->groupBy('user_id');
+
+        $visaCounts = DB::table('visa_applications')
+            ->select('user_id', DB::raw('COUNT(id) as visa_applications'))
+            ->groupBy('user_id');
+
+        $ticketCounts = DB::table('tickets')
+            ->select(
+                'generate_by as user_id',
+                DB::raw('COUNT(id) as total_tickets'),
+                DB::raw("SUM(CASE WHEN status NOT IN ('closed', 'resolved', '0') THEN 1 ELSE 0 END) as open_tickets")
+            )
+            ->groupBy('generate_by');
+
+        $paymentAggregates = DB::table('payments')
+            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+            ->select(
+                'bookings.user_id',
+                DB::raw('COALESCE(SUM(payments.amount), 0) as total_paid')
+            )
+            ->groupBy('bookings.user_id');
+
+        $refundAggregates = DB::table('refunds')
+            ->join('bookings', 'refunds.booking_id', '=', 'bookings.id')
+            ->select(
+                'bookings.user_id',
+                DB::raw('COUNT(refunds.id) as total_refunds'),
+                DB::raw("SUM(CASE WHEN refunds.status = 'pending' THEN 1 ELSE 0 END) as refund_pending"),
+                DB::raw('COALESCE(SUM(refunds.amount), 0) as total_refunded')
+            )
+            ->groupBy('bookings.user_id');
+
+        return DB::table('users as u')
+            ->leftJoinSub($bookingCounts, 'b', function ($join) {
+                $join->on('u.id', '=', 'b.user_id');
+            })
+            ->leftJoinSub($packageBookingCounts, 'pb', function ($join) {
+                $join->on('u.id', '=', 'pb.user_id');
+            })
+            ->leftJoinSub($hotelBookingCounts, 'hb', function ($join) {
+                $join->on('u.id', '=', 'hb.user_id');
+            })
+            ->leftJoinSub($visaCounts, 'va', function ($join) {
+                $join->on('u.id', '=', 'va.user_id');
+            })
+            ->leftJoinSub($ticketCounts, 'tc', function ($join) {
+                $join->on('u.id', '=', 'tc.user_id');
+            })
+            ->leftJoinSub($paymentAggregates, 'pa', function ($join) {
+                $join->on('u.id', '=', 'pa.user_id');
+            })
+            ->leftJoinSub($refundAggregates, 'ra', function ($join) {
+                $join->on('u.id', '=', 'ra.user_id');
+            })
+            ->where('u.role', 'users')
+            ->select(
+                'u.id as user_id',
+                DB::raw('COALESCE(b.total_bookings, 0) as total_bookings'),
+                DB::raw('COALESCE(b.paid_bookings, 0) as paid_bookings'),
+                DB::raw('COALESCE(b.pending_bookings, 0) as pending_bookings'),
+                DB::raw('COALESCE(b.cancelled_bookings, 0) as cancelled_bookings'),
+                DB::raw('COALESCE(b.trip_bookings, 0) as trip_bookings'),
+                DB::raw('COALESCE(pb.package_bookings, 0) as package_bookings'),
+                DB::raw('COALESCE(hb.hotel_bookings, 0) as hotel_bookings'),
+                DB::raw('COALESCE(va.visa_applications, 0) as visa_applications'),
+                DB::raw('COALESCE(tc.total_tickets, 0) as total_tickets'),
+                DB::raw('COALESCE(tc.open_tickets, 0) as open_tickets'),
+                DB::raw('COALESCE(ra.total_refunds, 0) as total_refunds'),
+                DB::raw('COALESCE(ra.refund_pending, 0) as refund_pending'),
+                DB::raw('COALESCE(pa.total_paid, 0) as total_paid'),
+                DB::raw('COALESCE(ra.total_refunded, 0) as total_refunded'),
+                DB::raw('(COALESCE(pa.total_paid, 0) - COALESCE(ra.total_refunded, 0)) as net_spent'),
+                DB::raw('CASE WHEN COALESCE(b.total_bookings, 0) > 0 THEN COALESCE(pa.total_paid, 0) / COALESCE(b.total_bookings, 0) ELSE 0 END as avg_booking_value'),
+                DB::raw('(
+                    COALESCE(b.total_bookings, 0) +
+                    COALESCE(pb.package_bookings, 0) +
+                    COALESCE(hb.hotel_bookings, 0) +
+                    COALESCE(va.visa_applications, 0) +
+                    COALESCE(tc.total_tickets, 0)
+                ) as activity_score'),
+                'b.last_booking_at'
+            )
+            ->get();
+    }
+
+    private function attachCustomerComparisonRanks($selectedMetrics, $allCustomerMetrics)
+    {
+        $selectedValueRanks = $selectedMetrics->sortByDesc('net_spent')->values()->pluck('user_id')->flip();
+        $selectedBookingRanks = $selectedMetrics->sortByDesc('total_bookings')->values()->pluck('user_id')->flip();
+        $selectedActivityRanks = $selectedMetrics->sortByDesc('activity_score')->values()->pluck('user_id')->flip();
+
+        $globalValueRanks = $allCustomerMetrics->sortByDesc('net_spent')->values()->pluck('user_id')->flip();
+        $globalBookingRanks = $allCustomerMetrics->sortByDesc('total_bookings')->values()->pluck('user_id')->flip();
+        $globalActivityRanks = $allCustomerMetrics->sortByDesc('activity_score')->values()->pluck('user_id')->flip();
+
+        return $selectedMetrics->map(function ($metric) use (
+            $selectedValueRanks,
+            $selectedBookingRanks,
+            $selectedActivityRanks,
+            $globalValueRanks,
+            $globalBookingRanks,
+            $globalActivityRanks
+        ) {
+            $metric->selected_value_rank = ($selectedValueRanks[$metric->user_id] ?? 0) + 1;
+            $metric->selected_booking_rank = ($selectedBookingRanks[$metric->user_id] ?? 0) + 1;
+            $metric->selected_activity_rank = ($selectedActivityRanks[$metric->user_id] ?? 0) + 1;
+            $metric->global_value_rank = ($globalValueRanks[$metric->user_id] ?? 0) + 1;
+            $metric->global_booking_rank = ($globalBookingRanks[$metric->user_id] ?? 0) + 1;
+            $metric->global_activity_rank = ($globalActivityRanks[$metric->user_id] ?? 0) + 1;
+            return $metric;
+        });
+    }
+
+    private function buildCustomerComparisonMonthlyTrends($customerIds)
+    {
+        $rows = DB::table('bookings')
+            ->leftJoin('payments', 'payments.booking_id', '=', 'bookings.id')
+            ->whereIn('bookings.user_id', $customerIds)
+            ->select(
+                'bookings.user_id',
+                DB::raw("DATE_FORMAT(bookings.created_at, '%Y-%m') as month_key"),
+                DB::raw("DATE_FORMAT(bookings.created_at, '%b %Y') as month_label"),
+                DB::raw('COUNT(DISTINCT bookings.id) as booking_count'),
+                DB::raw('COALESCE(SUM(payments.amount), 0) as total_amount')
+            )
+            ->groupBy('bookings.user_id', 'month_key', 'month_label')
+            ->orderBy('month_key')
+            ->get();
+
+        $trendMap = [];
+        foreach ($rows as $row) {
+            if (!isset($trendMap[$row->user_id])) {
+                $trendMap[$row->user_id] = [];
+            }
+
+            $trendMap[$row->user_id][] = [
+                'month' => $row->month_label,
+                'month_key' => $row->month_key,
+                'booking_count' => (int) $row->booking_count,
+                'amount' => round((float) $row->total_amount, 2),
+            ];
+        }
+
+        foreach ($trendMap as $userId => $items) {
+            $trendMap[$userId] = array_slice($items, -8);
+        }
+
+        return $trendMap;
+    }
+
     public function refundStatusReport()
     {
         try {

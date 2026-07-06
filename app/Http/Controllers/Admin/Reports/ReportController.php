@@ -308,6 +308,28 @@ class ReportController extends Controller
         }
     }
 
+    public function customerCompare(Request $request)
+    {
+        try {
+            $ids = $request->query('ids', '');
+            $customerIds = collect(explode(',', $ids))
+                ->map(function ($id) {
+                    return (int) trim($id);
+                })
+                ->filter(function ($id) {
+                    return $id > 0;
+                })
+                ->values()
+                ->all();
+
+            $response = $this->reportService->customerCompare($customerIds);
+            return $this->serviceResponse($response, $this->serviceStatusCode($response));
+        } catch (\Exception $ex) {
+            Log::info("Error in ReportController - customerCompare function: " . $ex->getMessage());
+            return $this->failedResponse();
+        }
+    }
+
     public function ticketStatusReport()
     {
         try {
