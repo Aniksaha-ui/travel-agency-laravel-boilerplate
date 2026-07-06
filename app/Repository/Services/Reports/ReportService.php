@@ -947,6 +947,7 @@ class ReportService
 
             $customers = $selectedMetricsWithRank->map(function ($metric) use ($selectedUsers, $monthlyTrendMap) {
                 $user = $selectedUsers->get($metric->user_id);
+                $growthMetrics = $this->buildCustomerComparisonGrowthMetrics($monthlyTrendMap[$metric->user_id] ?? []);
 
                 return [
                     'id' => $metric->user_id,
@@ -971,8 +972,17 @@ class ReportService
                         'total_refunded' => round((float) $metric->total_refunded, 2),
                         'net_spent' => round((float) $metric->net_spent, 2),
                         'avg_booking_value' => round((float) $metric->avg_booking_value, 2),
+                        'avg_profit_margin' => round((float) $metric->avg_profit_margin, 2),
+                        'gross_profit' => round((float) $metric->gross_profit, 2),
+                        'known_margin_revenue' => round((float) $metric->known_margin_revenue, 2),
+                        'known_margin_cost' => round((float) $metric->known_margin_cost, 2),
                         'activity_score' => (int) $metric->activity_score,
                         'last_booking_at' => $metric->last_booking_at,
+                        'amount_growth_percentage' => $growthMetrics['amount_growth_percentage'],
+                        'booking_growth_percentage' => $growthMetrics['booking_growth_percentage'],
+                        'amount_growth_direction' => $growthMetrics['amount_growth_direction'],
+                        'booking_growth_direction' => $growthMetrics['booking_growth_direction'],
+                        'growth_reference_month' => $growthMetrics['growth_reference_month'],
                     ],
                     'rankings' => [
                         'selected' => [
@@ -1076,6 +1086,13 @@ class ReportService
             )
             ->groupBy('bookings.user_id');
 
+        $paymentByBooking = DB::table('payments')
+            ->select(
+                'booking_id',
+                DB::raw('COALESCE(SUM(amount), 0) as booking_paid_amount')
+            )
+            ->groupBy('booking_id');
+
         $refundAggregates = DB::table('refunds')
             ->join('bookings', 'refunds.booking_id', '=', 'bookings.id')
             ->select(
@@ -1085,6 +1102,74 @@ class ReportService
                 DB::raw('COALESCE(SUM(refunds.amount), 0) as total_refunded')
             )
             ->groupBy('bookings.user_id');
+
+        $tripCostTotals = DB::table('trip_package_costings')
+            ->whereNotNull('trip_id')
+            ->select(
+                'trip_id',
+                DB::raw('COALESCE(SUM(cost_amount), 0) as total_trip_cost')
+            )
+            ->groupBy('trip_id');
+
+        $tripPaidBookingCounts = DB::table('bookings')
+            ->where('booking_type', 'trip')
+            ->where('status', 'paid')
+            ->whereNotNull('trip_id')
+            ->select(
+                'trip_id',
+                DB::raw('COUNT(id) as total_paid_trip_bookings')
+            )
+            ->groupBy('trip_id');
+
+        $tripMarginAggregates = DB::table('bookings')
+            ->leftJoinSub($paymentByBooking, 'pbb', function ($join) {
+                $join->on('bookings.id', '=', 'pbb.booking_id');
+            })
+            ->leftJoinSub($tripCostTotals, 'tct', function ($join) {
+                $join->on('bookings.trip_id', '=', 'tct.trip_id');
+            })
+            ->leftJoinSub($tripPaidBookingCounts, 'tpbc', function ($join) {
+                $join->on('bookings.trip_id', '=', 'tpbc.trip_id');
+            })
+            ->where('bookings.booking_type', 'trip')
+            ->where('bookings.status', 'paid')
+            ->select(
+                'bookings.user_id',
+                DB::raw('COALESCE(SUM(pbb.booking_paid_amount), 0) as trip_margin_revenue'),
+                DB::raw('COALESCE(SUM(CASE WHEN COALESCE(tpbc.total_paid_trip_bookings, 0) > 0 THEN COALESCE(tct.total_trip_cost, 0) / tpbc.total_paid_trip_bookings ELSE 0 END), 0) as trip_margin_cost')
+            )
+            ->groupBy('bookings.user_id');
+
+        $packageCostTotals = DB::table('trip_package_costings')
+            ->whereNotNull('package_id')
+            ->select(
+                'package_id',
+                DB::raw('COALESCE(SUM(cost_amount), 0) as total_package_cost')
+            )
+            ->groupBy('package_id');
+
+        $packagePaidBookingCounts = DB::table('package_bookings')
+            ->where('payment_status', 'paid')
+            ->select(
+                'package_id',
+                DB::raw('COUNT(id) as total_paid_package_bookings')
+            )
+            ->groupBy('package_id');
+
+        $packageMarginAggregates = DB::table('package_bookings')
+            ->leftJoinSub($packageCostTotals, 'pct', function ($join) {
+                $join->on('package_bookings.package_id', '=', 'pct.package_id');
+            })
+            ->leftJoinSub($packagePaidBookingCounts, 'ppbc', function ($join) {
+                $join->on('package_bookings.package_id', '=', 'ppbc.package_id');
+            })
+            ->where('package_bookings.payment_status', 'paid')
+            ->select(
+                'package_bookings.user_id',
+                DB::raw('COALESCE(SUM(package_bookings.total_cost), 0) as package_margin_revenue'),
+                DB::raw('COALESCE(SUM(CASE WHEN COALESCE(ppbc.total_paid_package_bookings, 0) > 0 THEN COALESCE(pct.total_package_cost, 0) / ppbc.total_paid_package_bookings ELSE 0 END), 0) as package_margin_cost')
+            )
+            ->groupBy('package_bookings.user_id');
 
         return DB::table('users as u')
             ->leftJoinSub($bookingCounts, 'b', function ($join) {
@@ -1108,6 +1193,12 @@ class ReportService
             ->leftJoinSub($refundAggregates, 'ra', function ($join) {
                 $join->on('u.id', '=', 'ra.user_id');
             })
+            ->leftJoinSub($tripMarginAggregates, 'tma', function ($join) {
+                $join->on('u.id', '=', 'tma.user_id');
+            })
+            ->leftJoinSub($packageMarginAggregates, 'pma', function ($join) {
+                $join->on('u.id', '=', 'pma.user_id');
+            })
             ->where('u.role', 'users')
             ->select(
                 'u.id as user_id',
@@ -1127,6 +1218,10 @@ class ReportService
                 DB::raw('COALESCE(ra.total_refunded, 0) as total_refunded'),
                 DB::raw('(COALESCE(pa.total_paid, 0) - COALESCE(ra.total_refunded, 0)) as net_spent'),
                 DB::raw('CASE WHEN COALESCE(b.total_bookings, 0) > 0 THEN COALESCE(pa.total_paid, 0) / COALESCE(b.total_bookings, 0) ELSE 0 END as avg_booking_value'),
+                DB::raw('(COALESCE(tma.trip_margin_revenue, 0) + COALESCE(pma.package_margin_revenue, 0)) as known_margin_revenue'),
+                DB::raw('(COALESCE(tma.trip_margin_cost, 0) + COALESCE(pma.package_margin_cost, 0)) as known_margin_cost'),
+                DB::raw('((COALESCE(tma.trip_margin_revenue, 0) + COALESCE(pma.package_margin_revenue, 0)) - (COALESCE(tma.trip_margin_cost, 0) + COALESCE(pma.package_margin_cost, 0))) as gross_profit'),
+                DB::raw('CASE WHEN (COALESCE(tma.trip_margin_revenue, 0) + COALESCE(pma.package_margin_revenue, 0)) > 0 THEN ((((COALESCE(tma.trip_margin_revenue, 0) + COALESCE(pma.package_margin_revenue, 0)) - (COALESCE(tma.trip_margin_cost, 0) + COALESCE(pma.package_margin_cost, 0))) / (COALESCE(tma.trip_margin_revenue, 0) + COALESCE(pma.package_margin_revenue, 0))) * 100) ELSE 0 END as avg_profit_margin'),
                 DB::raw('(
                     COALESCE(b.total_bookings, 0) +
                     COALESCE(pb.package_bookings, 0) +
@@ -1202,6 +1297,66 @@ class ReportService
         }
 
         return $trendMap;
+    }
+
+    private function buildCustomerComparisonGrowthMetrics($trends = [])
+    {
+        $trendCollection = collect($trends)->sortBy('month_key')->values();
+        $latestTrend = $trendCollection->last();
+        $previousTrend = $trendCollection->count() > 1 ? $trendCollection->slice(-2, 1)->first() : null;
+
+        return [
+            'amount_growth_percentage' => $this->calculateCustomerComparisonGrowthPercentage(
+                $previousTrend['amount'] ?? 0,
+                $latestTrend['amount'] ?? 0
+            ),
+            'booking_growth_percentage' => $this->calculateCustomerComparisonGrowthPercentage(
+                $previousTrend['booking_count'] ?? 0,
+                $latestTrend['booking_count'] ?? 0
+            ),
+            'amount_growth_direction' => $this->resolveCustomerComparisonGrowthDirection(
+                $this->calculateCustomerComparisonGrowthPercentage(
+                    $previousTrend['amount'] ?? 0,
+                    $latestTrend['amount'] ?? 0
+                )
+            ),
+            'booking_growth_direction' => $this->resolveCustomerComparisonGrowthDirection(
+                $this->calculateCustomerComparisonGrowthPercentage(
+                    $previousTrend['booking_count'] ?? 0,
+                    $latestTrend['booking_count'] ?? 0
+                )
+            ),
+            'growth_reference_month' => $latestTrend['month'] ?? null,
+        ];
+    }
+
+    private function calculateCustomerComparisonGrowthPercentage($previousValue, $currentValue)
+    {
+        $previousValue = (float) $previousValue;
+        $currentValue = (float) $currentValue;
+
+        if ($previousValue <= 0) {
+            if ($currentValue <= 0) {
+                return 0;
+            }
+
+            return 100;
+        }
+
+        return round((($currentValue - $previousValue) / $previousValue) * 100, 2);
+    }
+
+    private function resolveCustomerComparisonGrowthDirection($growthValue)
+    {
+        if ($growthValue > 0) {
+            return 'up';
+        }
+
+        if ($growthValue < 0) {
+            return 'down';
+        }
+
+        return 'flat';
     }
 
     public function refundStatusReport()
