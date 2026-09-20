@@ -169,13 +169,13 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
 
     Route::get('admin/guide', 'Admin\guide\guideController@getGuides');
     Route::post('admin/guide', 'Admin\guide\guideController@store');
-      Route::get('admin/guide/dropdown', 'Admin\guide\guideController@getGuidesdropdown');
-      Route::post('admin/guide/update', 'Admin\guide\guideController@update');
-      Route::get('guide/performance', 'Admin\guide\guideController@getGuidePerformance');
+    Route::get('admin/guide/dropdown', 'Admin\guide\guideController@getGuidesdropdown');
+    Route::post('admin/guide/update', 'Admin\guide\guideController@update');
+    Route::get('guide/performance', 'Admin\guide\guideController@getGuidePerformance');
     Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
-  
 
-   #Guide api start ********************************** */
+
+    #Guide api start ********************************** */
 
     Route::get('admin/refund', 'Admin\refund\refundController@getRefunds');
     Route::post('admin/refund/disburse', 'Admin\refund\refundController@disburseRefund');
@@ -192,7 +192,7 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     #transactions and payment api
     Route::get('admin/transaction', 'Admin\transaction\transactionController@getTransactions');
 
-   
+
     /*************************************Menu Items api start**************************************/
     Route::get('admin/menu_items', 'Admin\Menu\MenuController@index');
     Route::post('admin/menu_items', 'Admin\Menu\MenuController@store');
@@ -214,7 +214,7 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::post('admin/tickets/update/{id}', 'Admin\tickets\ticketsController@updateTicket');
     Route::get('admin/monitoring', 'Admin\monitoring\monitoringController@monitoring');
     #tickets api
- 
+
     #online payment configure
     Route::get('admin/online-configure', 'Admin\configure\OnlineConfigureController@onlineConfigureList');
     Route::post('admin/online-configure', 'Admin\configure\OnlineConfigureController@storeNewConfigure');
@@ -252,11 +252,11 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/route-wise-sales-summary', 'Admin\Reports\ReportController@routeWiseSalesSummary');
     Route::get('/admin/current-month-trip-sales-report', 'Admin\Reports\ReportController@currentMonthTripSales');
 
-    
+
     Route::get('/admin/unpaid-booking-report', 'Admin\Reports\ReportController@unpaidBookingReport');
     Route::get('/admin/ticket-status-report', 'Admin\Reports\ReportController@ticketStatusReport');
     Route::get('/admin/low-occupancy-trip-report', 'Admin\Reports\ReportController@lowOccupancyTripReport');
-    
+
     Route::get('/admin/user-growth-report', 'Admin\Reports\ReportController@userGrowthReport');
     Route::get('/admin/top-active-customers', 'Admin\Reports\ReportController@topActiveCustomers');
     Route::get('/admin/booking-frequency-per-user', 'Admin\Reports\ReportController@bookingFrequencyPerUser');
@@ -265,9 +265,9 @@ Route::middleware(['auth:sanctum', 'admin', 'query.monitor'])->group(function ()
     Route::get('/admin/low-performing-packages', 'Admin\Reports\ReportController@lowPerformingPackages');
     Route::get('/admin/high-cancellation-packages', 'Admin\Reports\ReportController@highCancellationPackages');
     Route::get('/admin/package-profit-margin', 'Admin\Reports\ReportController@packageProfitMargin');
-    
 
-    
+
+
     Route::get('/admin/hotel-performance-report', 'Admin\Reports\ReportController@hotelPerformanceReport');
     Route::get('/admin/room-type-popularity-report', 'Admin\Reports\ReportController@roomTypePopularityReport');
     Route::get('/admin/refund-reason-analysis', 'Admin\Reports\ReportController@refundReasonAnalysis');
@@ -321,7 +321,7 @@ Route::get('/influence/statistics', 'User\InfluenceController@siteStatistics');
 // Route::post('guide/performance', 'Admin\guide\guideController@guidePerformance');
 // Route::get('admin/guide/{id}', 'Admin\guide\guideController@getGuideById');
 
-Route::middleware(['auth:sanctum', 'users','query.monitor'])->group(function () {
+Route::middleware(['auth:sanctum', 'users', 'query.monitor'])->group(function () {
     Route::post('/user/tripsummery', 'Admin\booking\bookingController@tripwiseBooking');
     Route::post('/booking', 'User\booking\bookingController@tripBooking');
     Route::post('/mybookings', 'User\booking\bookingController@mybookings');
@@ -356,6 +356,16 @@ Route::middleware(['auth:sanctum', 'guide'])->group(function () {
     Route::post('admin/guide/costingbypackage', 'Admin\guide\guideController@costingByPackage');
     Route::post('admin/guide/costingbypackage/update', 'Admin\guide\guideController@updatePackageCosting');
     Route::post('admin/guide/costingbypackage/{id}', 'Admin\guide\guideController@findCostingById');
+
+
+    Route::get('admin/visa/applications', 'Admin\Visa\VisaApplicationController@index');
+    Route::post('admin/visa/applications/update/{id}', 'Admin\Visa\VisaApplicationController@update');
+    Route::delete('admin/visa/applications/{id}', 'Admin\Visa\VisaApplicationController@destroy');
+    Route::get('admin/visa/applications/{id}', 'Admin\Visa\VisaApplicationController@show');
+    Route::post('admin/visa/assign', 'Admin\Visa\VisaApplicationController@assign');
+    Route::post('admin/visa/document-verify', 'Admin\Visa\VisaApplicationController@documentVerify');
+    Route::post('admin/visa/status-update', 'Admin\Visa\VisaApplicationController@statusUpdate');
+    Route::get('admin/visa/print/{id}', 'Admin\Visa\VisaApplicationController@printApplication');
 });
 
 
@@ -369,6 +379,6 @@ Route::middleware(['auth:sanctum', 'guide'])->group(function () {
 
 
 //payment redirect
- Route::post('/payment/success', 'User\booking\bookingController@successPayment')->name('payment.success');
+Route::post('/payment/success', 'User\booking\bookingController@successPayment')->name('payment.success');
 Route::post('/users/order/fail', 'User\booking\bookingController@successPayment')->name('payment.fail');
 Route::post('/users/order/cancel', 'User\booking\bookingController@successPayment')->name('payment.cancel');
